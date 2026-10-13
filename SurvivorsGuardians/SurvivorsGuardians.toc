@@ -1,0 +1,6 @@
+## Interface: 11200
+## Title: SurvivorsGuardians
+## Notes: Suivi des gardiens de la carte pour Azeroth Survivors
+## Author: ZKY
+## SavedVariables: SurvivorsGuardiansDB
+SurvivorsGuardians.lua

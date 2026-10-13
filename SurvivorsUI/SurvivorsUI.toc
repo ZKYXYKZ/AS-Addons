@@ -1,0 +1,6 @@
+## Interface: 11200
+## Title: SurvivorsUI
+## Notes: Interface sobre et compacte pour Azeroth Survivors
+## Author: ZKY
+## SavedVariables: SurvivorsUIErrors
+SurvivorsUI.lua
