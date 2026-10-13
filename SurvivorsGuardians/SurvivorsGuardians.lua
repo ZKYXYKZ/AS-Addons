@@ -244,7 +244,7 @@ local function addBoss(name)
   local g = { name = name, boss = true, dead = false }
   table.insert(order, g)
   if lastBoss and clock - lastBoss > 60 then
-    SurvivorsGuardiansDB.bossEvery = math.floor((clock - lastBoss) / 5 + 0.5) * 5
+    SurvivorsGuardiansDB.bossEvery = math.floor((clock - lastBoss) / 30 + 0.5) * 30
   end
   if not lastBoss or clock - lastBoss > 60 then
     lastBoss = clock
