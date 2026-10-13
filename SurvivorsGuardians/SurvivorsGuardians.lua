@@ -231,8 +231,16 @@ end
 local function render()
   local n = table.getn(order)
   if n == 0 then
-    panel:Hide()
     for i = 1, table.getn(pins) do pins[i]:Hide() end
+    for i = 1, table.getn(rows) do rows[i]:Hide() end
+    if SurvivorsUI and SurvivorsUI.unlocked then
+      title:SetText("Guardians")
+      count:SetText("")
+      panel:SetHeight(HEAD + ROW)
+      panel:Show()
+    else
+      panel:Hide()
+    end
     return
   end
   if n > MAXROWS then n = MAXROWS end
@@ -350,7 +358,13 @@ driver:RegisterEvent("CHAT_MSG_COMBAT_HOSTILE_DEATH")
 local ready, acc = false, 0
 driver:SetScript("OnEvent", function()
   if event == "PLAYER_ENTERING_WORLD" then
-    place()
+    if SurvivorsUI and SurvivorsUI.Register then
+      panel:SetScript("OnDragStart", nil)
+      panel:SetScript("OnDragStop", nil)
+      SurvivorsUI.Register("guardians", "Guardians", panel, "TOPRIGHT", -14, -200)
+    else
+      place()
+    end
     ready = true
   elseif event == "PLAYER_TARGET_CHANGED" then
     watchUnit("target")

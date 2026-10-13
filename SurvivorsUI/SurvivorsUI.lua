@@ -67,35 +67,42 @@ local POWER = {
   [3] = { 1, 0.9, 0.3 },
 }
 
-local root, player, power, target, xp, actions, buttons
+local S = SurvivorsUI
+local player, power, target, xp, actions, buttons
+
+local function box(name, w, h)
+  local f = CreateFrame("Frame", name, UIParent)
+  f:SetWidth(w)
+  f:SetHeight(h)
+  return f
+end
 
 local function buildUnits()
-  root = CreateFrame("Frame", "SurvivorsUIRoot", UIParent)
-  root:SetWidth(W)
-  root:SetHeight(130)
-  root:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, 12)
-
-  xp = bar("SurvivorsUIXP", root, W, 5)
-  xp:SetPoint("BOTTOM", root, "BOTTOM", 0, 0)
+  local actionsBox = box("SurvivorsUIActionsBox", W, ICON + 8)
+  xp = bar("SurvivorsUIXP", actionsBox, W, 5)
+  xp:SetPoint("BOTTOM", actionsBox, "BOTTOM", 0, 0)
   xp.fill:SetTexture(0.55, 0.3, 0.85, 1)
-
-  actions = CreateFrame("Frame", "SurvivorsUIActions", root)
+  actions = CreateFrame("Frame", "SurvivorsUIActions", actionsBox)
   actions:SetWidth(W)
   actions:SetHeight(ICON)
   actions:SetPoint("BOTTOM", xp, "TOP", 0, 3)
+  S.Register("actions", "Spells", actionsBox, "BOTTOM", 0, 12)
 
-  power = bar("SurvivorsUIPower", root, W, 6)
-  power:SetPoint("BOTTOM", actions, "TOP", 0, 3)
-
-  player = bar("SurvivorsUIPlayer", root, W, 26)
+  local playerBox = box("SurvivorsUIPlayerBox", W, 33)
+  power = bar("SurvivorsUIPower", playerBox, W, 6)
+  power:SetPoint("BOTTOM", playerBox, "BOTTOM", 0, 0)
+  player = bar("SurvivorsUIPlayer", playerBox, W, 26)
   player:SetPoint("BOTTOM", power, "TOP", 0, 1)
   player.left = text(player, 14, "LEFT")
   player.left:SetPoint("LEFT", player, "LEFT", 8, 0)
   player.right = text(player, 14, "RIGHT")
   player.right:SetPoint("RIGHT", player, "RIGHT", -8, 0)
+  S.Register("player", "Player", playerBox, "BOTTOM", 0, 57)
 
-  target = bar("SurvivorsUITarget", root, W, 24)
-  target:SetPoint("BOTTOM", player, "TOP", 0, 10)
+  local targetBox = box("SurvivorsUITargetBox", W, 24)
+  target = bar("SurvivorsUITarget", targetBox, W, 24)
+  target:SetAllPoints(targetBox)
+  S.Register("target", "Target", targetBox, "BOTTOM", 0, 100)
   target.left = text(target, 13, "LEFT")
   target.left:SetPoint("LEFT", target, "LEFT", 8, 0)
   target.right = text(target, 13, "RIGHT")
@@ -221,6 +228,12 @@ local function updateUnits()
     target.left:SetText(UnitName("target") or "")
     target.right:SetText(short(thp) .. " / " .. short(tmax) .. "   " .. string.format("%d%%", p * 100))
     target:Show()
+  elseif S.unlocked then
+    setBar(target, 1, 1)
+    target.fill:SetTexture(0.8, 0.2, 0.2, 1)
+    target.left:SetText("Target")
+    target.right:SetText("")
+    target:Show()
   else
     target:Hide()
   end
@@ -230,8 +243,7 @@ local function buildMicro()
   local holder = CreateFrame("Frame", "SurvivorsUIMicro", UIParent)
   holder:SetWidth(170)
   holder:SetHeight(40)
-  holder:SetPoint("BOTTOMLEFT", root, "BOTTOMRIGHT", 24, 0)
-  holder:SetScale(0.8)
+  S.Register("micro", "Menu", holder, "BOTTOM", 340, 12, 0.8)
   local names = { "CharacterMicroButton", "TalentMicroButton", "WorldMapMicroButton", "MainMenuMicroButton", "HelpMicroButton" }
   for i = 1, table.getn(names) do
     local b = getglobal(names[i])
@@ -248,7 +260,7 @@ local function buildMicro()
   end
   holder:SetAlpha(0.25)
   holder:SetScript("OnUpdate", function()
-    if MouseIsOver(this) then
+    if S.unlocked or MouseIsOver(this) then
       this:SetAlpha(1)
     else
       this:SetAlpha(0.25)
@@ -280,11 +292,10 @@ local function styleChat()
     end
   end
   kill(ChatFrameMenuButton)
-  ChatFrame1:ClearAllPoints()
-  ChatFrame1:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", 14, 14)
   ChatFrame1:SetWidth(340)
   ChatFrame1:SetHeight(100)
   ChatFrame1:SetUserPlaced(1)
+  S.Register("chat", "Chat", ChatFrame1, "BOTTOMLEFT", 14, 14)
   ChatFrameEditBox:ClearAllPoints()
   ChatFrameEditBox:SetPoint("BOTTOMLEFT", ChatFrame1, "TOPLEFT", -5, 4)
   ChatFrameEditBox:SetPoint("BOTTOMRIGHT", ChatFrame1, "TOPRIGHT", 5, 4)
@@ -311,10 +322,10 @@ local function styleMinimap()
   kill(MiniMapTrackingFrame)
   kill(MinimapNorthTag)
   Minimap:SetMaskTexture("Interface\\Buttons\\WHITE8X8")
-  Minimap:ClearAllPoints()
-  Minimap:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", -14, -14)
   Minimap:SetWidth(size)
   Minimap:SetHeight(size)
+  S.Register("minimap", "Minimap", Minimap, "TOPRIGHT", -14, -14)
+  S.BuildMinimapButton()
   local edge = CreateFrame("Frame", "SurvivorsUIMinimapEdge", Minimap)
   edge:SetFrameLevel(Minimap:GetFrameLevel() + 1)
   edge:SetAllPoints(Minimap)
@@ -369,6 +380,10 @@ driver:SetScript("OnEvent", function()
   step("stock", hideStock)
   step("chat", styleChat)
   step("minimap", styleMinimap)
+  step("camera", function()
+    if not S.DB().camera then S.DB().camera = 3 end
+    S.ApplyCamera()
+  end)
   ready = true
 end)
 driver:SetScript("OnUpdate", function()

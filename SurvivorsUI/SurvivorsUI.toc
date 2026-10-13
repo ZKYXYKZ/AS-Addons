@@ -2,5 +2,7 @@
 ## Title: SurvivorsUI
 ## Notes: Interface sobre et compacte pour Azeroth Survivors
 ## Author: ZKY
-## SavedVariables: SurvivorsUIErrors
+## SavedVariables: SurvivorsUIErrors, SurvivorsUIDB
+Movers.lua
+Settings.lua
 SurvivorsUI.lua
