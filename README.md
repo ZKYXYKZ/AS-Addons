@@ -4,6 +4,8 @@ Addons for [Azeroth Survivors](https://wow.aethus.pl/), a survivors-style game b
 
 The game loads regular WoW 1.12 addons (Lua 5.0, `## Interface: 11200`). These two are written for its game mode, where spells cast on their own and most of the stock interface is noise.
 
+![SurvivorsUI and SurvivorsGuardians in a run](docs/gameplay.jpg)
+
 ## Addons
 
 ### SurvivorsUI
@@ -18,6 +20,8 @@ A compact replacement for the stock interface.
   - Resize every block.
   - `Unlock frames` shows a grid: drag to move, mouse wheel to resize. Frames snap to each other, to the screen edges and center, and to the grid. Hold Shift to disable snapping.
   - Max camera zoom out, from 15 to 90 yards.
+
+![Settings panel with frames unlocked](docs/settings.jpg)
 
 ### SurvivorsGuardians
 
