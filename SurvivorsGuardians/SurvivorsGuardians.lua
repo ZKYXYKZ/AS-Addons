@@ -461,15 +461,8 @@ local function render()
       r.dot:SetTexture(c[1], c[2], c[3], 1)
       r.name:SetTextColor(1, 1, 1)
       r.info:SetTextColor(c[1], c[2], c[3])
-      if speed > 0 then
-        local eta = d / speed
-        if eta < 3 then
-          r.info:SetText("here")
-        elseif eta < 100 then
-          r.info:SetText(string.format("%ds", eta))
-        else
-          r.info:SetText(string.format("%dm", eta / 60))
-        end
+      if g.hp and g.hp < 1 then
+        r.info:SetText(string.format("%d%%", g.hp * 100))
       else
         r.info:SetText("")
       end
