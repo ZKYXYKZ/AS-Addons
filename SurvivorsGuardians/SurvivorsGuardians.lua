@@ -86,6 +86,13 @@ local function row(i)
   r.name:SetPoint("LEFT", r.compass, "RIGHT", 6, 1)
   r.name:SetWidth(WIDTH - 80)
   r.name:SetHeight(11)
+  r.strike = tex(r, "OVERLAY", 0.6, 0.6, 0.6, 0.9)
+  r.strike:SetHeight(1)
+  r.strike:SetPoint("LEFT", r.name, "LEFT", -2, 0)
+  r.strike:Hide()
+  r.shade = tex(r, "BACKGROUND", 0, 0, 0, 0.35)
+  r.shade:SetAllPoints(r)
+  r.shade:Hide()
   r.info = text(r, 11, "RIGHT")
   r.info:SetPoint("RIGHT", r, "RIGHT", -6, 1)
   r.hpbg = tex(r, "BORDER", 0, 0, 0, 0.6)
@@ -121,10 +128,65 @@ local px, py = 0, 0
 local speed = 0
 local lastX, lastY, lastT
 
+local clock, lastAct, bossSync, lastBoss = 0, 0, 0, nil
+local tail = 0
+local BOSS_EVERY = 180
+
 local function reset()
   order, byName = {}, {}
   speed = 0
   lastX, lastY, lastT = nil, nil, nil
+  clock, bossSync, lastBoss = 0, 0, nil
+end
+
+local function known()
+  SurvivorsGuardiansDB.zones = SurvivorsGuardiansDB.zones or {}
+  if not zone or zone == "" then return {} end
+  SurvivorsGuardiansDB.zones[zone] = SurvivorsGuardiansDB.zones[zone] or {}
+  return SurvivorsGuardiansDB.zones[zone]
+end
+
+local function keyOf(name, x, y)
+  return string.format("%s@%.3f,%.3f", name, x, y)
+end
+
+local function find(name, state)
+  local best, bd
+  for i = 1, table.getn(order) do
+    local g = order[i]
+    if g.name == name and (not state or (state == "dead") == (g.dead and true or false)) then
+      local d = 0
+      if g.x then
+        local dx, dy = (g.x - px) * 1.5, g.y - py
+        d = dx * dx + dy * dy
+      end
+      if not best or d < bd then best, bd = g, d end
+    end
+  end
+  return best
+end
+
+local function preload()
+  local keys = {}
+  for key, k in pairs(known()) do
+    if k.name then table.insert(keys, key) end
+  end
+  table.sort(keys)
+  for i = 1, table.getn(keys) do
+    local k = known()[keys[i]]
+    local g = { name = k.name, x = k.x, y = k.y, dead = false }
+    byName[keys[i]] = g
+    table.insert(order, g)
+  end
+end
+
+local function revive(g)
+  if g.deadClock and clock - g.deadClock > 20 then
+    SurvivorsGuardiansDB.respawn = math.floor(clock - g.deadClock + 0.5)
+  end
+  g.dead = false
+  g.lock = nil
+  g.deadClock = nil
 end
 
 local function scan()
@@ -132,9 +194,11 @@ local function scan()
   if z ~= zone then
     zone = z
     reset()
+    preload()
   end
   if not (WorldMapFrame and WorldMapFrame:IsVisible()) then SetMapToCurrentZone() end
   px, py = GetPlayerMapPosition("player")
+  local stamp = GetTime()
   for i = 1, GetNumMapLandmarks() do
     local name, _, _, x, y = GetMapLandmarkInfo(i)
     if name then
@@ -142,19 +206,33 @@ local function scan()
       local _, _, dead = string.find(name, "^(.+)'s lair %(empty%)$")
       local base = alive or dead
       if base then
-        local g = byName[base]
-        if not g then
-          g = { name = base }
-          byName[base] = g
-          table.insert(order, g)
+        local key = keyOf(base, x, y)
+        local g
+        for j = 1, table.getn(order) do
+          local o = order[j]
+          if o.name == base and not o.boss and o.claim ~= stamp and math.abs(o.x - x) < 0.03 and math.abs(o.y - y) < 0.03 then
+            g = o
+            break
+          end
         end
-        g.x, g.y = x, y
-        g.boss = nil
-        if dead then
-          g.dead = true
-          g.hp = nil
+        if g then
+          g.claim = stamp
+          if not g.dead or dead then g.x, g.y = x, y end
         else
-          g.dead = false
+          g = { name = base, x = x, y = y, claim = stamp }
+          byName[key] = g
+          table.insert(order, g)
+          known()[key] = { name = base, x = x, y = y }
+        end
+        if dead then
+          if not g.dead then
+            g.dead = true
+            g.deadClock = clock
+          end
+          g.hp = nil
+          g.lock = nil
+        elseif g.dead and not (g.lock and GetTime() < g.lock) then
+          revive(g)
         end
       end
     end
@@ -162,16 +240,19 @@ local function scan()
 end
 
 local function addBoss(name)
-  if not name or name == "" or byName[name] then return end
+  if not name or name == "" or find(name) then return end
   local g = { name = name, boss = true, dead = false }
-  byName[name] = g
   table.insert(order, g)
+  if lastBoss and clock - lastBoss > 60 then
+    SurvivorsGuardiansDB.bossEvery = math.floor((clock - lastBoss) / 5 + 0.5) * 5
+  end
+  if not lastBoss or clock - lastBoss > 60 then
+    lastBoss = clock
+    bossSync = clock
+  end
 end
 
-local function dropBoss(name)
-  local g = name and byName[name]
-  if not g or not g.boss then return end
-  byName[name] = nil
+local function dropBoss(g)
   for i = 1, table.getn(order) do
     if order[i] == g then
       table.remove(order, i)
@@ -180,8 +261,21 @@ local function dropBoss(name)
   end
 end
 
+local function markDead(name)
+  local g = name and find(name, "alive")
+  if not g then return end
+  g.dead = true
+  g.hp = nil
+  g.diedAt = GetTime()
+  g.deadClock = clock
+  g.lock = GetTime() + 6
+end
+
 local function readChat(msg, speaker)
   if not msg then return end
+  if speaker and speaker ~= "" then
+    msg = string.gsub(msg, "%%s", speaker)
+  end
   if event == "CHAT_MSG_MONSTER_YELL" then
     addBoss(speaker)
     return
@@ -189,28 +283,85 @@ local function readChat(msg, speaker)
   local _, _, came = string.find(msg, "^(.+) has come!$")
   local _, _, near = string.find(msg, "^(.+) approaches!$")
   if came or near then
-    addBoss(came or near)
+    local name = came or near
+    if not string.find(name, "%%") then addBoss(name) end
+    return
+  end
+  local _, _, back = string.find(msg, "^(.+) claims its lair once more")
+  if back then
+    local g = find(back, "dead")
+    if g then revive(g) end
     return
   end
   local _, _, a = string.find(msg, "^(.+) dies%.$")
   local _, _, b = string.find(msg, "^(.+) is defeated!")
   local _, _, c = string.find(msg, "^(.+) is slain!")
   local _, _, d = string.find(msg, "^You have slain (.+)!$")
-  dropBoss(a or b or c or d)
+  local soft = a or d
+  local sg = soft and find(soft)
+  if sg and not sg.boss then soft = nil end
+  markDead(b or c or soft)
 end
 
 local function watchUnit(unit)
   if not UnitExists(unit) then return end
   local name = UnitName(unit) or ""
-  if not byName[name] and UnitClassification(unit) == "worldboss" and not UnitIsDead(unit) then addBoss(name) end
-  local g = byName[name]
+  if not find(name) and UnitClassification(unit) == "worldboss" and not UnitIsDead(unit) then addBoss(name) end
+  local g = find(name, "alive") or find(name)
   if not g then return end
-  if g.boss and UnitIsDead(unit) then
-    dropBoss(name)
+  local level = UnitLevel(unit)
+  if level and level > 0 then g.level = level end
+  g.seenAt = GetTime()
+  if UnitIsDead(unit) then
+    if g.boss then markDead(name) end
     return
   end
+  if g.dead and g.boss then return end
   local max = UnitHealthMax(unit)
   if max and max > 0 then g.hp = UnitHealth(unit) / max end
+end
+
+local peekIndex, peekAcc = 0, 0
+local pending, release
+
+local function peek()
+  if SurvivorsGuardiansDB.peek == false then return end
+  local n = table.getn(order)
+  if n == 0 then return end
+  local current = UnitName("target")
+  if current and find(current) then return end
+  if not current and not ClearTarget then return end
+  for k = 1, n do
+    peekIndex = peekIndex + 1
+    if peekIndex > n then peekIndex = 1 end
+    local g = order[peekIndex]
+    if not g.dead and not (g.seenAt and GetTime() - g.seenAt < 30) then
+      pending = { g = g, had = current, ticks = 0 }
+      SURVIVORS_PEEKING = 1
+      TargetByName(g.name, 1)
+      return
+    end
+  end
+end
+
+local function finishPeek()
+  pending.ticks = pending.ticks + 1
+  local arrived = UnitName("target") == pending.g.name
+  if not arrived and pending.ticks < 3 then return end
+  pending.g.seenAt = GetTime()
+  if arrived then
+    watchUnit("target")
+    if pending.had then TargetLastTarget() else ClearTarget() end
+  end
+  pending = nil
+  release = 2
+end
+
+local function expireBosses()
+  for i = table.getn(order), 1, -1 do
+    local g = order[i]
+    if g.boss and g.dead and g.diedAt and GetTime() - g.diedAt > 20 then dropBoss(g) end
+  end
 end
 
 local function measureSpeed()
@@ -263,10 +414,34 @@ local function render()
       r.dot:ClearAllPoints()
       r.dot:SetPoint("CENTER", r.compass, "CENTER", ux * 6, uy * 6)
     end
-    r.name:SetText(g.name)
+    if g.level then
+      r.name:SetText("|cffaaaaaa" .. g.level .. "|r  " .. g.name)
+    else
+      r.name:SetText(g.name)
+    end
     r.unitName = (not g.dead) and g.name or nil
     local p = pin(i)
-    if g.boss then
+    if g.dead then
+      if not g.boss then slain = slain + 1 end
+      r.name:SetText((g.level and (g.level .. "  ") or "") .. g.name)
+      r.dot:SetTexture(0.35, 0.35, 0.35, 1)
+      r.name:SetTextColor(0.42, 0.42, 0.42)
+      r.info:SetTextColor(0.85, 0.3, 0.3)
+      local back = (not g.boss) and SurvivorsGuardiansDB.respawn and g.deadClock and (SurvivorsGuardiansDB.respawn - (clock - g.deadClock))
+      if back and back > 0 then
+        r.info:SetText(string.format("DEAD %d:%02d", back / 60, math.mod(back, 60)))
+      else
+        r.info:SetText("DEAD")
+      end
+      r.strike:SetWidth(math.min(r.name:GetStringWidth() + 4, WIDTH - 80))
+      r.strike:Show()
+      r.shade:Show()
+      r.hp:Hide()
+      r.hpbg:Hide()
+      p:Hide()
+    elseif g.boss then
+      r.strike:Hide()
+      r.shade:Hide()
       r.name:SetTextColor(c[1], c[2], c[3])
       r.info:SetTextColor(c[1], c[2], c[3])
       r.info:SetText("boss")
@@ -280,16 +455,9 @@ local function render()
         r.hpbg:Hide()
       end
       p:Hide()
-    elseif g.dead then
-      slain = slain + 1
-      r.dot:SetTexture(0.45, 0.45, 0.45, 1)
-      r.name:SetTextColor(0.5, 0.5, 0.5)
-      r.info:SetTextColor(0.5, 0.5, 0.5)
-      r.info:SetText("slain")
-      r.hp:Hide()
-      r.hpbg:Hide()
-      p:Hide()
     else
+      r.strike:Hide()
+      r.shade:Hide()
       r.dot:SetTexture(c[1], c[2], c[3], 1)
       r.name:SetTextColor(1, 1, 1)
       r.info:SetTextColor(c[1], c[2], c[3])
@@ -332,7 +500,9 @@ local function render()
   for i = n + 1, table.getn(rows) do rows[i]:Hide() end
   for i = n + 1, table.getn(pins) do pins[i]:Hide() end
   title:SetText("Guardians")
-  count:SetText(slain .. " / " .. total)
+  local every = SurvivorsGuardiansDB.bossEvery or BOSS_EVERY
+  local nextBoss = every - math.mod(clock - bossSync, every)
+  count:SetText(string.format("|cffcc77ffboss %d:%02d|r   %d / %d", nextBoss / 60, math.mod(nextBoss, 60), slain, total))
   panel:SetHeight(HEAD + n * ROW + 3)
   panel:Show()
 end
@@ -355,9 +525,31 @@ driver:RegisterEvent("CHAT_MSG_RAID_BOSS_EMOTE")
 driver:RegisterEvent("CHAT_MSG_MONSTER_EMOTE")
 driver:RegisterEvent("CHAT_MSG_MONSTER_YELL")
 driver:RegisterEvent("CHAT_MSG_COMBAT_HOSTILE_DEATH")
+local ACTIVITY = {
+  UNIT_COMBAT = 1,
+  UNIT_HEALTH = 1,
+  PLAYER_XP_UPDATE = 1,
+  CHAT_MSG_COMBAT_HOSTILE_DEATH = 1,
+  CHAT_MSG_COMBAT_SELF_HITS = 1,
+  CHAT_MSG_SPELL_SELF_DAMAGE = 1,
+  CHAT_MSG_COMBAT_CREATURE_VS_SELF_HITS = 1,
+}
+local CHAT = {
+  CHAT_MSG_SYSTEM = 1,
+  CHAT_MSG_RAID_BOSS_EMOTE = 1,
+  CHAT_MSG_MONSTER_EMOTE = 1,
+  CHAT_MSG_MONSTER_YELL = 1,
+  CHAT_MSG_COMBAT_HOSTILE_DEATH = 1,
+}
+for e in pairs(ACTIVITY) do driver:RegisterEvent(e) end
 local ready, acc = false, 0
 driver:SetScript("OnEvent", function()
+  if ACTIVITY[event] then
+    lastAct = GetTime()
+    tail = 0
+  end
   if event == "PLAYER_ENTERING_WORLD" then
+    zone = nil
     if SurvivorsUI and SurvivorsUI.Register then
       panel:SetScript("OnDragStart", nil)
       panel:SetScript("OnDragStop", nil)
@@ -370,12 +562,19 @@ driver:SetScript("OnEvent", function()
     watchUnit("target")
   elseif event == "UPDATE_MOUSEOVER_UNIT" then
     watchUnit("mouseover")
-  else
+  elseif CHAT[event] then
     readChat(arg1, arg2)
   end
 end)
 driver:SetScript("OnUpdate", function()
   if not ready then return end
+  if GetTime() - lastAct < 2.5 then
+    clock = clock + arg1
+    tail = tail + arg1
+  elseif tail > 0 then
+    clock = clock - tail
+    tail = 0
+  end
   acc = acc + arg1
   if acc < 0.25 then return end
   acc = 0
@@ -383,13 +582,38 @@ driver:SetScript("OnUpdate", function()
     scan()
     measureSpeed()
     watchUnit("target")
+    expireBosses()
+    if pending then
+      finishPeek()
+    elseif release then
+      release = release - 1
+      if release <= 0 then
+        release = nil
+        SURVIVORS_PEEKING = nil
+      end
+    else
+      peekAcc = peekAcc + 0.25
+      if peekAcc >= 2 then
+        peekAcc = 0
+        peek()
+      end
+    end
     render()
   end)
   if not ok then SurvivorsGuardiansDB.error = tostring(err) end
 end)
 
 SLASH_SURVIVORSGUARDIANS1 = "/guardians"
-SlashCmdList["SURVIVORSGUARDIANS"] = function()
+SlashCmdList["SURVIVORSGUARDIANS"] = function(msg)
+  if msg == "peek" then
+    SurvivorsGuardiansDB.peek = (SurvivorsGuardiansDB.peek == false)
+    DEFAULT_CHAT_FRAME:AddMessage("Guardians peek: " .. (SurvivorsGuardiansDB.peek and "on" or "off"))
+    return
+  end
+  if SurvivorsUI and SurvivorsUI.movers.guardians then
+    SurvivorsUI.Reset(SurvivorsUI.movers.guardians)
+    return
+  end
   SurvivorsGuardiansDB.x, SurvivorsGuardiansDB.y = nil, nil
   place()
 end

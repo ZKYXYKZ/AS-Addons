@@ -39,6 +39,15 @@ Fichiers : `Movers.lua` (registre des blocs déplaçables, grille, aimantation, 
 - `GetLeft`/`GetTop` et les décalages de `SetPoint` sont dans l'unité propre du cadre (écran divisé par son échelle), vérifié en jeu.
 - Caméra : `SetCVar("cameraDistanceMaxFactor", n)` et `cameraDistanceMax` (n x 15 yd) sont acceptés au-delà de la limite du menu du jeu. Défaut de l'addon : 3 (45 yd), réglable de 15 à 90 yd.
 
+## SurvivorsGuardians : fonctionnement interne
+
+- `GetMapLandmarkInfo` n'expose un gardien qu'une fois proche. Les gardiens vus sont mémorisés par carte dans `SurvivorsGuardiansDB.zones[zone]["Nom@x,y"]` et rechargés au début de la run suivante. Deux gardiens peuvent porter le même nom (deux Kobold Taskmaster à Elwynn), d'où la clé nom + position et le rapprochement à 0,03 unité de carte.
+- `TargetByName(nom, 1)` atteint un gardien même hors de vue, mais le changement de cible est asynchrone. Relevé automatique (niveau, vie) : ciblage, lecture au tick suivant, puis `TargetLastTarget()` ou `ClearTarget()`. Un gardien est relevé au plus toutes les 30 s. `SURVIVORS_PEEKING` gèle la barre de cible de SurvivorsUI pendant ce temps. `/guardians peek` coupe le relevé.
+- Les emotes du jeu arrivent avec `%s` non remplacé dans `arg1` et le nom dans `arg2`.
+- Horloge de run : le timer natif est illisible en Lua. L'addon compte le temps tant que des événements de combat arrivent ; pendant l'écran de choix de montée de niveau seuls les événements de recharge continuent, donc l'horloge se fige. Écart mesuré face au timer natif : 1 à 5 s.
+- Boss : intervalle supposé de 180 s (observé à Elwynn et Warsong), recalé à chaque boss détecté et appris dans `SurvivorsGuardiansDB.bossEvery`. Détection du boss par texte (« has come! », « approaches! », cri) ou unité classée `worldboss`, jamais vue en test.
+- Réapparition d'un gardien : délai appris entre sa mort et « claims its lair once more », stocké dans `SurvivorsGuardiansDB.respawn`, puis affiché en compte à rebours sur les lignes mortes. Jamais observé en test.
+
 ## SurvivorsGuardians
 
 Panneau déplaçable sous la minimap : une ligne par gardien avec boussole (nord en haut), temps de trajet estimé, vie si déjà ciblé, état « slain ». Clic sur une ligne : cible le gardien. Repères colorés sur le bord de la minimap. `/guardians` remet le panneau à sa place.

@@ -212,6 +212,7 @@ local function updateUnits()
 
   setBar(xp, UnitXP("player"), UnitXPMax("player"))
 
+  if SURVIVORS_PEEKING then return end
   if UnitExists("target") and not UnitIsDead("target") then
     local thp, tmax = UnitHealth("target"), UnitHealthMax("target")
     local p = setBar(target, thp, tmax)
