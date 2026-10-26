@@ -1809,12 +1809,12 @@ class Companion : Form
                 if (B(G(settings, "autoPick")) && a.Key != null && (a.Key.StartsWith("skip") || a.Key.StartsWith("ban")))
                 {
                     if (!B(G(settings, "experimentalAutoplay"))) break;
-                    PointF pt = new PointF(0.555f, 0.864f);
+                    PointF pt = new PointF(0.548f, 0.861f);
                     if (a.Key.StartsWith("ban"))
                     {
                         string[] bp = a.Key.Substring(3).Split('/');
                         int bi = int.Parse(bp[0]), bn = int.Parse(bp[1]);
-                        pt = new PointF((960f + (bi - (bn + 1) / 2f) * 375f) / 1920f, 0.797f);
+                        pt = new PointF((960f + (bi - (bn + 1) / 2f) * 375.5f) / 1920f, 0.795f);
                     }
                     System.Windows.Forms.Timer ct = new System.Windows.Forms.Timer { Interval = 900 };
                     ct.Tick += delegate
