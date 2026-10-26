@@ -67,3 +67,9 @@ luckFrame:SetScript("OnEvent", function()
   db.luck[SB.PlayerClass()] = math.floor(tonumber(v) * 1000 + 0.5) / 10
   luckSeen = true
 end)
+
+local logFrame = CreateFrame("Frame")
+logFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+logFrame:SetScript("OnEvent", function()
+  if SB.Fresh() and LoggingCombat and not LoggingCombat() then LoggingCombat(1) end
+end)

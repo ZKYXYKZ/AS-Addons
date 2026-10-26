@@ -226,8 +226,78 @@ class Companion : Form
         catch { return true; }
     }
 
+    string combatLog;
+    long combatPos;
+    DateTime combatRead = DateTime.MinValue;
+    Dictionary<string, double> spellDmg = new Dictionary<string, double>();
+    double totalDmg;
+    static readonly Regex HitLine = new Regex(@"^\S+ \S+\s+Your (.+?) (?:hits|crits) .+? for (\d+)", RegexOptions.Compiled);
+    static readonly Regex TickLine = new Regex(@"^\S+ \S+\s+.+? suffers (\d+) .*?from your (.+?)\.", RegexOptions.Compiled);
+    static readonly Regex MeleeLine = new Regex(@"^\S+ \S+\s+You (?:hit|crit) .+? for (\d+)", RegexOptions.Compiled);
+
+    void ReadCombat()
+    {
+        if (combatLog == null || !File.Exists(combatLog)) return;
+        try
+        {
+            using (FileStream fs = new FileStream(combatLog, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            {
+                if (fs.Length < combatPos) combatPos = 0;
+                if (fs.Length == combatPos) return;
+                fs.Seek(combatPos, SeekOrigin.Begin);
+                byte[] buf = new byte[fs.Length - combatPos];
+                int n = fs.Read(buf, 0, buf.Length);
+                int last = Array.LastIndexOf(buf, (byte)'\n', n - 1);
+                if (last < 0) return;
+                combatPos += last + 1;
+                foreach (string line in Utf8.GetString(buf, 0, last + 1).Split('\n'))
+                {
+                    Match m = HitLine.Match(line);
+                    if (m.Success) { AddDmg(m.Groups[1].Value, double.Parse(m.Groups[2].Value)); continue; }
+                    m = TickLine.Match(line);
+                    if (m.Success) { AddDmg(m.Groups[2].Value, double.Parse(m.Groups[1].Value)); continue; }
+                    m = MeleeLine.Match(line);
+                    if (m.Success) AddDmg("Attack", double.Parse(m.Groups[1].Value));
+                }
+            }
+        }
+        catch (IOException) { }
+        if (totalDmg > 0 && DateTime.Now > dpsLog)
+        {
+            dpsLog = DateTime.Now.AddSeconds(60);
+            Log("dps " + string.Join(", ", spellDmg.OrderByDescending(kv => kv.Value).Take(6).Select(kv => kv.Key + " " + Math.Round(100 * kv.Value / totalDmg) + "%")));
+        }
+    }
+
+    DateTime dpsLog = DateTime.MinValue;
+
+    void AddDmg(string spellName, double dmg)
+    {
+        string key = spellName;
+        if (heroClass != null)
+            foreach (object sp in A(G(heroClass, "spells")))
+                if (S(G(G(sp, "name"), "en")) == spellName) { key = S(G(sp, "key")); break; }
+        double v;
+        spellDmg.TryGetValue(key, out v);
+        spellDmg[key] = v + dmg;
+        totalDmg += dmg;
+    }
+
+    double DmgShare(string key)
+    {
+        double v;
+        return totalDmg > 0 && spellDmg.TryGetValue(key, out v) ? v / totalDmg : 0;
+    }
+
+    double DmgFactor(string key)
+    {
+        if (totalDmg < 20000) return 1;
+        return Math.Max(0.3, Math.Min(2, 0.3 + 3 * DmgShare(key)));
+    }
+
     void OnTick(object sender, EventArgs e)
     {
+        if (running && DateTime.Now > combatRead) { combatRead = DateTime.Now.AddSeconds(1); ReadCombat(); }
         if (running && game != null && game.HasExited)
         {
             running = false;
@@ -494,6 +564,11 @@ class Companion : Form
         string l = S(G(settings, "lang"));
         lang = !string.IsNullOrEmpty(l) && l != "auto" ? l : GameLang().StartsWith("fr") ? "fr" : "en";
         WriteGateway(s, Path.GetDirectoryName(path));
+        string home = Environment.GetEnvironmentVariable("BENILLA_HOME");
+        combatLog = Path.Combine(string.IsNullOrEmpty(home) ? Path.Combine(Path.GetDirectoryName(path), "benilla-config") : home, "Logs", "WoWCombatLog.txt");
+        combatPos = File.Exists(combatLog) ? new FileInfo(combatLog).Length : 0;
+        spellDmg = new Dictionary<string, double>();
+        totalDmg = 0;
         ProcessStartInfo psi = new ProcessStartInfo(path);
         psi.WorkingDirectory = Path.GetDirectoryName(path);
         psi.UseShellExecute = false;
@@ -538,6 +613,8 @@ class Companion : Form
                 amulet = null;
                 jewels = new Dictionary<string, string>();
                 runLuck = 0;
+                spellDmg = new Dictionary<string, double>();
+                totalDmg = 0;
                 jewelLuck = new Dictionary<string, double>();
                 amuletLuck = 0;
                 amuletUps = 0;
@@ -691,7 +768,11 @@ class Companion : Form
         int idx = list.IndexOf(key);
         double set = N(G(G(build, "jw"), key), 0);
         double w = idx >= 0 ? (set > 0 ? set : idx < (cat == "amulets" ? 1 : 2) ? 5 : 3) * 2 : 0;
-        if (key.StartsWith("leg:")) w = Math.Max(w, BuildWeight(key.Substring(4)) * Boost());
+        if (key.StartsWith("leg:"))
+        {
+            string sk = key.Substring(4);
+            w = Math.Max(w, BuildWeight(sk) * Boost()) * DmgFactor(sk);
+        }
         return w;
     }
 
