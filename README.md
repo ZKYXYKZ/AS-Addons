@@ -35,15 +35,14 @@ A compact replacement for the stock interface.
 
 ### SurvivorsGuardians
 
-A tracker for the map guardians (mini bosses) and bosses.
+A tracker for the four guardian lairs and the bosses, fed by the game's own addon API.
 
-- One row per guardian: compass dot (north is up), level, health once damaged.
-- Dead guardians are greyed out, struck through and marked `DEAD`, with a respawn countdown once the delay has been measured.
-- Colored pins on the minimap edge point to each living guardian.
-- Bosses get their own row when they appear, and the header shows a countdown to the next one.
+- One row per lair: guardian name, health bar and percent, asleep or fighting.
+- An empty lair shows the countdown until a new guardian claims it.
+- Bosses get their own row with their health while they are alive.
+- The header counts the held lairs and shows the next boss with its countdown.
 - Click a row to target that guardian or boss.
-- Guardians are remembered per map, so the full list shows from the start of your next run there.
-- `/guardians` resets the panel position, `/guardians peek` toggles the automatic level and health readout.
+- `/guardians` resets the panel position.
 
 SurvivorsGuardians works on its own. With SurvivorsUI installed, its panel is moved and resized from the same settings.
 
@@ -59,9 +58,6 @@ To update, extract the new zip over the old files.
 ## Known limits
 
 - The run timer, the kill and gold counters, the damage meter and the native spell icon row are drawn by the game engine. Addons cannot move or hide them.
-- The game only reveals a guardian on the map once you get close, so the first run on a map fills the list as you explore.
-- The boss countdown is estimated from combat activity, since the game timer is not readable from Lua. Expect a few seconds of drift until the first boss appears.
-- To read the level and health of distant guardians, the tracker targets each one for a fraction of a second, at most every 30 seconds, then restores your target.
 
 ## Notes for developers
 
