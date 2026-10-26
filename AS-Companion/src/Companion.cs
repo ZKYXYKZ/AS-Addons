@@ -103,7 +103,7 @@ class Companion : Form
     string amulet;
     Dictionary<string, string> jewels = new Dictionary<string, string>();
     int screenRerolls;
-    double runLuck;
+    double runLuck, amuletLuck;
     uint pendingKey;
     DateTime pendingAt;
     int pendingTries;
@@ -536,6 +536,7 @@ class Companion : Form
                 amulet = null;
                 jewels = new Dictionary<string, string>();
                 runLuck = 0;
+                amuletLuck = 0;
                 if (build == null) ShowAdvice(lang == "fr" ? "Aucun build pour " + S(G(j, "class")) + " dans le compagnon" : "No build for " + S(G(j, "class")) + " in the companion");
                 Log("hero " + S(G(j, "class")) + ", build " + S(G(build, "name")));
                 break;
@@ -579,7 +580,18 @@ class Companion : Form
         if (info.Type == "spell" && info.Key != null) owned[info.Key] = (int)N(G(card, "rank"), 1);
         if (info.Cat == "amulets" && info.Key != null) amulet = info.Key;
         if (info.Type == "jewel" && info.Key != null && info.Cat != "amulets") jewels[info.Key] = info.Cat;
-        if (info.Type == "jewel" && info.Key != null && info.Cat != "amulets") runLuck += JewelLuck(info.Cat, info.Key);
+        if (info.Type == "jewel")
+        {
+            double cl = CardLuck(card);
+            if (info.Cat == "amulets") amuletLuck = cl; else runLuck += cl;
+            Log("took " + S(G(card, "title")) + " (" + S(G(card, "rarityName")) + "): " + (S(G(card, "lines")) ?? "").Replace("\n", " / "));
+        }
+    }
+
+    static double CardLuck(object card)
+    {
+        Match m = Regex.Match((S(G(card, "lines")) ?? "") + " " + (S(G(card, "text")) ?? ""), @"\+([\d.,]+)\s*%\s*(de chance|luck)");
+        return m.Success ? double.Parse(m.Groups[1].Value.Replace(",", "."), System.Globalization.CultureInfo.InvariantCulture) : 0;
     }
 
     Dictionary<string, object> SelectBuild(string cls)
@@ -643,7 +655,7 @@ class Companion : Form
                     if (Regex.IsMatch(S(G(G(t, "desc"), "en")) ?? "", "your luck by \\{v\\}%") && tal != null && tal.ContainsKey(S(G(t, "key"))))
                         l += N(G(t, "v"), 0) * N(tal[S(G(t, "key"))], 0);
         }
-        if (amulet != null && !amulet.StartsWith("leg:")) l += JewelLuck("amulets", amulet);
+        l += amuletLuck;
         return l;
     }
 
