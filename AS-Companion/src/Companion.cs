@@ -279,6 +279,7 @@ class Companion : Form
         Log("server started on " + Url);
         if (!noBrowser) ShowUi();
         ThreadPool.QueueUserWorkItem(delegate { CheckUpdate(); });
+        ThreadPool.QueueUserWorkItem(delegate { try { FindGame(); FirstRunAddons(); } catch (Exception ex) { Log("find game: " + ex.Message); } });
         tick = new System.Windows.Forms.Timer { Interval = 200 };
         tick.Tick += OnTick;
         tick.Start();
@@ -293,7 +294,7 @@ class Companion : Form
         base.OnFormClosed(e);
     }
 
-    const string Repo = "ZKYXYKZ/AS-Addons";
+    const string Repo = "ZKYXYKZ/Azeroth-Survivor-Companion";
     bool watchUi;
     volatile bool updating;
     volatile string latestTag, latestZip, latestSums, updateError = "";
@@ -328,6 +329,7 @@ class Companion : Form
             string manifest;
             if (assets.TryGetValue("addons.json", out manifest))
                 using (WebClient w = Web()) remoteAddons = A(json.DeserializeObject(Utf8.GetString(w.DownloadData(manifest)))).Select(D).Where(x => x != null).ToList();
+            FirstRunAddons();
             AutoUpdateAddons();
             Version remote, local = new Version(CurrentVersion);
             if (tag == null || !Version.TryParse(tag.TrimStart('v', 'V'), out remote) || remote <= local || latestZip == null) { latestTag = null; return; }
@@ -354,8 +356,8 @@ class Companion : Form
             if (sums == null || !sums.ToLowerInvariant().Contains(hash + "  azerothsurvivors-addons.zip"))
                 throw new Exception("SHA-256 mismatch");
             Dictionary<string, object> st = D(LoadState()["settings"]);
-            string gamePath = S(G(st, "gamePath"));
-            if (string.IsNullOrEmpty(gamePath)) gamePath = DefaultGamePath();
+            string gamePath = GamePath();
+            if (gamePath == null) throw new Exception("game not found");
             string gameDir = Path.GetDirectoryName(gamePath);
             string home = Environment.GetEnvironmentVariable("BENILLA_HOME");
             string addons = Path.Combine(string.IsNullOrEmpty(home) ? Path.Combine(gameDir, "benilla-config") : home, "AddOns");
@@ -408,8 +410,7 @@ class Companion : Form
     string AddonsDir()
     {
         Dictionary<string, object> st = D(LoadState()["settings"]);
-        string gamePath = S(G(st, "gamePath"));
-        if (string.IsNullOrEmpty(gamePath)) gamePath = DefaultGamePath();
+        string gamePath = GamePath() ?? Path.Combine(exeDir, "AzerothSurvivors.exe");
         string home = Environment.GetEnvironmentVariable("BENILLA_HOME");
         return Path.Combine(string.IsNullOrEmpty(home) ? Path.Combine(Path.GetDirectoryName(gamePath), "benilla-config") : home, "AddOns");
     }
@@ -849,7 +850,7 @@ class Companion : Form
             }
             if (path == "/api/status")
             {
-                Respond(ctx, 200, "application/json", Utf8.GetBytes(json.Serialize(new Dictionary<string, object> { { "running", running }, { "advice", advice }, { "error", error }, { "version", CurrentVersion }, { "update", latestTag }, { "updating", updating }, { "updateError", updateError }, { "addonsUpdated", addonsUpdated } })));
+                Respond(ctx, 200, "application/json", Utf8.GetBytes(json.Serialize(new Dictionary<string, object> { { "running", running }, { "advice", advice }, { "error", error }, { "version", CurrentVersion }, { "update", latestTag }, { "updating", updating }, { "updateError", updateError }, { "addonsUpdated", addonsUpdated }, { "game", GamePath() } })));
                 return;
             }
             if (path == "/api/browse" && method == "POST")
@@ -934,11 +935,94 @@ class Companion : Form
     static IEnumerable<object> A(object o) { IEnumerable e = o as IEnumerable; return e == null || o is string ? new object[0] : e.Cast<object>(); }
     string Loc(object o) { return S(G(o, lang)) ?? S(G(o, "en")) ?? ""; }
 
-    string DefaultGamePath()
+    const string GameExe = "AzerothSurvivors.exe";
+    volatile string detectedGame;
+
+    string GamePath()
     {
-        foreach (string p in new[] { Path.Combine(exeDir, "AzerothSurvivors.exe"), Path.Combine(Path.GetDirectoryName(exeDir.TrimEnd('\\')), "AzerothSurvivors.exe") })
-            if (File.Exists(p)) return p;
-        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), @"Downloads\AzerothSurvivors\AzerothSurvivors\AzerothSurvivors.exe");
+        string saved = S(G(D(LoadState()["settings"]), "gamePath"));
+        if (!string.IsNullOrEmpty(saved) && File.Exists(saved)) return saved;
+        string d = detectedGame;
+        if (d != null && File.Exists(d)) return d;
+        d = QuickFind();
+        if (d != null) detectedGame = d;
+        return d;
+    }
+
+    string QuickFind()
+    {
+        foreach (Process proc in Process.GetProcessesByName("AzerothSurvivors"))
+            try { return proc.MainModule.FileName; } catch { }
+        string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        List<string> dirs = new List<string> { exeDir, Path.GetDirectoryName(exeDir.TrimEnd('\\')) };
+        foreach (string b in new[] { Path.Combine(home, "Downloads"), Environment.GetFolderPath(Environment.SpecialFolder.Desktop), Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), home, @"C:\Games", @"D:\Games" })
+        {
+            dirs.Add(Path.Combine(b, "AzerothSurvivors"));
+            dirs.Add(Path.Combine(b, @"AzerothSurvivors\AzerothSurvivors"));
+            dirs.Add(Path.Combine(b, "Azeroth Survivors"));
+        }
+        foreach (string dir in dirs)
+            if (!string.IsNullOrEmpty(dir) && File.Exists(Path.Combine(dir, GameExe))) return Path.Combine(dir, GameExe);
+        return null;
+    }
+
+    void FindGame()
+    {
+        if (GamePath() != null) return;
+        string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        List<string> roots = new List<string> { home };
+        foreach (DriveInfo dv in DriveInfo.GetDrives())
+            try { if (dv.IsReady && dv.DriveType == DriveType.Fixed) roots.Add(dv.RootDirectory.FullName); } catch { }
+        HashSet<string> skip = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Windows", "$Recycle.Bin", "System Volume Information", "AppData", "ProgramData", "node_modules", ".git", "WindowsApps", "Recovery", "PerfLogs", "$WinREAgent" };
+        HashSet<string> seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        int visited = 0;
+        foreach (string root in roots)
+        {
+            Queue<KeyValuePair<string, int>> q = new Queue<KeyValuePair<string, int>>();
+            q.Enqueue(new KeyValuePair<string, int>(root, 0));
+            while (q.Count > 0 && visited < 300000)
+            {
+                KeyValuePair<string, int> cur = q.Dequeue();
+                if (!seen.Add(cur.Key)) continue;
+                visited++;
+                string f = Path.Combine(cur.Key, GameExe);
+                if (File.Exists(f))
+                {
+                    detectedGame = f;
+                    Log("game found: " + f);
+                    return;
+                }
+                if (cur.Value >= 5) continue;
+                try
+                {
+                    foreach (string sub in Directory.GetDirectories(cur.Key))
+                        if (!skip.Contains(Path.GetFileName(sub)) && (new DirectoryInfo(sub).Attributes & FileAttributes.ReparsePoint) == 0)
+                            q.Enqueue(new KeyValuePair<string, int>(sub, cur.Value + 1));
+                }
+                catch { }
+            }
+        }
+        Log("game not found after " + visited + " folders");
+    }
+
+    void FirstRunAddons()
+    {
+        string marker = Path.Combine(dataDir, "setup.json");
+        if (File.Exists(marker) || running || remoteAddons.Count == 0 || GamePath() == null) return;
+        string dir = AddonsDir();
+        bool any = remoteAddons.Any(r => Directory.Exists(Path.Combine(dir, S(G(r, "name")) ?? "")));
+        if (!any)
+        {
+            List<string> done = new List<string>();
+            foreach (Dictionary<string, object> r in remoteAddons)
+            {
+                string name = S(G(r, "name")), err;
+                try { err = AddonAction(name, "install"); } catch (Exception ex) { err = ex.Message; }
+                if (string.IsNullOrEmpty(err)) done.Add(name); else Log("first install failed: " + name + ": " + err);
+            }
+            if (done.Count > 0) { addonsUpdated = string.Join(", ", done); Log("addons installed on first run: " + addonsUpdated); }
+        }
+        File.WriteAllText(marker, "{\"addons\":true}");
     }
 
     static string GameLang()
@@ -963,7 +1047,8 @@ class Companion : Form
     {
         Dictionary<string, object> s = LoadState();
         Dictionary<string, object> st = D(s["settings"]);
-        if (string.IsNullOrEmpty(S(G(st, "gamePath")))) st["gamePath"] = DefaultGamePath();
+        string saved = S(G(st, "gamePath"));
+        if (string.IsNullOrEmpty(saved) || !File.Exists(saved)) st["gamePath"] = GamePath() ?? "";
         st["gameLang"] = GameLang();
         return json.Serialize(s);
     }
@@ -1073,9 +1158,8 @@ class Companion : Form
     {
         Dictionary<string, object> s = LoadState();
         settings = D(s["settings"]);
-        string path = S(G(settings, "gamePath"));
-        if (string.IsNullOrEmpty(path)) path = DefaultGamePath();
-        if (!File.Exists(path)) { error = (GameLang().StartsWith("fr") ? "Jeu introuvable : " : "Game not found: ") + path; return; }
+        string path = GamePath();
+        if (path == null) { error = GameLang().StartsWith("fr") ? "Jeu introuvable : indiquez où se trouve AzerothSurvivors.exe" : "Game not found: show where AzerothSurvivors.exe is"; return; }
         string l = S(G(settings, "lang"));
         lang = !string.IsNullOrEmpty(l) && l != "auto" ? l : GameLang().StartsWith("fr") ? "fr" : "en";
         WriteGateway(s, Path.GetDirectoryName(path));

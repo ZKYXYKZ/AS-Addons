@@ -1,4 +1,4 @@
-# AS-Addons
+# Azeroth Survivors Companion
 
 [English](README.md) · **Français**
 
@@ -13,7 +13,7 @@ Des outils pour [Azeroth Survivors](https://wow.aethus.pl/), un jeu de type surv
 
 ## Démarrage rapide
 
-1. Téléchargez `AzerothSurvivors-Addons.zip` depuis la [dernière version](https://github.com/ZKYXYKZ/AS-Addons/releases/latest).
+1. Téléchargez `AzerothSurvivors-Addons.zip` depuis la [dernière version](https://github.com/ZKYXYKZ/Azeroth-Survivor-Companion/releases/latest).
 2. Extrayez-le dans le dossier du jeu, celui qui contient `AzerothSurvivors.exe`. Il y ajoute `ASCompanion.exe` et place les trois addons dans `benilla-config\AddOns`, le dossier d'où le jeu charge les addons.
 3. Lancez `ASCompanion.exe`, créez un build pour votre classe, puis cliquez sur **Lancer le jeu**.
 
