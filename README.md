@@ -12,9 +12,9 @@ All addons share one window: the gold `S` button on the minimap, `/survivors`, o
 
 ### AS Companion and SurvivorsBuilds
 
-The build planner lives in **AS Companion** (`AS-Companion` folder), a small local app with its own window: talent trees, spell priorities and weights, banned spells, target and fallback jewelry including the legendary amulet of each spell, reroll, skip and banish rules, text sharing, and a **Launch game** button. See [AS-Companion/README.md](AS-Companion/README.md).
+The build planner lives in **AS Companion** (`AS-Companion` folder), a Windows app (`ASCompanion.exe`, from the releases): talent trees, spell priorities and weights, banned spells, target and fallback jewelry including the legendary amulet of each spell, reroll, skip and banish rules, text sharing, and a **Launch game** button. See [AS-Companion/README.md](AS-Companion/README.md).
 
-The level-up cards are drawn by the game engine and never reach addons. The companion starts the game, reads the cards from its console output, shows the best pick in a banner and can pick it for you (keys 1, 2, 3 and R; skip and banish stay manual). It weighs spells you already own and the legendary amulet you wear.
+The level-up cards are drawn by the game engine and never reach addons. The companion starts the game, reads the cards from its console output, shows the best pick in a banner and can pick it for you (keys 1, 2, 3 and R; skip and banish stay manual). It weighs spells you already own, the legendary amulet you wear and your luck.
 
 **SurvivorsBuilds** is the in-game side. It receives the active build of each class when the companion launches the game, then shows it in the Builds tab and in a small panel while you pick a card, and writes every spell you take or rank up to the chat.
 
@@ -49,10 +49,12 @@ SurvivorsGuardians works on its own. With SurvivorsUI installed, its panel is mo
 
 ## Install
 
+Download `AS-Addons.zip` and `ASCompanion.exe` from the [latest release](https://github.com/ZKYXYKZ/AS-Addons/releases/latest).
+
 1. In game, open Options, go to the AddOns tab and click `Open AddOns Folder`.
-2. Copy the `SurvivorsBuilds`, `SurvivorsUI` and `SurvivorsGuardians` folders into it.
+2. Extract `AS-Addons.zip` into it.
 3. Enable them in the AddOns list. They load at your next run.
-4. Copy the `AS-Companion` folder next to `AzerothSurvivors.exe` and start the game from `Start-Companion.cmd`.
+4. Put `ASCompanion.exe` next to `AzerothSurvivors.exe` and start the game from it.
 
 ## Known limits
 

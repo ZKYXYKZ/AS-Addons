@@ -2,26 +2,35 @@
 
 Build planner and launcher for Azeroth Survivors. It edits your builds, starts the game, reads the level-up cards and advises or picks the best one.
 
-## Start
+## Install
 
-1. Put the `AS-Companion` folder next to `AzerothSurvivors.exe`.
-2. Run `Start-Companion.cmd`. The builder opens in its own window (Microsoft Edge app mode, no browser bar). Closing it quits the companion, unless a game it launched is still running.
-3. Create a build for your class: talents, spell priorities, jewelry, rules.
-4. Click **Launch game**.
+1. Download `ASCompanion.exe` from the [latest release](https://github.com/ZKYXYKZ/AS-Addons/releases/latest).
+2. Put it next to `AzerothSurvivors.exe` (or anywhere, then set the game path in Options).
+3. Run it. The builder opens in its own window. A tray icon reopens it.
+
+Windows 10 or 11 only, nothing to install: it runs on the .NET Framework shipped with Windows and shows its window with Microsoft Edge. The exe is not code-signed, so SmartScreen may warn on first launch: More info, Run anyway. It is built from this repository by GitHub Actions, and `SHA256SUMS.txt` in each release lets you check the file.
 
 ## Builder
 
-- **Talents**: the three trees of the class, 51 points, milestones and capstone.
-- **Spells**: priority order with a weight, banned spells. The first 6 are targets, the rest fallbacks.
-- **Jewelry**: target and fallback rings, trinkets and amulets, including the legendary amulet of each spell.
+- **Build**: on one page, the three talent trees of the class (51 points, milestones and capstone), the spell priorities with a weight and banned spells (the first 6 are targets, the rest fallbacks), and the target and fallback rings, trinkets and amulets, including the legendary amulet of each spell. Every piece of jewelry shows its effects, decoded from the game.
 - **Rules**: rarity weight, rerolls kept in reserve, banishes, reroll before skipping, level from which fallback rings and trinkets are accepted, legendary boost, adapt to the run.
-- **Options**: game path, language, card auto-pick, overlay.
+- **Options**: game path, language, card auto-pick, overlay, account luck.
 - **Sharing**: Export and Import a build as one line of text.
 
 ## In game
 
-The companion reads the cards the game prints on its console, so the game must be started with **Launch game**. A topmost banner shows the advice. With auto-pick on, the keys 1, 2, 3 and R are sent to the game window. Skip and banish have no key and stay manual.
+Click **Launch game**. The companion reads the cards the game prints on its console, so the game must be started from it. A banner shows the advice without taking the focus. With auto-pick on, the keys 1, 2, 3 and R are sent to the game window, and sent again if the game did not take them. Skip and banish have no key and stay manual; a banish also refreshes the cards, so it is advised when a banned card shows up.
 
-At launch the companion also writes the active builds into the SurvivorsBuilds addon saved variables: the in-game Builds tab and the guide panel show them during the run.
+Luck makes rarer cards: the companion adds your account luck, the luck talents of the build and the luck jewelry taken in the run, and rerolls an average card more readily when luck is high.
 
-Builds are stored in `state.json`, the log in `companion.log`.
+At launch the companion writes the active builds into the SurvivorsBuilds addon saved variables: the in-game Builds tab and the guide panel show them during the run.
+
+Builds and the log are in `%APPDATA%\AS-Companion`.
+
+## Build from source
+
+```
+node tools/build-companion.js
+```
+
+Compiles `AS-Companion/src/Companion.cs` with the C# compiler of the .NET Framework (`csc.exe`, part of Windows) and embeds `AS-Companion/web` into `dist/ASCompanion.exe`.

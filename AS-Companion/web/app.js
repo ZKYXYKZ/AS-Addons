@@ -7,7 +7,7 @@ const RARITY_COLORS = ["#d9d9d9", "#1eff00", "#0070dd", "#a335ee", "#ff8000"];
 const STR = {
   fr: {
     new: "Nouveau", dup: "Dupliquer", ren: "Renommer", del: "Supprimer", delConfirm: "Supprimer ce build ?", imp: "Importer", exp: "Exporter",
-    launch: "Lancer le jeu", running: "Jeu en cours", talents: "Talents", spells: "Sorts", jewels: "Bijoux", rules: "Règles", options: "Options",
+    launch: "Lancer le jeu", running: "Jeu en cours", build: "Build", talents: "Talents", spells: "Sorts", jewels: "Bijoux", rules: "Règles", options: "Options",
     none: "Aucun build pour cette classe. Cliquez sur Nouveau.", spec: "Spé", baseVal: "Valeurs de base, plus fortes aux raretés supérieures", pts: "points", rank: "Rang", next: "Rang suivant", locked: "Rangée verrouillée : {n} points requis dans cet arbre",
     clickTalent: "Clic gauche : +1 · Clic droit : -1", reset: "Réinitialiser les talents",
     pool: "Sorts de la classe", poolHint: "Clic : ajouter · Clic droit : bannir", prio: "Ordre de priorité", prioHint: "Un run garde 6 sorts : les 6 premiers sont visés, les suivants servent de repli. Le poids (1 à 5) entre dans le score avec la rareté.",
@@ -20,12 +20,12 @@ const STR = {
     boost: "Bonus de synergie", boostHelp: "Multiplie le poids d'un sort dont vous portez l'amulette légendaire ou que vous avez déjà monté.",
     adapt: "Adapter le build à la run", adaptHelp: "Tient compte des sorts déjà pris (6 emplacements) et de l'amulette portée.",
     gamePath: "Chemin du jeu", lang: "Langue", auto: "Auto", autoPick: "Sélection auto des cartes", autoPickHelp: "Le compagnon choisit et relance à votre place (touches 1, 2, 3, R). Skip et bannir restent manuels.",
-    overlay: "Bandeau de conseil par-dessus le jeu", importTitle: "Collez un build (texte d'export) puis validez", exportTitle: "Copiez ce texte pour partager le build", ok: "Importer", close: "Fermer", bad: "Texte de build invalide",
+    overlay: "Bandeau de conseil par-dessus le jeu", luck: "Chance du compte", luckHelp: "Votre chance hors talents du build (fiche du personnage, améliorations du compte). Le compagnon y ajoute les talents de chance du build et les bijoux de chance pris pendant la run. Plus la chance est haute, plus une relance donne des cartes rares : le compagnon relance alors plus volontiers une carte moyenne.", importTitle: "Collez un build (texte d'export) puis validez", exportTitle: "Copiez ce texte pour partager le build", ok: "Importer", close: "Fermer", bad: "Texte de build invalide",
     renamePrompt: "Nouveau nom du build", saved: "Enregistré", gameOff: "Jeu fermé", advice: "Conseil",
   },
   en: {
     new: "New", dup: "Duplicate", ren: "Rename", del: "Delete", delConfirm: "Delete this build?", imp: "Import", exp: "Export",
-    launch: "Launch game", running: "Game running", talents: "Talents", spells: "Spells", jewels: "Jewelry", rules: "Rules", options: "Options",
+    launch: "Launch game", running: "Game running", build: "Build", talents: "Talents", spells: "Spells", jewels: "Jewelry", rules: "Rules", options: "Options",
     none: "No build for this class. Click New.", spec: "Spec", baseVal: "Base values, stronger at higher rarities", pts: "points", rank: "Rank", next: "Next rank", locked: "Row locked: {n} points required in this tree",
     clickTalent: "Left click: +1 · Right click: -1", reset: "Reset talents",
     pool: "Class spells", poolHint: "Click: add · Right click: ban", prio: "Priority order", prioHint: "A run holds 6 spells: the first 6 are targets, the rest are fallbacks. Weight (1 to 5) counts in the score with rarity.",
@@ -38,12 +38,12 @@ const STR = {
     boost: "Synergy bonus", boostHelp: "Multiplies the weight of a spell whose legendary amulet you wear or that you already ranked up.",
     adapt: "Adapt the build to the run", adaptHelp: "Accounts for spells already taken (6 slots) and the worn amulet.",
     gamePath: "Game path", lang: "Language", auto: "Auto", autoPick: "Auto-pick cards", autoPickHelp: "The companion picks and rerolls for you (keys 1, 2, 3, R). Skip and banish stay manual.",
-    overlay: "Advice banner over the game", importTitle: "Paste a build (export text) then confirm", exportTitle: "Copy this text to share the build", ok: "Import", close: "Close", bad: "Invalid build text",
+    overlay: "Advice banner over the game", luck: "Account luck", luckHelp: "Your luck outside the build talents (character sheet, account upgrades). The companion adds the build luck talents and the luck jewelry taken during the run. The higher the luck, the rarer the cards a reroll gives: the companion then rerolls an average card more readily.", importTitle: "Paste a build (export text) then confirm", exportTitle: "Copy this text to share the build", ok: "Import", close: "Close", bad: "Invalid build text",
     renamePrompt: "New build name", saved: "Saved", gameOff: "Game closed", advice: "Advice",
   },
 };
 
-let DATA, STATE, CLASS = null, TAB = "talents";
+let DATA, STATE, CLASS = null, TAB = "build";
 const $ = (id) => document.getElementById(id);
 const lang = () => {
   const l = STATE.settings.lang || "auto";
@@ -324,6 +324,7 @@ function renderOptions(sec) {
   field(f, T("lang"), sel);
   field(f, T("autoPick"), checkInput(() => s.autoPick, (x) => (s.autoPick = x)), T("autoPickHelp"));
   field(f, T("overlay"), checkInput(() => s.overlay ?? 1, (x) => (s.overlay = x)));
+  field(f, T("luck"), rangeInput(() => s.baseLuck ?? 0, (x) => (s.baseLuck = x), 0, 200, 5, (x) => x + " %"), T("luckHelp"));
   sec.appendChild(f);
 }
 
@@ -375,7 +376,7 @@ function renderHeader() {
   [["newBtn", "new"], ["dupBtn", "dup"], ["renBtn", "ren"], ["delBtn", "del"], ["impBtn", "imp"], ["expBtn", "exp"]].forEach(([id, k]) => ($(id).textContent = T(k)));
   const tabs = $("tabs");
   tabs.innerHTML = "";
-  ["talents", "spells", "jewels", "rules", "options"].forEach((t) => {
+  ["build", "rules", "options"].forEach((t) => {
     const x = el("button", t === TAB ? "active" : "", T(t));
     x.onclick = () => { TAB = t; render(); };
     tabs.appendChild(x);
@@ -387,18 +388,26 @@ function renderHeader() {
 }
 
 function render() {
+  const y = window.scrollY;
   hideTip();
   renderHeader();
   const b = active();
-  ["talents", "spells", "jewels", "rules", "options"].forEach((t) => {
+  ["build", "rules", "options"].forEach((t) => {
     const sec = $("tab-" + t);
     sec.innerHTML = "";
     sec.className = t === TAB ? "show" : "";
     if (t !== TAB) return;
     if (t === "options") return renderOptions(sec);
     if (!b) { sec.appendChild(el("div", "empty", T("none"))); return; }
-    ({ talents: renderTalents, spells: renderSpells, jewels: renderJewels, rules: renderRules })[t](sec, b);
+    if (t === "rules") return renderRules(sec, b);
+    [["talents", renderTalents], ["spells", renderSpells], ["jewels", renderJewels]].forEach(([k, fn]) => {
+      const part = el("div", "part");
+      part.appendChild(el("h2", "", T(k)));
+      fn(part, b);
+      sec.appendChild(part);
+    });
   });
+  window.scrollTo(0, y);
 }
 
 async function poll() {
@@ -411,6 +420,13 @@ async function poll() {
   } catch (e) {}
   setTimeout(poll, 1500);
 }
+
+document.addEventListener("click", (e) => {
+  const a = e.target.closest("footer a");
+  if (!a) return;
+  e.preventDefault();
+  fetch("/api/open", { method: "POST", body: a.href }).catch(() => window.open(a.href));
+});
 
 async function init() {
   [DATA, STATE] = await Promise.all([fetch("data.json").then((r) => r.json()), fetch("/api/state").then((r) => r.json())]);
