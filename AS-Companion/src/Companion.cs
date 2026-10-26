@@ -20,6 +20,93 @@ using System.Windows.Forms;
 [assembly: AssemblyCompany("ZKYXYKZ")]
 [assembly: AssemblyCopyright("ZKYXYKZ")]
 
+static class Web2
+{
+    static string libDir;
+
+    public static void Prepare()
+    {
+        string version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+        libDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AS-Companion", "lib", version);
+        try
+        {
+            Directory.CreateDirectory(libDir);
+            string arch = (Environment.GetEnvironmentVariable("PROCESSOR_ARCHITECTURE") ?? "").ToUpperInvariant() == "ARM64" ? "arm64" : Environment.Is64BitProcess ? "x64" : "x86";
+            Extract("lib/Microsoft.Web.WebView2.Core.dll", "Microsoft.Web.WebView2.Core.dll");
+            Extract("lib/Microsoft.Web.WebView2.WinForms.dll", "Microsoft.Web.WebView2.WinForms.dll");
+            Extract("lib/" + arch + "/WebView2Loader.dll", "WebView2Loader.dll");
+        }
+        catch { }
+        AppDomain.CurrentDomain.AssemblyResolve += (s, e) =>
+        {
+            string f = Path.Combine(libDir, new AssemblyName(e.Name).Name + ".dll");
+            return File.Exists(f) ? Assembly.LoadFrom(f) : null;
+        };
+    }
+
+    static void Extract(string resource, string name)
+    {
+        string target = Path.Combine(libDir, name);
+        using (Stream s = Assembly.GetExecutingAssembly().GetManifestResourceStream(resource))
+        {
+            if (s == null || (File.Exists(target) && new FileInfo(target).Length == s.Length)) return;
+            using (FileStream f = File.Create(target)) s.CopyTo(f);
+        }
+    }
+
+    public static bool Available()
+    {
+        try { return Check(); } catch { return false; }
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    static bool Check()
+    {
+        Microsoft.Web.WebView2.Core.CoreWebView2Environment.SetLoaderDllFolderPath(libDir);
+        return !string.IsNullOrEmpty(Microsoft.Web.WebView2.Core.CoreWebView2Environment.GetAvailableBrowserVersionString());
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    public static Form Create(string url, string dataDir)
+    {
+        return new UiWindow(url, dataDir);
+    }
+}
+
+class UiWindow : Form
+{
+    readonly Microsoft.Web.WebView2.WinForms.WebView2 view;
+
+    public UiWindow(string url, string dataDir)
+    {
+        Text = "AS Companion";
+        Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+        StartPosition = FormStartPosition.CenterScreen;
+        Rectangle wa = Screen.PrimaryScreen.WorkingArea;
+        Width = Math.Min(1320, wa.Width - 40);
+        Height = Math.Min(920, wa.Height - 40);
+        MinimumSize = new Size(760, 520);
+        BackColor = Color.FromArgb(14, 14, 16);
+        view = new Microsoft.Web.WebView2.WinForms.WebView2();
+        view.Dock = DockStyle.Fill;
+        view.DefaultBackgroundColor = BackColor;
+        Controls.Add(view);
+        Load += async (s, e) =>
+        {
+            Microsoft.Web.WebView2.Core.CoreWebView2Environment env = await Microsoft.Web.WebView2.Core.CoreWebView2Environment.CreateAsync(null, dataDir);
+            await view.EnsureCoreWebView2Async(env);
+            view.CoreWebView2.Settings.IsStatusBarEnabled = false;
+            view.CoreWebView2.Settings.AreDevToolsEnabled = false;
+            view.CoreWebView2.NewWindowRequested += (o, a) =>
+            {
+                a.Handled = true;
+                if (a.Uri.StartsWith("https://")) Process.Start(a.Uri);
+            };
+            view.Source = new Uri(url);
+        };
+    }
+}
+
 static class Native
 {
     [DllImport("user32.dll")] static extern bool PostMessage(IntPtr h, uint m, IntPtr w, IntPtr l);
@@ -74,7 +161,8 @@ class Overlay : Form
 
 class Companion : Form
 {
-    const int Port = 47821;
+    static readonly int Port = TestPort();
+    static int TestPort() { int p; return int.TryParse(Environment.GetEnvironmentVariable("AS_COMPANION_PORT"), out p) ? p : 47821; }
     static readonly string Url = "http://localhost:" + Port + "/";
     static readonly UTF8Encoding Utf8 = new UTF8Encoding(false);
     static readonly double[] BaseOdds = { 0.58, 0.24, 0.11, 0.05, 0.02 };
@@ -115,26 +203,27 @@ class Companion : Form
     {
         bool first;
         bool after = args.Contains("--after-update");
-        Mutex m = new Mutex(true, "AS-Companion-ZKYXYKZ", out first);
+        Mutex m = new Mutex(true, "AS-Companion-ZKYXYKZ-" + Port, out first);
         for (int i = 0; !first && after && i < 50; i++)
         {
             Thread.Sleep(200);
             m.Dispose();
-            m = new Mutex(true, "AS-Companion-ZKYXYKZ", out first);
+            m = new Mutex(true, "AS-Companion-ZKYXYKZ-" + Port, out first);
         }
         using (m)
         {
             if (!first)
             {
-                OpenUi();
+                try { using (WebClient w = new WebClient()) w.UploadString(Url + "api/show", ""); } catch { OpenUi(); }
                 return;
             }
+            Web2.Prepare();
             Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
             Application.ThreadException += (s, e) => CrashLog(e.Exception);
             AppDomain.CurrentDomain.UnhandledException += (s, e) => CrashLog(e.ExceptionObject as Exception);
             Application.EnableVisualStyles();
             Companion app;
-            try { app = new Companion(args.Contains("-NoBrowser") || after, after); }
+            try { app = new Companion(args.Contains("-NoBrowser"), after); }
             catch (Exception ex)
             {
                 CrashLog(ex);
@@ -158,7 +247,6 @@ class Companion : Form
 
     Companion(bool noBrowser, bool afterUpdate)
     {
-        watchUi = !noBrowser || afterUpdate;
         try { File.Delete(Path.Combine(exeDir, "ASCompanion.old.exe")); } catch { }
         ShowInTaskbar = false;
         WindowState = FormWindowState.Minimized;
@@ -182,7 +270,11 @@ class Companion : Form
         tray.DoubleClick += delegate { ShowUi(); };
         listener = new HttpListener();
         listener.Prefixes.Add(Url);
-        listener.Start();
+        for (int i = 0; ; i++)
+        {
+            try { listener.Start(); break; }
+            catch (HttpListenerException) { if (i >= 50) throw; Thread.Sleep(200); listener = new HttpListener(); listener.Prefixes.Add(Url); }
+        }
         listener.BeginGetContext(OnContext, null);
         Log("server started on " + Url);
         if (!noBrowser) ShowUi();
@@ -460,14 +552,77 @@ class Companion : Form
         }
     }
 
+    Form uiForm;
+    bool askedRuntime;
+
     void ShowUi()
     {
-        ui = OpenUi();
-        if (ui == null)
+        if (uiForm != null && !uiForm.IsDisposed)
         {
-            watchUi = false;
-            Log("no Edge or Chrome found, opened the default browser; quit from the tray icon");
+            uiForm.Show();
+            if (uiForm.WindowState == FormWindowState.Minimized) uiForm.WindowState = FormWindowState.Normal;
+            uiForm.Activate();
+            return;
         }
+        if (Web2.Available())
+        {
+            try
+            {
+                uiForm = Web2.Create(Url, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AS-Companion", "webview"));
+                uiForm.FormClosing += OnUiClosing;
+                uiForm.Show();
+                watchUi = false;
+                return;
+            }
+            catch (Exception ex) { Log("webview error: " + ex.Message); uiForm = null; }
+        }
+        else if (!askedRuntime)
+        {
+            askedRuntime = true;
+            bool fr = GameLang().StartsWith("fr");
+            DialogResult r = MessageBox.Show(fr
+                ? "AS Companion a besoin du composant Microsoft WebView2 pour afficher sa fenêtre.\n\nLe télécharger et l'installer maintenant (environ 2 Mo, gratuit, de Microsoft) ?\nEn attendant, l'interface s'ouvre dans votre navigateur."
+                : "AS Companion needs the Microsoft WebView2 component to show its window.\n\nDownload and install it now (about 2 MB, free, from Microsoft)?\nMeanwhile, the interface opens in your browser.",
+                "AS Companion", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+            if (r == DialogResult.Yes) ThreadPool.QueueUserWorkItem(delegate { InstallWebView2(); });
+        }
+        ui = OpenUi();
+        watchUi = ui != null;
+        if (ui == null) Log("opened the default browser; quit from the tray icon");
+    }
+
+    void OnUiClosing(object sender, FormClosingEventArgs e)
+    {
+        if (e.CloseReason == CloseReason.WindowsShutDown || e.CloseReason == CloseReason.ApplicationExitCall || e.CloseReason == CloseReason.TaskManagerClosing) return;
+        if (running)
+        {
+            e.Cancel = true;
+            uiForm.Hide();
+            tray.ShowBalloonTip(4000, "AS Companion", GameLang().StartsWith("fr") ? "Le compagnon reste actif pendant la partie." : "The companion stays on while the game runs.", ToolTipIcon.Info);
+            return;
+        }
+        Log("ui closed");
+        BeginInvoke((MethodInvoker)delegate { Close(); });
+    }
+
+    void InstallWebView2()
+    {
+        try
+        {
+            string setup = Path.Combine(Path.GetTempPath(), "MicrosoftEdgeWebview2Setup.exe");
+            using (WebClient w = Web()) w.DownloadFile("https://go.microsoft.com/fwlink/p/?LinkId=2124703", setup);
+            Log("installing WebView2");
+            Process p = Process.Start(setup, "/silent /install");
+            p.WaitForExit();
+            Log("WebView2 setup exit " + p.ExitCode);
+            BeginInvoke((MethodInvoker)delegate
+            {
+                if (!Web2.Available()) { MessageBox.Show(GameLang().StartsWith("fr") ? "L'installation de WebView2 a échoué. L'interface reste dans votre navigateur." : "WebView2 setup failed. The interface stays in your browser.", "AS Companion"); return; }
+                watchUi = false;
+                ShowUi();
+            });
+        }
+        catch (Exception ex) { Log("WebView2 install failed: " + ex.Message); }
     }
 
     static Process OpenUi()
@@ -687,6 +842,12 @@ class Companion : Form
                 string err;
                 try { err = AddonAction(S(G(req, "name")), S(G(req, "action"))); } catch (Exception ex) { err = ex.Message; }
                 Respond(ctx, 200, "application/json", Utf8.GetBytes(json.Serialize(new Dictionary<string, object> { { "error", err } })));
+                return;
+            }
+            if (path == "/api/show" && method == "POST")
+            {
+                ShowUi();
+                Respond(ctx, 200, "application/json", Utf8.GetBytes("{}"));
                 return;
             }
             if (path == "/api/open" && method == "POST")

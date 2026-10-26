@@ -21,7 +21,7 @@ Le compagnon se met à jour, lui et les addons, depuis les versions publiées su
 
 ## AS Companion
 
-Le compagnon s'ouvre dans sa propre fenêtre (Microsoft Edge en mode application). Une icône dans la zone de notification la rouvre. Fermer la fenêtre arrête le compagnon, sauf si une partie qu'il a lancée tourne encore.
+Le compagnon s'ouvre dans sa propre fenêtre, affichée par Microsoft WebView2 (intégré à Windows 10 et 11). Si WebView2 manque, le compagnon propose de le télécharger et de l'installer en arrière-plan, et ouvre en attendant son interface dans votre navigateur. Une icône dans la zone de notification rouvre la fenêtre. Fermer la fenêtre arrête le compagnon, sauf si une partie qu'il a lancée tourne encore.
 
 ### Builds
 

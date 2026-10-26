@@ -21,7 +21,7 @@ The companion updates itself and the addons from the GitHub releases. Windows 10
 
 ## AS Companion
 
-The companion opens in its own window (Microsoft Edge app mode). A tray icon reopens it. Closing the window quits it, unless a game it launched is still running.
+The companion opens in its own window, rendered by Microsoft WebView2 (built into Windows 10 and 11). If WebView2 is missing, the companion offers to download and install it in the background, and meanwhile opens its interface in your browser. A tray icon reopens the window. Closing the window quits the companion, unless a game it launched is still running.
 
 ### Builds
 
