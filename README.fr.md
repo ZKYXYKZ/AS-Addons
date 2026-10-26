@@ -24,6 +24,9 @@ C'est tout. Windows 10 ou 11, rien d'autre à installer. Le compagnon se tient �
 
 ### Préparer vos builds
 
+![Page Builds : arbres de talents d'un guerrier Fureur](docs/companion-builds.jpg)
+
+
 - **Talents** : les trois arbres de votre classe, comme dans le jeu.
 - **Sorts** : votre ordre de priorité, un poids de 1 à 5 pour chacun, et les sorts dont vous ne voulez jamais. Une partie garde 6 sorts : les 6 premiers sont vos cibles, les suivants servent de repli.
 - **Bijoux** : les anneaux, bijoux et amulettes que vous voulez, amulettes légendaires comprises, chacun avec un poids de 1 à 5. Survolez un bijou pour voir ses effets.
@@ -41,17 +44,25 @@ Lancez toujours le jeu avec **Lancer le jeu** : c'est ainsi que le compagnon voi
 
 ### Suivre vos parties
 
+![Page Statistiques](docs/companion-stats.png)
+
 La page **Statistiques** enregistre chaque partie lancée depuis le compagnon, mode endless compris : durée de survie, niveau, victimes, DPS, boss et gardiens, avec des graphiques par partie, par classe, par spécialisation et par race, et la part des dégâts de chaque sort.
 
 ### Gérer les addons
 
 La page **Addons** présente chaque addon avec son rôle, sa version, et des boutons pour l'installer, le mettre à jour, l'activer, le désactiver ou le désinstaller.
 
+![Page Addons](docs/companion-addons.png)
+
 ## Les addons
 
 ### SurvivorsBuilds
 
+<img src="docs/build-panel.png" alt="Panneau Build en partie" align="right" width="260">
+
 Affiche votre build à l'écran pendant la partie : les 6 sorts visés avec leur rang, les bijoux portés dans la couleur de leur qualité, et ce qui manque encore. Pendant le choix d'une carte, il rappelle quoi bannir et combien de relances il reste. Il transmet aussi au compagnon votre chance et vos dégâts par sort.
+
+<br clear="right">
 
 ### SurvivorsUI
 
@@ -61,7 +72,11 @@ Une interface compacte pour ce mode de jeu : barres de cible, de vie, de ressour
 
 ### SurvivorsGuardians
 
+<img src="docs/guardians.png" alt="Panneau Gardiens avec un boss" align="right" width="260">
+
 Suit les quatre repaires de gardiens et les boss : vie des gardiens, endormis ou en combat, compte à rebours avant le retour d'un gardien, et prochain boss. Un clic sur une ligne le cible.
+
+<br clear="right">
 
 Les trois partagent une fenêtre : le bouton doré **S** sur la minicarte, ou `/survivors`. Leurs panneaux se déplacent à la souris.
 

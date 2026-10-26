@@ -512,6 +512,9 @@ async function init() {
   STATE.settings = STATE.settings || {};
   STATE.nextId = STATE.nextId || 1;
   CLASS = STATE.lastClass || "warrior";
+  const qp = new URLSearchParams(location.search);
+  if (["builds", "stats", "addons", "options"].includes(qp.get("page"))) PAGE = qp.get("page");
+  if (qp.get("tab") === "rules") TAB = "rules";
   $("classSel").onchange = (e) => { CLASS = e.target.value; STATE.lastClass = CLASS; changed(); };
   $("buildSel").onchange = (e) => { STATE.active[CLASS] = +e.target.value; changed(); };
   $("newBtn").onclick = () => { newBuild(CLASS); changed(); };

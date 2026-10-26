@@ -24,6 +24,9 @@ That's all. Windows 10 or 11, nothing else to install. The companion keeps itsel
 
 ### Plan your builds
 
+![Builds page: talent trees of a Fury warrior](docs/companion-builds.jpg)
+
+
 - **Talents**: the three trees of your class, as in the game.
 - **Spells**: your priority order, a weight from 1 to 5 for each, and the spells you never want. A run holds 6 spells: the first 6 are your targets, the rest are fallbacks.
 - **Jewelry**: the rings, trinkets and amulets you want, legendary amulets included, each with a weight from 1 to 5. Hover any piece to see its effects.
@@ -41,17 +44,25 @@ Always start the game with **Launch game**: that's how the companion sees the le
 
 ### Track your runs
 
+![Statistics page](docs/companion-stats.png)
+
 The **Statistics** page records every run launched from the companion, endless mode included: time survived, level, kills, DPS, bosses and guardians, with charts by run, by class, by spec and by race, and the damage share of each spell.
 
 ### Manage the addons
 
 The **Addons** page shows each addon with what it does, its version, and buttons to install, update, enable, disable or uninstall it.
 
+![Addons page](docs/companion-addons.png)
+
 ## The addons
 
 ### SurvivorsBuilds
 
+<img src="docs/build-panel.png" alt="Build panel in a run" align="right" width="260">
+
 Shows your build on screen during the run: the 6 target spells with their rank, the jewelry you wear in its quality color, and what's still missing. While you pick a card, it reminds you what to banish and how many rerolls are left. It also feeds the companion with your luck and your damage per spell.
+
+<br clear="right">
 
 ### SurvivorsUI
 
@@ -61,7 +72,11 @@ A compact interface for this game mode: target, health, resource and spell bars 
 
 ### SurvivorsGuardians
 
+<img src="docs/guardians.png" alt="Guardians panel with a boss" align="right" width="260">
+
 Tracks the four guardian lairs and the bosses: guardian health, asleep or fighting, the countdown until an empty lair fills again, and the next boss. Click a row to target it.
+
+<br clear="right">
 
 All three share one window: the gold **S** button on the minimap, or `/survivors`. Their panels can be dragged with the mouse.
 

@@ -530,6 +530,7 @@ class Companion : Form
     }
 
     volatile string addonsUpdated = "";
+    DateTime addonsUpdatedAt;
     DateTime nextCheck = DateTime.Now.AddMinutes(30);
 
     static Version ParseVersion(string v)
@@ -559,6 +560,7 @@ class Companion : Form
         if (done.Count > 0)
         {
             addonsUpdated = string.Join(", ", done);
+            addonsUpdatedAt = DateTime.Now;
             Log("addons auto-updated: " + addonsUpdated);
         }
     }
@@ -850,7 +852,7 @@ class Companion : Form
             }
             if (path == "/api/status")
             {
-                Respond(ctx, 200, "application/json", Utf8.GetBytes(json.Serialize(new Dictionary<string, object> { { "running", running }, { "advice", advice }, { "error", error }, { "version", CurrentVersion }, { "update", latestTag }, { "updating", updating }, { "updateError", updateError }, { "addonsUpdated", addonsUpdated }, { "game", GamePath() } })));
+                Respond(ctx, 200, "application/json", Utf8.GetBytes(json.Serialize(new Dictionary<string, object> { { "running", running }, { "advice", advice }, { "error", error }, { "version", CurrentVersion }, { "update", latestTag }, { "updating", updating }, { "updateError", updateError }, { "addonsUpdated", (DateTime.Now - addonsUpdatedAt).TotalMinutes < 2 ? addonsUpdated : "" }, { "game", GamePath() } })));
                 return;
             }
             if (path == "/api/browse" && method == "POST")
@@ -1020,7 +1022,7 @@ class Companion : Form
                 try { err = AddonAction(name, "install"); } catch (Exception ex) { err = ex.Message; }
                 if (string.IsNullOrEmpty(err)) done.Add(name); else Log("first install failed: " + name + ": " + err);
             }
-            if (done.Count > 0) { addonsUpdated = string.Join(", ", done); Log("addons installed on first run: " + addonsUpdated); }
+            if (done.Count > 0) { addonsUpdated = string.Join(", ", done); addonsUpdatedAt = DateTime.Now; Log("addons installed on first run: " + addonsUpdated); }
         }
         File.WriteAllText(marker, "{\"addons\":true}");
     }
@@ -1540,12 +1542,16 @@ class Companion : Form
             return new Advice { Text = fr ? "Bannir la carte " + banIdx + " : " + S(G(cards[banIdx - 1], "title")) + " (rafraîchit les cartes)" : "Banish card " + banIdx + ": " + S(G(cards[banIdx - 1], "title")) + " (refreshes the cards)" };
         if (B(G(j, "skip")))
             return new Advice { Text = fr ? "Rien du build : skip (+" + S(G(j, "skipGold")) + " or)" : "Nothing from the build: skip (+" + S(G(j, "skipGold")) + " gold)" };
+        if (rerolls > 0)
+            return new Advice { Text = fr ? "Rien du build, pas de skip : relancer (R), " + rerolls + " restantes" : "Nothing from the build, no skip: reroll (R), " + rerolls + " left", Key = "r" };
         int pick = 1, pr = -1;
         for (int i = 1; i <= cards.Count; i++)
         {
             CardInfo info = Info(cards[i - 1]);
             if (info.Key != null && ban.ContainsKey(info.Key)) continue;
-            int r = (int)N(G(cards[i - 1], "rarity"), 0);
+            string kind = S(G(cards[i - 1], "kind"));
+            int cat = kind == "upgrade" ? 3 : kind == "new" ? 1 : 2;
+            int r = cat * 10 + (int)N(G(cards[i - 1], "rarity"), 0);
             if (r > pr) { pr = r; pick = i; }
         }
         return new Advice { Text = (fr ? "Rien du build, pas de skip : prendre " + pick + " : " : "Nothing from the build, no skip: take " + pick + ": ") + S(G(cards[pick - 1], "title")), Key = pick.ToString(), Pick = cards[pick - 1] };
