@@ -949,7 +949,7 @@ class Companion : Form
 
     double DmgFactor(string key)
     {
-        if (totalDmg < 20000) return 1;
+        if (totalDmg < 20000 || !spellDmg.ContainsKey(key)) return 1;
         return Math.Max(0.3, Math.Min(2, 0.3 + 3 * DmgShare(key)));
     }
 
@@ -1870,7 +1870,7 @@ class Companion : Form
         }
         if (N(G(G(build, "rules"), "adapt"), 1) != 0)
         {
-            if (owned.ContainsKey(key)) w = Math.Max(w, 1) * 1.25;
+            if (owned.ContainsKey(key)) w = Math.Max(w, 1) * 1.25 * DmgFactor(key);
             if (amulet == "leg:" + key) w = Math.Max(w, 2) * Boost();
         }
         return w;
