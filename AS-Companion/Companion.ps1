@@ -102,7 +102,14 @@ while (-not $game.HasExited) {
   while ($queue.TryDequeue([ref]$line)) {
     if (-not $line.StartsWith("rogue: {")) { continue }
     try { $j = $line.Substring(7) | ConvertFrom-Json } catch { continue }
-    if ($j.type -eq "choices") {
+    if ($j.type -eq "ready") {
+      $m = [regex]::Match($data, 'key = "' + $f[1] + '", name = \{ en = "([^"]*)", fr = "([^"]*)" \}')
+      if ($m.Success -and $j.class -ne $m.Groups[1].Value -and $j.class -ne $m.Groups[2].Value) {
+        $label.Text = "build.txt : build $($f[2]) pour $($m.Groups[2].Value), héros $($j.class). Exportez le bon build."
+        $form.Show()
+        Log "class mismatch: build $($f[1]) hero $($j.class)"
+      }
+    } elseif ($j.type -eq "choices") {
       $a = Advise $j
       $label.Text = $a.text
       $form.Show()
