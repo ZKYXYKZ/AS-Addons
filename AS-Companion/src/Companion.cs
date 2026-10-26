@@ -866,6 +866,7 @@ class Companion : Form
         {
             dpsLog = DateTime.Now.AddSeconds(60);
             ResearchCombat();
+            ResearchIo();
             Log("dps " + string.Join(", ", spellDmg.OrderByDescending(kv => kv.Value).Take(6).Select(kv => kv.Key + " " + Math.Round(100 * kv.Value / totalDmg) + "%")));
         }
     }
@@ -1357,18 +1358,68 @@ class Companion : Form
         psi.RedirectStandardOutput = true;
         psi.StandardOutputEncoding = Encoding.UTF8;
         game = Process.Start(psi);
-        game.OutputDataReceived += (o, e) =>
-        {
-            if (e.Data == null) return;
-            string line = e.Data;
-            try { BeginInvoke((MethodInvoker)delegate { OnGameLine(line); }); } catch { }
-        };
-        game.BeginOutputReadLine();
+        Process started = game;
+        Thread reader = new Thread(delegate () { ReadGame(started); });
+        reader.IsBackground = true;
+        reader.Priority = ThreadPriority.AboveNormal;
+        reader.Start();
         state = s;
         running = true;
         error = "";
         advice = "";
         Log("game started: " + path + ", autoPick=" + B(G(settings, "autoPick")));
+    }
+
+    static readonly string[] Noise = { "rogue: {\"type\":\"hz\"", "rogue: {\"type\":\"hzt\"", "rogue: {\"type\":\"hzend\"", "rogue: {\"type\":\"roster\"" };
+    readonly object ioLock = new object();
+    Dictionary<string, long[]> io = new Dictionary<string, long[]>();
+    DateTime ioSince = DateTime.Now;
+
+    void ReadGame(Process p)
+    {
+        try
+        {
+            using (StreamReader sr = new StreamReader(p.StandardOutput.BaseStream, new UTF8Encoding(false), false, 1 << 16))
+            {
+                string line;
+                while ((line = sr.ReadLine()) != null)
+                {
+                    string kind = "other";
+                    if (line.StartsWith("rogue: {\"type\":\""))
+                    {
+                        int e = line.IndexOf('"', 16);
+                        kind = e > 16 ? line.Substring(16, e - 16) : "rogue";
+                    }
+                    lock (ioLock)
+                    {
+                        long[] c;
+                        if (!io.TryGetValue(kind, out c)) io[kind] = c = new long[2];
+                        c[0]++;
+                        c[1] += line.Length + 1;
+                    }
+                    if (!line.StartsWith("rogue: {") || Noise.Any(line.StartsWith)) continue;
+                    string l = line;
+                    try { BeginInvoke((MethodInvoker)delegate { OnGameLine(l); }); } catch { }
+                }
+            }
+        }
+        catch (Exception ex) { Log("game output: " + ex.Message); }
+    }
+
+    void ResearchIo()
+    {
+        Dictionary<string, object> d = new Dictionary<string, object>();
+        double secs;
+        lock (ioLock)
+        {
+            secs = Math.Max(1, (DateTime.Now - ioSince).TotalSeconds);
+            foreach (KeyValuePair<string, long[]> kv in io.OrderByDescending(kv => kv.Value[1]))
+                d[kv.Key] = new Dictionary<string, object> { { "lines", kv.Value[0] }, { "bytes", kv.Value[1] } };
+            io = new Dictionary<string, long[]>();
+            ioSince = DateTime.Now;
+        }
+        Research("io", new Dictionary<string, object> { { "secs", Math.Round(secs) }, { "types", d } });
+        Log("game output " + Math.Round(secs) + "s: " + string.Join(", ", d.Select(kv => kv.Key + " " + G(kv.Value, "lines"))));
     }
 
     void ShowAdvice(string text)
