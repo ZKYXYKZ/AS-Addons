@@ -13,7 +13,7 @@ Plan your build once, launch the game from the companion, and let it pick the ri
 ## Get started
 
 1. Download **[ASCompanion.exe](https://github.com/ZKYXYKZ/Azeroth-Survivor-Companion/releases/latest/download/ASCompanion.exe)**.
-2. Run it from anywhere. It finds the game by itself and installs the addons in the right folder. If it can't find the game, it asks where `AzerothSurvivors.exe` is.
+2. Put it in the game folder, next to `AzerothSurvivors.exe`, and run it. It installs the addons in the right folder by itself. Anywhere else works too: it then looks for the game, and asks where `AzerothSurvivors.exe` is if it can't find it.
 3. Create a build for your class, then click **Launch game**.
 
 That's all. Windows 10 or 11, nothing else to install. The companion keeps itself and the addons up to date.

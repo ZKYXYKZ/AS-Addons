@@ -13,7 +13,7 @@ Préparez votre build une fois, lancez le jeu depuis le compagnon, et laissez-le
 ## Pour commencer
 
 1. Téléchargez **[ASCompanion.exe](https://github.com/ZKYXYKZ/Azeroth-Survivor-Companion/releases/latest/download/ASCompanion.exe)**.
-2. Lancez-le, depuis n'importe quel dossier. Il trouve le jeu tout seul et installe les addons au bon endroit. S'il ne trouve pas le jeu, il vous demande où se trouve `AzerothSurvivors.exe`.
+2. Placez-le dans le dossier du jeu, à côté de `AzerothSurvivors.exe`, et lancez-le. Il installe tout seul les addons au bon endroit. Ailleurs, ça marche aussi : il cherche alors le jeu, et vous demande où se trouve `AzerothSurvivors.exe` s'il ne le trouve pas.
 3. Créez un build pour votre classe, puis cliquez sur **Lancer le jeu**.
 
 C'est tout. Windows 10 ou 11, rien d'autre à installer. Le compagnon se tient à jour, lui et les addons.
