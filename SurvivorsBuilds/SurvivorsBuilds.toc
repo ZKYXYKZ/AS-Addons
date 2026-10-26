@@ -9,3 +9,4 @@ Hub.lua
 Core.lua
 Guide.lua
 Window.lua
+Talents.lua

@@ -21,6 +21,7 @@ const STR = {
     adapt: "Adapter le build à la run", adaptHelp: "Tient compte des sorts déjà pris (6 emplacements) et de l'amulette portée.",
     gamePath: "Chemin du jeu", browse: "Parcourir", lang: "Langue", auto: "Auto", autoPick: "Sélection auto des cartes", autoPickHelp: "Le compagnon choisit et relance à votre place (touches 1, 2, 3, R). Skip et bannir restent manuels.",
     overlay: "Bandeau de conseil par-dessus le jeu", importTitle: "Collez un build (texte d'export) puis validez", exportTitle: "Copiez ce texte pour partager le build", ok: "Importer", close: "Fermer", bad: "Texte de build invalide",
+    raceRec: "Race conseillée :", raceAlt: "toutes races débloquées (succès) :",
     presets: "Builds proposés", presetsTitle: "Builds proposés : {c}", presetAdd: "Ajouter", presetHave: "Déjà ajouté", by: "par {v}",
     report: "Créer un rapport", reportLabel: "Rapport de bug", reportHelp: "Rassemble dans un zip le journal du compagnon, tes dernières parties et tes réglages, puis ouvre le dossier. Envoie ce fichier avec la description du problème.", reportDone: "Rapport créé : {v}",
     noGame: "Jeu introuvable : indiquez où se trouve AzerothSurvivors.exe.", addonsUpdated: "Addons mis à jour : {v}. Ils prennent effet au prochain lancement du jeu.", autoAddons: "Mise à jour auto des addons", autoAddonsHelp: "Au démarrage puis toutes les 30 minutes, hors partie, les addons installés sont mis à jour depuis la dernière version publiée sur GitHub.", stage_download: "Téléchargement de la version {v}…", stage_verify: "Vérification du fichier…", stage_install: "Installation des addons et du compagnon…", stage_restart: "Redémarrage du compagnon…", updated: "Mis à jour en version {v}", updateAvail: "Mise à jour {v} disponible", updateBtn: "Mettre à jour", updating: "Mise à jour en cours…", version: "Version", checkUpdate: "Rechercher une mise à jour", upToDate: "À jour", down: "Le compagnon ne répond plus : relancez ASCompanion.exe. Si ça recommence, envoyez %APPDATA%\\AS-Companion\\companion.log.", renamePrompt: "Nouveau nom du build", saved: "Enregistré", gameOff: "Jeu fermé", advice: "Conseil",
@@ -41,6 +42,7 @@ const STR = {
     adapt: "Adapt the build to the run", adaptHelp: "Accounts for spells already taken (6 slots) and the worn amulet.",
     gamePath: "Game path", browse: "Browse", lang: "Language", auto: "Auto", autoPick: "Auto-pick cards", autoPickHelp: "The companion picks and rerolls for you (keys 1, 2, 3, R). Skip and banish stay manual.",
     overlay: "Advice banner over the game", importTitle: "Paste a build (export text) then confirm", exportTitle: "Copy this text to share the build", ok: "Import", close: "Close", bad: "Invalid build text",
+    raceRec: "Recommended race:", raceAlt: "with every race unlocked (achievement):",
     presets: "Suggested builds", presetsTitle: "Suggested builds: {c}", presetAdd: "Add", presetHave: "Already added", by: "by {v}",
     report: "Create a report", reportLabel: "Bug report", reportHelp: "Zips the companion log, your latest runs and your settings, then opens the folder. Send this file with a description of the problem.", reportDone: "Report created: {v}",
     noGame: "Game not found: show where AzerothSurvivors.exe is.", addonsUpdated: "Addons updated: {v}. They apply at the next game launch.", autoAddons: "Auto-update addons", autoAddonsHelp: "At startup and every 30 minutes, outside a run, the installed addons are updated from the latest version published on GitHub.", stage_download: "Downloading version {v}…", stage_verify: "Checking the file…", stage_install: "Installing the addons and the companion…", stage_restart: "Restarting the companion…", updated: "Updated to version {v}", updateAvail: "Update {v} available", updateBtn: "Update", updating: "Updating…", version: "Version", checkUpdate: "Check for updates", upToDate: "Up to date", down: "The companion is not responding: restart ASCompanion.exe. If it happens again, send %APPDATA%\\AS-Companion\\companion.log.", renamePrompt: "New build name", saved: "Saved", gameOff: "Game closed", advice: "Advice",
@@ -49,6 +51,32 @@ const STR = {
 
 let VERSION = null;
 let PRESETS = [];
+const RACES = {
+  human: { name: { fr: "Humain", en: "Human" }, lines: { fr: ["Perception : toutes les 30 s, +15 % de dégâts pendant 10 s", "+10 % d'expérience", "+20 % d'or"], en: ["Perception: every 30 sec, +15% damage for 10 sec", "+10% experience", "+20% gold"] } },
+  orc: { name: { fr: "Orc", en: "Orc" }, lines: { fr: ["Fureur sanguinaire : toutes les 40 s, +35 % de dégâts pendant 12 s", "+10 % de points de vie max."], en: ["Blood Fury: every 40 sec, +35% damage for 12 sec", "+10% max health"] } },
+  dwarf: { name: { fr: "Nain", en: "Dwarf" }, lines: { fr: ["Forme de pierre : toutes les 45 s, un bouclier de 30 % des points de vie max.", "+6 % de dégâts", "+30 % de portée de ramassage"], en: ["Stoneform: every 45 sec, a shield of 30% max health", "+6% damage", "+30% pickup range"] } },
+  nightelf: { name: { fr: "Elfe de la nuit", en: "Night Elf" }, lines: { fr: ["Proche de la mort, 3 s d'immunité (recharge 75 s)", "+8 % de vitesse", "+5 % de réduction des dégâts"], en: ["Near death, 3 sec of immunity (75 sec cooldown)", "+8% movement speed", "+5% damage reduction"] } },
+  scourge: { name: { fr: "Mort-vivant", en: "Undead" }, lines: { fr: ["Proche de la mort, 4 s d'immunité (recharge 60 s)", "Chaque victime rend 1 point de vie", "+4 % de réduction des dégâts"], en: ["Near death, 4 sec of immunity (60 sec cooldown)", "Every kill heals 1 health", "+4% damage reduction"] } },
+  tauren: { name: { fr: "Tauren", en: "Tauren" }, lines: { fr: ["Choc martial : toutes les 15 s, étourdit les ennemis proches 2 s", "+15 % de points de vie max."], en: ["War Stomp: every 15 sec, stuns nearby enemies for 2 sec", "+15% max health"] } },
+  gnome: { name: { fr: "Gnome", en: "Gnome" }, lines: { fr: ["Toutes les 20 s, immobilise les ennemis proches 2 s", "-8 % de temps de recharge", "+20 % de chance"], en: ["Every 20 sec, roots nearby enemies for 2 sec", "-8% cooldowns", "+20% luck"] } },
+  troll: { name: { fr: "Troll", en: "Troll" }, lines: { fr: ["Berserker : toutes les 35 s, recharges 30 % plus rapides pendant 10 s", "+1,5 point de vie par seconde", "+3 % de critique"], en: ["Berserking: every 35 sec, cooldowns recover 30% faster for 10 sec", "+1.5 health per second", "+3% critical strike"] } },
+};
+function raceLine(race, alt) {
+  const r = RACES[race];
+  if (!r) return null;
+  const line = el("div", "raceline");
+  const name = el("b", "", esc(L(r.name)));
+  tipOn(name, () => `<div class="t">${esc(L(r.name))}</div>` + L(r.lines).map((x) => `<div>${esc(x)}</div>`).join(""));
+  line.appendChild(el("span", "hint", esc(T("raceRec")) + " "));
+  line.appendChild(name);
+  if (alt && RACES[alt]) {
+    line.appendChild(el("span", "hint", " · " + esc(T("raceAlt")) + " "));
+    const a = el("b", "", esc(L(RACES[alt].name)));
+    tipOn(a, () => `<div class="t">${esc(L(RACES[alt].name))}</div>` + L(RACES[alt].lines).map((x) => `<div>${esc(x)}</div>`).join(""));
+    line.appendChild(a);
+  }
+  return line;
+}
 let DATA, STATE, CLASS = null, TAB = "build", PAGE = "builds";
 const $ = (id) => document.getElementById(id);
 const lang = () => {
@@ -423,13 +451,15 @@ function showPresets() {
     const head = el("div", "row");
     head.appendChild(el("b", "", esc(p.name)));
     if (p.author) head.appendChild(el("span", "hint", esc(T("by", { v: p.author }))));
-    const have = builds(CLASS).some((b) => b.name === p.name);
+    const have = builds(CLASS).some((b) => encode(Object.assign({}, b, { name: p.name })) === p.code);
     const add = el("button", "small" + (have ? "" : " primary"), esc(have ? T("presetHave") : T("presetAdd")));
     add.disabled = have;
     add.onclick = () => {
       const b = decode(p.code);
       if (!b) return alert(T("bad"));
       b.name = p.name;
+      if (p.race) b.race = p.race;
+      if (p.raceAlt) b.raceAlt = p.raceAlt;
       STATE.lastClass = CLASS;
       $("presetModal").classList.add("hidden");
       changed();
@@ -438,6 +468,8 @@ function showPresets() {
     item.appendChild(head);
     const notes = p.notes && (p.notes[lang()] || p.notes.en);
     if (notes) item.appendChild(el("div", "hint", esc(notes)));
+    const rl = raceLine(p.race, p.raceAlt);
+    if (rl) item.appendChild(rl);
     list.appendChild(item);
   });
   $("presetModal").classList.remove("hidden");
@@ -507,6 +539,8 @@ function render() {
     if (t !== TAB || PAGE !== "builds") return;
     if (!b) { sec.appendChild(el("div", "empty", T("none"))); return; }
     if (t === "rules") return renderRules(sec, b);
+    const rl = raceLine(b.race, b.raceAlt);
+    if (rl) sec.appendChild(rl);
     [["talents", renderTalents], ["spells", renderSpells], ["jewels", renderJewels]].forEach(([k, fn]) => {
       const part = el("div", "part");
       part.appendChild(el("h2", "", T(k)));

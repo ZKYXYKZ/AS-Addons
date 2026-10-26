@@ -184,3 +184,5 @@ header { flex: none; }
 .preset .row { gap: 10px; align-items: center; }
 .preset .row button { margin-left: auto; }
 .hidden { display: none !important; }
+.raceline { margin: 6px 0 2px; font-size: 13px; }
+.raceline b { color: var(--gold); cursor: help; }

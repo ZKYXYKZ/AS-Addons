@@ -1574,6 +1574,21 @@ class Companion : Form
                 L.Append("          { cat = " + LuaStr(cat) + ", name = " + LuaStr(t[0]) + ", item = " + LuaStr(t[1]) + ", icon = " + LuaStr(t[2]) + " },\n");
             }
         L.Append("        },\n");
+        Dictionary<string, object> tal = D(G(b, "talents")) ?? new Dictionary<string, object>();
+        List<string> treeNames = new List<string>();
+        L.Append("        talents = {\n");
+        int ti = 0;
+        foreach (object tree in A(G(c, "trees")))
+        {
+            treeNames.Add(LuaStr(Loc(G(tree, "name"))));
+            foreach (object t in A(G(tree, "talents")))
+            {
+                int rank = (int)N(G(tal, S(G(t, "key"))), 0);
+                if (rank > 0) L.Append("          { t = " + (ti + 1) + ", r = " + (int)N(G(t, "row"), 0) + ", c = " + (int)N(G(t, "col"), 0) + ", p = " + rank + ", m = " + (int)N(G(t, "max"), 1) + ", n = " + LuaStr(Loc(G(t, "name"))) + ", i = " + LuaStr(S(G(t, "icon"))) + " },\n");
+            }
+            ti++;
+        }
+        L.Append("        },\n        trees = { " + string.Join(", ", treeNames) + " },\n");
         L.Append("        reserve = " + (int)N(G(rules, "reserve"), 1) + ", banishes = " + (int)N(G(rules, "banishes"), 3) + ", reroll = " + (int)N(G(rules, "reroll"), 1) + ",\n      },\n");
     }
 

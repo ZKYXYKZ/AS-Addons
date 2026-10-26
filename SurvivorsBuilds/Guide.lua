@@ -324,5 +324,9 @@ SlashCmdList["SURVIVORSBUILDS"] = function(msg)
     SB.Print("guide: " .. (db.guide or "auto"))
     return
   end
+  if msg == "talents" then
+    SB.Talents.Toggle()
+    return
+  end
   SurvivorsHub.Toggle("builds")
 end
