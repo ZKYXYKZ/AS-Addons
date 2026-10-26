@@ -51,3 +51,12 @@ Fichiers : `Movers.lua` (registre des blocs déplaçables, grille, aimantation, 
 ## SurvivorsGuardians
 
 Panneau déplaçable sous la minimap : une ligne par gardien avec boussole (nord en haut), temps de trajet estimé, vie si déjà ciblé, état « slain ». Clic sur une ligne : cible le gardien. Repères colorés sur le bord de la minimap. `/guardians` remet le panneau à sa place.
+
+## Jeu v0.119 : ce qui a changé et ce que le jeu expose (26/10/2026)
+
+- La config est maintenant à côté de l'exe : `<dossier du jeu>\benilla-config` (AddOns, saved, etc.). `BENILLA_HOME` la déplace toujours.
+- API officielle pour addons, code Lua embarqué dans l'exe (`AZSApiFrame`) : canaux `CHAT_MSG_ADDON` `AZSRUN`, `AZSZONE`, `AZSBOSSES`, `AZSUNITS`, `AZSLAIRS`, `AZSSPELLS`, `AZSTIMERS`, `AZSPETS`, `AZSMETER`, `AZSBANNER`, etc. et fonctions `AZS_GetRunTime`, `AZS_GetPhase`, `AZS_GetGuardians`, `AZS_GetLairs`, `AZS_GetUpcomingBosses`, `AZS_GetBosses`, `AZS_RegisterBannerHandler`, `AZS_SetStoringLevels`, `AZS_OpenStoredLevels`. `AZSLAIRS` donne les 4 repaires avec état, nom, temps restant et position : c'est la bonne source pour refaire SurvivorsGuardians.
+- Aucune donnée sur les cartes proposées à la montée de niveau n'arrive au Lua. L'écran de choix est natif (Bevy) et se pilote au clavier (1 2 3 pour choisir, R pour relancer). Les choix sortent en JSON sur la sortie standard (`rogue: {"type":"choices",...}`) quand le jeu est lancé avec stdout redirigé.
+- Talents : l'API Lua `GetTalentInfo` renvoie les talents de WoW vanilla, pas ceux du jeu. Les vrais talents sont des tables Rust dans `.rdata` : entrées de 160 octets (clé, nom, icône, effets, description ; rangée, colonne et rang max aux octets 104 à 106 ; prérequis). Effet type 0x24 : bonus de stat, valeur par rang en f32 ; type 0x25 : bonus sur un sort, clé du sort et valeur par rang.
+- Localisation : 14 tables JSON embarquées (anglais, français, etc.), 2979 clés dont `ability.<clé>.name`, `rarity.0..5`, et les talents indexés par leur texte anglais.
+- Un autre addon a laissé ses variables chez l'utilisateur : `saved\ASBuilder.lua` (builds par classe, variantes, priorités de sorts et de bijoux, bannissements).
