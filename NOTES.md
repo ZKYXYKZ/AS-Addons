@@ -58,7 +58,7 @@ Panneau déplaçable sous la minimap : une ligne par gardien avec boussole (nord
 
 ## AS Companion (builder) et SurvivorsBuilds (passerelle)
 
-- Le builder vit dans le compagnon : `AS-Companion\Companion.ps1` sert `web\` sur http://localhost:47821/ (talents, sorts, bijoux et légendaires, règles, options, partage `SB1`, bouton « Lancer le jeu »). Les builds sont dans `AS-Companion\state.json`.
+- Le builder vit dans le compagnon : `AS-Companion\Companion.ps1` sert `web\` sur http://localhost:47821/, affiché dans une fenêtre Edge en mode application (`--app`, profil dédié `AS-Companion.ui`). Fermer la fenêtre arrête le compagnon sauf si le jeu tourne ; un second lancement rouvre seulement la fenêtre. Contenu (talents, sorts, bijoux et légendaires, règles, options, partage `SB1`, bouton « Lancer le jeu »). Les builds sont dans `AS-Companion\state.json`.
 - Données : `web\data.json`, généré par `node tools/gen-companion.js data.json AS-Companion/web/data.json legendary-text.json`.
 - « Lancer le jeu » écrit `<jeu>\benilla-config\saved\SurvivorsBuilds.lua` (ou `%BENILLA_HOME%\saved`) avec `SurvivorsBuildsDB.link` : date de lancement, sélection auto, langue, et pour chaque classe le build actif réduit (sorts et poids, noms, bannis, bijoux visés, réserve, bannissements, relance). Puis il lance le jeu et lit sa sortie console.
 - Aucun canal du Lua vers l'extérieur (print, chat, erreurs, SendChatMessage n'atteignent pas stdout) et le jeu ne lit les variables sauvegardées qu'au chargement : la passerelle est à sens unique, écrite avant le lancement. L'addon considère le lien actif si `link.launched` date de moins de 2 minutes.
