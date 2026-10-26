@@ -8,7 +8,7 @@ const STR = {
   fr: {
     new: "Nouveau", dup: "Dupliquer", ren: "Renommer", del: "Supprimer", delConfirm: "Supprimer ce build ?", imp: "Importer", exp: "Exporter",
     launch: "Lancer le jeu", running: "Jeu en cours", talents: "Talents", spells: "Sorts", jewels: "Bijoux", rules: "Règles", options: "Options",
-    none: "Aucun build pour cette classe. Cliquez sur Nouveau.", spec: "Spé", pts: "points", rank: "Rang", next: "Rang suivant", locked: "Rangée verrouillée : {n} points requis dans cet arbre",
+    none: "Aucun build pour cette classe. Cliquez sur Nouveau.", spec: "Spé", baseVal: "Valeurs de base, plus fortes aux raretés supérieures", pts: "points", rank: "Rang", next: "Rang suivant", locked: "Rangée verrouillée : {n} points requis dans cet arbre",
     clickTalent: "Clic gauche : +1 · Clic droit : -1", reset: "Réinitialiser les talents",
     pool: "Sorts de la classe", poolHint: "Clic : ajouter · Clic droit : bannir", prio: "Ordre de priorité", prioHint: "Un run garde 6 sorts : les 6 premiers sont visés, les suivants servent de repli. Le poids (1 à 5) entre dans le score avec la rareté.",
     weight: "Poids", banned: "Banni", fallbackSep: "Repli (au-delà de 6 sorts)", emptyPrio: "Cliquez un sort à gauche pour l'ajouter.",
@@ -26,7 +26,7 @@ const STR = {
   en: {
     new: "New", dup: "Duplicate", ren: "Rename", del: "Delete", delConfirm: "Delete this build?", imp: "Import", exp: "Export",
     launch: "Launch game", running: "Game running", talents: "Talents", spells: "Spells", jewels: "Jewelry", rules: "Rules", options: "Options",
-    none: "No build for this class. Click New.", spec: "Spec", pts: "points", rank: "Rank", next: "Next rank", locked: "Row locked: {n} points required in this tree",
+    none: "No build for this class. Click New.", spec: "Spec", baseVal: "Base values, stronger at higher rarities", pts: "points", rank: "Rank", next: "Next rank", locked: "Row locked: {n} points required in this tree",
     clickTalent: "Left click: +1 · Right click: -1", reset: "Reset talents",
     pool: "Class spells", poolHint: "Click: add · Right click: ban", prio: "Priority order", prioHint: "A run holds 6 spells: the first 6 are targets, the rest are fallbacks. Weight (1 to 5) counts in the score with rarity.",
     weight: "Weight", banned: "Banned", fallbackSep: "Fallback (beyond 6 spells)", emptyPrio: "Click a spell on the left to add it.",
@@ -145,9 +145,10 @@ function renderTalents(sec, b) {
   const c = cls(b.class);
   const sp = spec(b);
   const wrap = el("div", "trees");
-  c.trees.forEach((tree) => {
+  c.trees.forEach((tree, ti) => {
     const pts = treePoints(b, tree);
     const box = el("div", "tree" + (sp.tree === tree ? " spec" : ""));
+    box.style.backgroundImage = `linear-gradient(rgba(14,14,16,.5), rgba(14,14,16,.82)), url(img/${b.class}-${ti}.jpg)`;
     box.appendChild(el("div", "head", `<span>${esc(L(tree.name))}</span><span>${pts} ${T("pts")}</span>`));
     const grid = el("div", "grid");
     grid.style.gridTemplateRows = "repeat(7, 58px)";
@@ -249,7 +250,9 @@ function jewelIcon(b, cat, j, want, c) {
   n.oncontextmenu = (e) => { e.preventDefault(); if (idx >= 0) list.splice(idx, 1); if (b.ban[j.key]) delete b.ban[j.key]; else b.ban[j.key] = true; changed(); };
   tipOn(n, () => {
     if (j.legendary) return `<div class="t leg">${esc(L(j.name))}</div>` + (j.lines[lang()] || j.lines.en).map((x) => `<div>${esc(x)}</div>`).join("");
-    return `<div class="t">${esc(L(j.name))}</div>` + (j.desc && j.desc.length > 2 ? `<div>${esc(j.desc.split("{v}").join("x"))}</div>` : "");
+    const lines = j.desc && typeof j.desc === "object" ? j.desc[lang()] || j.desc.en : [];
+    const rar = j.tier ? `<div class="mute">${esc(L(DATA.rarity[j.tier[0]]))}</div>` : "";
+    return `<div class="t">${esc(L(j.name))}</div>` + rar + lines.map((x) => `<div>${esc(x)}</div>`).join("") + (lines.length ? `<div class="mute">${T("baseVal")}</div>` : "");
   });
   return n;
 }

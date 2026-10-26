@@ -313,7 +313,7 @@ function Handle($ctx) {
     $file = if ($path -eq "/") { "index.html" } else { $path.TrimStart("/") }
     $full = [System.IO.Path]::GetFullPath((Join-Path $web $file))
     if (-not $full.StartsWith($web) -or -not (Test-Path $full -PathType Leaf)) { Respond $ctx 404 "text/plain" $utf8.GetBytes("not found"); return }
-    $type = switch ([System.IO.Path]::GetExtension($full)) { ".html" { "text/html; charset=utf-8" } ".js" { "application/javascript; charset=utf-8" } ".css" { "text/css; charset=utf-8" } ".json" { "application/json" } default { "application/octet-stream" } }
+    $type = switch ([System.IO.Path]::GetExtension($full)) { ".html" { "text/html; charset=utf-8" } ".js" { "application/javascript; charset=utf-8" } ".css" { "text/css; charset=utf-8" } ".json" { "application/json" } ".jpg" { "image/jpeg" } ".png" { "image/png" } default { "application/octet-stream" } }
     Respond $ctx 200 $type ([System.IO.File]::ReadAllBytes($full))
   } catch {
     Log "http error $path : $($_.Exception.Message)"

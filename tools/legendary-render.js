@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const load = require("./pe.js");
-const [exe, legJson, locDir, outJson] = process.argv.slice(2);
+const [exe, legJson, locDir, outJson, jewelJson] = process.argv.slice(2);
 const P = load(exe);
 const { buf, str } = P;
 const leg = JSON.parse(fs.readFileSync(legJson, "utf8"));
@@ -33,6 +33,7 @@ const keyAt = (b, o) => {
   if (off < 0 || len <= 0 || len > 40) return null;
   return buf.toString("utf8", off, off + len);
 };
+const STATS = ["+{p} damage", "-{p} cooldowns", "+{p} max health", "+{p} critical strike", "+{p} critical strike damage", "+{p} damage reduction", "+{v} health per second", "+{p} movement speed", "+{p} area of effect", "+{p} pickup range", "+{p} experience", "+{p} gold", "+{p} luck", "{p} chance for a spell to cast twice", "Heals you for {p} of all damage dealt", "Each kill heals {v} health", "+{p} weapon damage", "+{p} pet damage", "+{p} damage to crowd-controlled enemies", "+{p} damage to elites and bosses", "+{p} damage to enemies below 30% health", "+{p} damage to afflicted enemies", "Melee attackers take {p} of the damage they deal", "+{p} buff power", "+{p} of max health per second"];
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 function render(lang, hex, ownerKey) {
@@ -60,6 +61,7 @@ function render(lang, hex, ownerKey) {
         return t(lang, "{who}: +{v} damage", { who, v: pct(v) });
       }
       if (stat === 1) return t(lang, "{who}: -{v} cooldown", { who, v: pct(v) });
+      if (stat === 2 && !k) return t(lang, Math.round(v) === 1 ? "{who}: +{n} target" : "{who}: +{n} targets", { who, n: num(v) }).replace(/^\s*:\s*/, "");
       if (stat === 2) return t(lang, Math.round(v) === 1 ? "{who}: +{n} target" : "{who}: +{n} targets", { who, n: num(v) });
       if (stat === 3) return t(lang, "{who}: +{v} area", { who, v: pct(v) });
       if (stat === 4) return t(lang, "{who}: +{v} duration", { who, v: pct(v) });
@@ -121,7 +123,13 @@ function render(lang, hex, ownerKey) {
     case 18:
       return t(lang, "{spell} also shields you for {frac} of your max health", { spell: spellName(lang, keyAt(b, 0x20) || ownerKey), frac: pct(f(4)) });
     case 19:
-      return t(lang, "A killing blow leaves you at {heal} health instead, once every {cd} sec", { heal: pct(f(4)), cd: num(f(8)) });
+      return t(lang, "A killing blow leaves you at {heal} health instead, once every {cd} sec", { heal: pct(f(8)), cd: num(f(4)) });
+    case 36: {
+      const tpl = STATS[b[8]];
+      if (!tpl) return t(lang, "A hidden power");
+      const v = f(4);
+      return t(lang, tpl, { p: pct(v), v: num(v) });
+    }
     case 22:
       return t(lang, "Every totem pulse heals you {frac} of max health", { frac: pct(f(4)) });
     case 23:
@@ -142,4 +150,34 @@ fs.writeFileSync(outJson, JSON.stringify(out, null, 1));
 for (const k of ["flamestrike", "hurricane", "cleave", "execute", "holy_shock", "pw_shield", "renew", "magma_totem", "chain_lightning", "rend", "divine_shield", "polymorph", "bloodthirst", "whirlwind"]) {
   const x = out[k];
   if (x) console.log(k, "|", x.family.fr, "\n   ", x.lines.fr.join("\n    "), "\n   ", x.lines.en.join(" || "));
+}
+
+if (jewelJson) {
+  const rd = P.sec(".rdata");
+  const find = (key, name) => { for (let p = rd.raw; p < rd.raw + rd.rs; p += 8) if (str(p, 40) === key && str(p + 16, 60) === name) return p; return -1; };
+  const jw = { rings: {}, trinkets: {}, amulets: {} };
+  const rb = find("accuria", "Band of Accuria");
+  for (let i = 0; i < 23; i++) {
+    const o = rb + i * 72;
+    const v = buf.readFloatLE(o + 64);
+    const tpl = str(o + 48, 200);
+    const line = {};
+    for (const lang of ["en", "fr"]) line[lang] = t(lang, tpl, { v: num(tpl.includes("{v}%") ? v * 100 : v), max: "" }).replace(/,? \+\{h\}[^,]*$/, "").replace(/ \{max\}% (at most|au maximum)\.?/, "");
+    jw[i < 9 ? "rings" : "trinkets"][str(o, 40)] = line;
+  }
+  const ab = find("mark_of_fordring", "Mark of Fordring");
+  for (let i = 0; i < 16; i++) {
+    const o = ab + i * 80;
+    const ep = P.toOff(buf.readBigUInt64LE(o + 48));
+    const n = Number(buf.readBigUInt64LE(o + 56));
+    const lines = { en: [], fr: [] };
+    for (let k = 0; k < n; k++) {
+      const hex = buf.slice(ep + k * 64, ep + k * 64 + 64).toString("hex");
+      for (const lang of ["en", "fr"]) { const s = render(lang, hex, null); if (s) lines[lang].push(s); }
+    }
+    jw.amulets[str(o, 40)] = { lines, tier: [Number(buf.readBigUInt64LE(o + 64)), Number(buf.readBigUInt64LE(o + 72))] };
+  }
+  fs.writeFileSync(jewelJson, JSON.stringify(jw, null, 1));
+  for (const [k, x] of Object.entries(jw.amulets)) console.log(k, x.tier.join("-"), "|", x.lines.fr.join(" ; "), "|", x.lines.en.join(" ; "));
+  for (const c of ["rings", "trinkets"]) for (const [k, x] of Object.entries(jw[c])) console.log(c, k, "|", x.fr, "|", x.en);
 }
