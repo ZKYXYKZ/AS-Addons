@@ -378,7 +378,7 @@ class Companion : Form
             if (path == "/api/open" && method == "POST")
             {
                 string target = new StreamReader(ctx.Request.InputStream, Utf8).ReadToEnd();
-                if (target.StartsWith("https://x.com/") || target.StartsWith("https://github.com/")) Process.Start(target);
+                if (target.StartsWith("https://x.com/") || target.StartsWith("https://github.com/") || target.StartsWith("https://www.buymeacoffee.com/")) Process.Start(target);
                 Respond(ctx, 200, "application/json", Utf8.GetBytes("{\"ok\":true}"));
                 return;
             }
