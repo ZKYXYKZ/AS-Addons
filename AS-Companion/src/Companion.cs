@@ -933,9 +933,9 @@ class Companion : Form
             overlay.Hide();
             Log("game exited");
         }
-        if (pendingKey != 0 && running && (DateTime.Now - pendingAt).TotalMilliseconds > 1500)
+        if (pendingKey != 0 && running && (DateTime.Now - pendingAt).TotalMilliseconds > 800)
         {
-            if (pendingTries >= 4) { Log("key not taken by the game"); pendingKey = 0; }
+            if (pendingTries >= 6) { Log("key not taken by the game"); pendingKey = 0; }
             else { SendKey(pendingKey); pendingTries++; Log("key resent (" + pendingTries + ")"); }
         }
         if (!running && !updating && DateTime.Now > nextCheck)
@@ -1387,7 +1387,7 @@ class Companion : Form
                 if (B(G(settings, "autoPick")) && a.Key != null)
                 {
                     uint vk = a.Key == "r" ? 0x52u : (uint)(0x30 + int.Parse(a.Key));
-                    System.Windows.Forms.Timer t = new System.Windows.Forms.Timer { Interval = (DateTime.Now - lastKey).TotalMilliseconds < 2500 ? 1500 : 600 };
+                    System.Windows.Forms.Timer t = new System.Windows.Forms.Timer { Interval = (DateTime.Now - lastKey).TotalMilliseconds < 2500 ? 800 : 600 };
                     lastKey = DateTime.Now;
                     t.Tick += delegate
                     {
