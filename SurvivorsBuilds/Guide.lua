@@ -7,13 +7,13 @@ local T = {
     title = "Build : %s", none = "Aucun build reçu du compagnon pour cette classe", learn = "à prendre", rank = "rang %d",
     ban = "À bannir (%d) : %s", rerolls = "Relances : %d (garder %d)", rule = "Rien du build : %s", reroll = "relancer puis skip", skip = "skip",
     jewels = "Bijoux visés : %s", newSpell = "Nouveau sort : %s%s", upSpell = "%s rang %d%s", prio = " (priorité %d)", out = " (hors build)",
-    auto = "Sélection auto active (compagnon)", worn = "porté",
+    auto = "Sélection auto active (compagnon)", worn = "porté", target = "visé", fallback = "repli",
   },
   en = {
     title = "Build: %s", none = "No build received from the companion for this class", learn = "to take", rank = "rank %d",
     ban = "Banish (%d): %s", rerolls = "Rerolls: %d (keep %d)", rule = "Nothing from the build: %s", reroll = "reroll then skip", skip = "skip",
     jewels = "Target jewelry: %s", newSpell = "New spell: %s%s", upSpell = "%s rank %d%s", prio = " (priority %d)", out = " (off build)",
-    auto = "Auto-pick on (companion)", worn = "worn",
+    auto = "Auto-pick on (companion)", worn = "worn", target = "target", fallback = "fallback",
   },
 }
 local function tl(k) return (T[SB.Lang()] or T.en)[k] end
@@ -139,24 +139,22 @@ local function build()
   return f
 end
 
+local SLOTS = { 2, 11, 12, 13, 14 }
+
 local function worn()
   local out = {}
-  for slot = 1, 19 do
-    local link = GetInventoryItemLink("player", slot)
+  for i = 1, table.getn(SLOTS) do
+    local link = GetInventoryItemLink("player", SLOTS[i])
     if link then
       local _, _, color, name = string.find(link, "|c(%x+)|H.-|h%[(.-)%]|h")
-      if name then out[name] = color end
+      if name then table.insert(out, { name = name, color = color, icon = GetInventoryItemTexture("player", SLOTS[i]) }) end
     end
   end
   return out
 end
 
-local function wornColor(items, t)
-  if not t.item or t.item == "" then return end
-  if items[t.item] then return items[t.item] end
-  for name, color in pairs(items) do
-    if string.find(name, t.item, 1, 1) then return color end
-  end
+local function matches(name, t)
+  return t.item and t.item ~= "" and (name == t.item or string.find(name, t.item, 1, 1))
 end
 
 local function choiceLines(b)
@@ -207,7 +205,7 @@ function G.Refresh()
     local e = b.spells[i]
     local r = nextRow()
     local rank = have[e.key]
-    r.icon:SetTexture(e.icon and ("Interface\Icons\\" .. e.icon) or nil)
+    r.icon:SetTexture(e.icon and ("Interface/Icons/" .. e.icon) or nil)
     r.icon:SetAlpha(rank and 1 or 0.35)
     r.name:SetText(e.name)
     if rank then
@@ -218,22 +216,31 @@ function G.Refresh()
       r.info:SetText("|cff66ff66" .. tl("learn") .. "|r")
     end
   end
-  if b.targets and table.getn(b.targets) > 0 then
-    y = y - 6
-    for i = 1, table.getn(b.targets) do
-      local t = b.targets[i]
+  local targets = b.targets or {}
+  local found = {}
+  if table.getn(items) > 0 or table.getn(targets) > 0 then y = y - 6 end
+  for i = 1, table.getn(items) do
+    local it = items[i]
+    local r = nextRow()
+    local target
+    for k = 1, table.getn(targets) do
+      if not found[k] and matches(it.name, targets[k]) then target = k break end
+    end
+    if target then found[target] = true end
+    r.icon:SetTexture(it.icon)
+    r.icon:SetAlpha(1)
+    r.name:SetText("|c" .. it.color .. it.name .. "|r")
+    r.info:SetText(target and ("|cffe6b84c" .. tl("target") .. "|r") or ("|cff8899aa" .. tl("fallback") .. "|r"))
+  end
+  for k = 1, table.getn(targets) do
+    if not found[k] then
+      local t = targets[k]
       local r = nextRow()
-      local color = wornColor(items, t)
-      r.icon:SetTexture(t.icon and t.icon ~= "" and ("Interface\Icons\\" .. t.icon) or nil)
-      r.icon:SetAlpha(color and 1 or 0.35)
-      if color then
-        r.name:SetText("|c" .. color .. t.name .. "|r")
-        r.info:SetText("|cff66ff66" .. tl("worn") .. "|r")
-      else
-        r.name:SetText(t.name)
-        r.name:SetTextColor(0.55, 0.55, 0.55)
-        r.info:SetText("")
-      end
+      r.icon:SetTexture(t.icon and t.icon ~= "" and ("Interface/Icons/" .. t.icon) or nil)
+      r.icon:SetAlpha(0.35)
+      r.name:SetText(t.name)
+      r.name:SetTextColor(0.55, 0.55, 0.55)
+      r.info:SetText("")
     end
   end
   for i = n + 1, table.getn(f.rows) do f.rows[i]:Hide() end
