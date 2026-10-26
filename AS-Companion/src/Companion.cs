@@ -1517,6 +1517,7 @@ class Companion : Form
         bool reroll = N(G(rules, "reroll"), 1) == 1 && !(jewelScreen && lvl < N(G(rules, "fallbackLevel"), 10) && screenRerolls >= 2);
         bool fr = lang == "fr";
         List<object> cards = A(G(j, "choices")).ToList();
+        List<string> scores = new List<string>();
         int best = 0, banIdx = 0;
         double bestScore = 0;
         bool bestTarget = false;
@@ -1535,7 +1536,7 @@ class Companion : Form
                 }
             }
             if (info.Type == "spell" && S(G(card, "kind")) == "upgrade" && info.Key != null) owned[info.Key] = (int)N(G(card, "rank"), 2) - 1;
-            if (info.Key != null && ban.ContainsKey(info.Key)) { if (banIdx == 0) banIdx = i; continue; }
+            if (info.Key != null && ban.ContainsKey(info.Key)) { if (banIdx == 0) banIdx = i; scores.Add(i + ". " + S(G(card, "title")) + " banni"); continue; }
             double baseW = 0;
             bool target = false;
             if (info.Type == "spell" && info.Key != null)
@@ -1569,8 +1570,10 @@ class Companion : Form
                 }
             }
             double score = baseW * (1 + infl * N(G(card, "rarity"), 0));
+            scores.Add(i + ". " + S(G(card, "title")) + " (" + S(G(card, "rarityName")) + ") " + (info.Key ?? "?") + " base " + Math.Round(baseW, 2) + " score " + Math.Round(score, 2) + (target ? " cible" : ""));
             if (score > bestScore) { bestScore = score; best = i; bestTarget = target; }
         }
+        Log("  scores: " + string.Join(" | ", scores));
         double luck = Luck();
         string luckTxt = luck > 0 ? (fr ? " · chance " : " · luck ") + Math.Round(luck) + " %" : "";
         if (best > 0 && !bestTarget && reroll && rerolls > reserve)
