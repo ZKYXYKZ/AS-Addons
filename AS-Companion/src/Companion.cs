@@ -105,6 +105,7 @@ class Companion : Form
     int screenRerolls;
     double runLuck, amuletLuck;
     int amuletUps;
+    Dictionary<string, double> jewelLuck = new Dictionary<string, double>();
     uint pendingKey;
     DateTime pendingAt;
     int pendingTries;
@@ -537,6 +538,7 @@ class Companion : Form
                 amulet = null;
                 jewels = new Dictionary<string, string>();
                 runLuck = 0;
+                jewelLuck = new Dictionary<string, double>();
                 amuletLuck = 0;
                 amuletUps = 0;
                 if (build == null) ShowAdvice(lang == "fr" ? "Aucun build pour " + S(G(j, "class")) + " dans le compagnon" : "No build for " + S(G(j, "class")) + " in the companion");
@@ -585,14 +587,15 @@ class Companion : Form
         if (info.Type == "jewel")
         {
             double cl = CardLuck(card);
-            if (info.Cat == "amulets") amuletLuck = cl; else runLuck += cl;
+            if (info.Cat == "amulets") amuletLuck = cl;
+            else if (info.Key != null) { jewelLuck[info.Key] = cl; runLuck = jewelLuck.Values.Sum(); }
             Log("took " + S(G(card, "title")) + " (" + S(G(card, "rarityName")) + "): " + (S(G(card, "lines")) ?? "").Replace("\n", " / "));
         }
     }
 
     static double CardLuck(object card)
     {
-        Match m = Regex.Match((S(G(card, "lines")) ?? "") + " " + (S(G(card, "text")) ?? ""), @"\+([\d.,]+)\s*%\s*(de chance|luck)");
+        Match m = Regex.Match((S(G(card, "lines")) ?? "") + " " + (S(G(card, "text")) ?? ""), @"(?:\+?[\d.,]+\s*%\s*»\s*)?\+?([\d.,]+)\s*%\s*(de chance|luck)");
         return m.Success ? double.Parse(m.Groups[1].Value.Replace(",", "."), System.Globalization.CultureInfo.InvariantCulture) : 0;
     }
 
