@@ -2,114 +2,81 @@
 
 [English](README.md) · **Français**
 
-Des outils pour [Azeroth Survivors](https://wow.aethus.pl/), un jeu de type survivors bâti sur un client WoW 1.12 réécrit : survivre aux vagues, monter de niveau, choisir sorts et bijoux, battre les boss, passer aux cartes plus difficiles.
+Une application compagnon et trois addons pour [Azeroth Survivors](https://wow.aethus.pl/), le jeu de type survivors bâti sur un client WoW 1.12 réécrit.
 
-- **AS Companion** : une application Windows pour préparer vos builds, lancer le jeu, choisir les cartes de niveau à votre place et garder les statistiques de vos parties.
-- **SurvivorsUI**, **SurvivorsBuilds**, **SurvivorsGuardians** : des addons en jeu, écrits pour ce mode de jeu.
+Préparez votre build une fois, lancez le jeu depuis le compagnon, et laissez-le choisir les bonnes cartes de niveau pendant que vous jouez.
+
+<a href="https://www.buymeacoffee.com/zkyxykz"><img src="AS-Companion/web/img/buymeacoffee.png" alt="Buy me a coffee" height="36"></a>
 
 ![SurvivorsUI et SurvivorsGuardians en partie](docs/gameplay.jpg)
 
-[![Buy me a coffee](AS-Companion/web/img/buymeacoffee.png)](https://www.buymeacoffee.com/zkyxykz)
+## Pour commencer
 
-## Démarrage rapide
+1. Téléchargez **[ASCompanion.exe](https://github.com/ZKYXYKZ/Azeroth-Survivor-Companion/releases/latest/download/ASCompanion.exe)**.
+2. Lancez-le, depuis n'importe quel dossier. Il trouve le jeu tout seul et installe les addons au bon endroit. S'il ne trouve pas le jeu, il vous demande où se trouve `AzerothSurvivors.exe`.
+3. Créez un build pour votre classe, puis cliquez sur **Lancer le jeu**.
 
-1. Téléchargez `AzerothSurvivors-Addons.zip` depuis la [dernière version](https://github.com/ZKYXYKZ/Azeroth-Survivor-Companion/releases/latest).
-2. Extrayez-le dans le dossier du jeu, celui qui contient `AzerothSurvivors.exe`. Il y ajoute `ASCompanion.exe` et place les trois addons dans `benilla-config\AddOns`, le dossier d'où le jeu charge les addons.
-3. Lancez `ASCompanion.exe`, créez un build pour votre classe, puis cliquez sur **Lancer le jeu**.
+C'est tout. Windows 10 ou 11, rien d'autre à installer. Le compagnon se tient à jour, lui et les addons.
 
-Le compagnon se met à jour, lui et les addons, depuis les versions publiées sur GitHub. Windows 10 ou 11, rien d'autre à installer.
+> Au premier lancement, Windows peut afficher un avertissement SmartScreen, car l'application n'est pas signée : cliquez sur **Informations complémentaires**, puis **Exécuter quand même**. Chaque version est compilée depuis ce dépôt par GitHub Actions, et `SHA256SUMS.txt` permet de vérifier les fichiers.
 
-## AS Companion
+## Ce qu'il fait
 
-Le compagnon s'ouvre dans sa propre fenêtre, affichée par Microsoft WebView2 (intégré à Windows 10 et 11). Si WebView2 manque, le compagnon propose de le télécharger et de l'installer en arrière-plan, et ouvre en attendant son interface dans votre navigateur. Une icône dans la zone de notification rouvre la fenêtre. Fermer la fenêtre arrête le compagnon, sauf si une partie qu'il a lancée tourne encore.
+### Préparer vos builds
 
-### Builds
+- **Talents** : les trois arbres de votre classe, comme dans le jeu.
+- **Sorts** : votre ordre de priorité, un poids de 1 à 5 pour chacun, et les sorts dont vous ne voulez jamais. Une partie garde 6 sorts : les 6 premiers sont vos cibles, les suivants servent de repli.
+- **Bijoux** : les anneaux, bijoux et amulettes que vous voulez, amulettes légendaires comprises, chacun avec un poids de 1 à 5. Survolez un bijou pour voir ses effets.
+- **Règles** : le poids de la rareté, le nombre de relances à garder, le moment où accepter les bijoux de repli, et plus encore.
+- **Partage** : exportez un build en une ligne de texte, importez celui d'un ami en un clic.
 
-- **Talents** : les trois arbres de la classe avec leurs fonds d'origine, 51 points, paliers et apogée.
-- **Sorts** : ordre de priorité avec un poids de 1 à 5, et sorts bannis. Une partie garde 6 sorts : les 6 premiers sont visés, les suivants servent de repli.
-- **Bijoux** : anneaux, bijoux et amulettes visés ou de repli, dont l'amulette légendaire de chaque sort, chacun avec un poids de 1 à 5. Chaque bijou affiche ses effets, décodés depuis le jeu.
-- **Règles** : poids de la rareté, relances gardées en réserve, bannissements, relancer avant de passer, niveau à partir duquel les anneaux et bijoux de repli sont acceptés, bonus de légendaire, adaptation à la partie.
-- **Partage** : Exporter et Importer un build complet en une ligne de texte.
+### Choisir les cartes à votre place
 
-### En partie
+Lancez toujours le jeu avec **Lancer le jeu** : c'est ainsi que le compagnon voit les cartes de niveau.
 
-Cliquez sur **Lancer le jeu**. Le jeu doit être lancé par le compagnon : c'est ainsi qu'il lit les cartes de niveau, dans la sortie console du jeu.
+- Un bandeau par-dessus le jeu indique la meilleure carte.
+- Activez la **Sélection auto** dans Options, et le compagnon choisit et relance pour vous.
+- Ses choix suivent la partie : sorts déjà pris et leur rang, dégâts réels de chaque sort, amulette portée, votre chance et les emplacements de bijoux encore libres. Les anneaux et bijoux ne se changent plus une fois pris : il les choisit avec soin.
+- Passer et Bannir n'ont pas encore de touche dans le jeu : ils restent manuels.
 
-- Un bandeau par-dessus le jeu indique la meilleure carte, sans prendre le focus.
-- La **sélection auto** (Options) appuie sur 1, 2, 3, 4 ou R à votre place, et réessaie si le jeu a raté la touche. Passer et Bannir n'ont pas encore de touche dans le jeu : ils restent manuels.
-- Le conseil s'adapte à la partie : sorts déjà pris, leur rang, leur part réelle de vos dégâts (lue dans le journal de combat du jeu), l'amulette portée et ses améliorations, votre chance et les emplacements de bijoux libres. Les anneaux et bijoux ne se changent plus une fois pris : les replis ne sont acceptés qu'à partir du niveau fixé dans les Règles.
-- La chance vient du jeu lui-même : l'addon SurvivorsBuilds la relève au début de chaque partie, et le compagnon y ajoute les bijoux de chance pris pendant la partie.
+### Suivre vos parties
 
-### Statistiques
+La page **Statistiques** enregistre chaque partie lancée depuis le compagnon, mode endless compris : durée de survie, niveau, victimes, DPS, boss et gardiens, avec des graphiques par partie, par classe, par spécialisation et par race, et la part des dégâts de chaque sort.
 
-Chaque partie lancée depuis le compagnon est enregistrée à sa fin, mode endless compris (après le boss final, le jeu peut continuer, avec un boss toutes les 5 minutes, jusqu'à la mort) :
+### Gérer les addons
 
-- filtres par classe, zone et résultat ;
-- chiffres clés : parties, victoires, temps joué, meilleure survie, niveau et victimes max, DPS moyen et max, boss et gardiens tués, meilleur endless ;
-- durée de survie et DPS par partie, survie moyenne par classe, part des dégâts par sort ;
-- tableaux par spécialisation et par race, et dernières parties.
+La page **Addons** présente chaque addon avec son rôle, sa version, et des boutons pour l'installer, le mettre à jour, l'activer, le désactiver ou le désinstaller.
 
-### Addons
-
-Liste les addons du jeu avec leur description, la version installée et la dernière version. Installez, mettez à jour, activez, désactivez ou désinstallez-les (les dossiers désinstallés partent à la corbeille). Fermez le jeu avant. Les addons installés se mettent aussi à jour seuls, au démarrage puis toutes les 30 minutes hors partie (option dans Options).
-
-### Options
-
-Chemin du jeu (avec un bouton Parcourir), langue, sélection auto, bandeau de conseil, version et recherche de mise à jour.
-
-### Mises à jour
-
-Au démarrage, le compagnon consulte la dernière version publiée sur GitHub. Si elle est plus récente, un bouton **Mettre à jour** apparaît dans la barre d'état : il télécharge la version, vérifie son SHA-256, met à jour les addons installés et le compagnon, puis redémarre. Builds, statistiques et réglages sont conservés dans `%APPDATA%\AS-Companion`.
-
-### Avertissement Windows
-
-`ASCompanion.exe` n'est pas signé : SmartScreen peut avertir au premier lancement. Cliquez sur **Informations complémentaires**, puis **Exécuter quand même**. Il est compilé depuis ce dépôt par GitHub Actions, et `SHA256SUMS.txt` dans chaque version permet de vérifier chaque fichier.
-
-## Addons
-
-Les trois partagent une fenêtre : le bouton doré `S` sur la minicarte, `/survivors`, ou une touche réglée dans Raccourcis > Survivors.
+## Les addons
 
 ### SurvivorsBuilds
 
-La passerelle avec AS Companion.
-
-- Un panneau qui reste à l'écran pendant la partie : les 6 sorts visés avec leur icône et leur rang, les bijoux portés dans la couleur de leur qualité (visés ou de repli), et les bijoux visés encore manquants.
-- Pendant le choix d'une carte : sorts à bannir, relances restantes et règle du build.
-- Chaque sort pris ou monté est écrit dans le chat avec sa priorité.
-- Relève votre chance pour le compagnon et active le journal de combat qu'il lit.
+Affiche votre build à l'écran pendant la partie : les 6 sorts visés avec leur rang, les bijoux portés dans la couleur de leur qualité, et ce qui manque encore. Pendant le choix d'une carte, il rappelle quoi bannir et combien de relances il reste. Il transmet aussi au compagnon votre chance et vos dégâts par sort.
 
 ### SurvivorsUI
 
-Une interface compacte qui remplace celle d'origine.
-
-- Bloc en bas au centre : barre de cible, vie, ressource, icônes de sorts avec recharge, barre d'expérience.
-- Les cadres joueur et cible et les barres d'action d'origine sont masqués. Chat épuré, minicarte carrée avec zoom à la molette, micro-boutons qui s'effacent jusqu'au survol.
-- Réglages dans l'onglet Interface de la fenêtre commune, ou `/sui` : taille de chaque bloc, déverrouillage pour déplacer les cadres sur une grille avec aimantation (Maj pour la désactiver), recul de la caméra de 15 à 90 mètres.
+Une interface compacte pour ce mode de jeu : barres de cible, de vie, de ressource et de sorts réunies en bas, chat épuré, minicarte carrée et caméra qui recule plus loin. Chaque bloc se déplace et se redimensionne sur une grille.
 
 ![Réglages avec les cadres déverrouillés](docs/settings.jpg)
 
 ### SurvivorsGuardians
 
-Un suivi des quatre repaires de gardiens et des boss, alimenté par l'API d'addons du jeu.
+Suit les quatre repaires de gardiens et les boss : vie des gardiens, endormis ou en combat, compte à rebours avant le retour d'un gardien, et prochain boss. Un clic sur une ligne le cible.
 
-- Une ligne par repaire : nom du gardien, vie, endormi ou en combat.
-- Un repaire vide affiche le compte à rebours avant le retour d'un gardien.
-- Les boss ont leur propre ligne avec leur vie. L'en-tête compte les repaires occupés et affiche le prochain boss avec son compte à rebours.
-- Un clic sur une ligne cible ce gardien ou ce boss.
+Les trois partagent une fenêtre : le bouton doré **S** sur la minicarte, ou `/survivors`. Leurs panneaux se déplacent à la souris.
 
-Les panneaux Build et Gardiens se déplacent directement à la souris.
+## Bon à savoir
 
-## Limites connues
-
-- Passer et Bannir ne peuvent pas être automatisés tant que le jeu ne leur donne pas de touche.
-- Le chrono, les compteurs de victimes et d'or, le compteur de dégâts et la rangée d'icônes de sorts sont dessinés par le moteur du jeu : les addons ne peuvent ni les déplacer ni les masquer.
-- Les addons ne peuvent rien envoyer au compagnon pendant la partie. Le compagnon lit à la place la sortie console et le journal de combat du jeu.
+- Builds, statistiques et réglages sont gardés dans `%APPDATA%\AS-Companion` : les mises à jour n'y touchent jamais.
+- Fermer la fenêtre du compagnon l'arrête, sauf si une partie qu'il a lancée tourne encore.
+- Le compagnon a besoin de Microsoft WebView2, intégré à Windows 10 et 11. S'il manque, le compagnon propose de l'installer.
+- Vous préférez installer à la main ? Chaque version contient aussi `AzerothSurvivors-Addons.zip`, à extraire dans le dossier du jeu.
 
 ## Pour les développeurs
 
 - Compiler le compagnon : `node tools/build-companion.js` (utilise le compilateur C# fourni avec Windows, sortie dans `dist\`).
-- Publier : poussez un tag `vX.Y.Z`. GitHub Actions compile le compagnon, emballe les addons avec cette version et publie `ASCompanion.exe`, `AzerothSurvivors-Addons.zip`, un zip par addon, `addons.json` et `SHA256SUMS.txt`.
-- `NOTES.md` décrit ce que le jeu expose, comment les données sont décodées depuis les fichiers du jeu, et le fonctionnement de chaque partie.
+- Publier une version : poussez un tag `vX.Y.Z`. GitHub Actions compile le compagnon, emballe les addons et publie la version.
+- `NOTES.md` explique ce que le jeu expose et le fonctionnement de chaque partie.
 
 ## Avertissement
 
