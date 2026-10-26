@@ -102,8 +102,60 @@ class UiWindow : Form
                 a.Handled = true;
                 if (a.Uri.StartsWith("https://")) Process.Start(a.Uri);
             };
+            view.CoreWebView2.WebMessageReceived += (o, a) => OnWindowMessage(a.TryGetWebMessageAsString());
             view.Source = new Uri(url);
         };
+        Resize += (s, e) => { if (view.CoreWebView2 != null) view.CoreWebView2.PostWebMessageAsString(WindowState == FormWindowState.Maximized ? "maximized" : "normal"); };
+    }
+
+    [DllImport("user32.dll")] static extern bool ReleaseCapture();
+    [DllImport("user32.dll")] static extern IntPtr SendMessage(IntPtr h, int m, IntPtr w, IntPtr l);
+    [DllImport("user32.dll")] static extern int GetSystemMetrics(int i);
+    [DllImport("dwmapi.dll")] static extern int DwmSetWindowAttribute(IntPtr h, int attr, ref int value, int size);
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct Rect { public int Left, Top, Right, Bottom; }
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct NcCalcSizeParams { public Rect R0, R1, R2; public IntPtr Pos; }
+
+    void OnWindowMessage(string msg)
+    {
+        if (msg == "drag" || msg == "resize-top")
+        {
+            ReleaseCapture();
+            SendMessage(Handle, 0xA1, (IntPtr)(msg == "drag" ? 2 : 12), IntPtr.Zero);
+        }
+        else if (msg == "min") WindowState = FormWindowState.Minimized;
+        else if (msg == "max") WindowState = WindowState == FormWindowState.Maximized ? FormWindowState.Normal : FormWindowState.Maximized;
+        else if (msg == "close") Close();
+    }
+
+    protected override void OnHandleCreated(EventArgs e)
+    {
+        base.OnHandleCreated(e);
+        int dark = 1, round = 2;
+        DwmSetWindowAttribute(Handle, 20, ref dark, 4);
+        DwmSetWindowAttribute(Handle, 33, ref round, 4);
+        SetWindowPos(Handle, IntPtr.Zero, 0, 0, 0, 0, 0x0027);
+    }
+
+    [DllImport("user32.dll")] static extern bool SetWindowPos(IntPtr h, IntPtr after, int x, int y, int cx, int cy, uint flags);
+
+    protected override void WndProc(ref Message m)
+    {
+        if (m.Msg == 0x83 && m.WParam != IntPtr.Zero)
+        {
+            NcCalcSizeParams p = (NcCalcSizeParams)Marshal.PtrToStructure(m.LParam, typeof(NcCalcSizeParams));
+            int top = p.R0.Top;
+            base.WndProc(ref m);
+            p = (NcCalcSizeParams)Marshal.PtrToStructure(m.LParam, typeof(NcCalcSizeParams));
+            p.R0.Top = top + (WindowState == FormWindowState.Maximized ? GetSystemMetrics(33) + GetSystemMetrics(92) : 0);
+            Marshal.StructureToPtr(p, m.LParam, false);
+            m.Result = IntPtr.Zero;
+            return;
+        }
+        base.WndProc(ref m);
     }
 }
 

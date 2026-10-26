@@ -12,8 +12,14 @@
   <div class="row right">
     <a class="coffee" href="https://www.buymeacoffee.com/zkyxykz" target="_blank" rel="noopener"><img src="img/buymeacoffee.png" alt="Buy me a coffee" width="128" height="36"></a>
     <button id="launchBtn" class="primary"></button>
+    <div id="winCtl" class="winctl hidden">
+      <button data-w="min" aria-label="Minimize"><svg viewBox="0 0 10 10"><path d="M1 5.5h8"/></svg></button>
+      <button data-w="max" aria-label="Maximize"><svg viewBox="0 0 10 10"><rect x="1.5" y="1.5" width="7" height="7"/></svg></button>
+      <button data-w="close" class="close" aria-label="Close"><svg viewBox="0 0 10 10"><path d="M1.5 1.5l7 7M8.5 1.5l-7 7"/></svg></button>
+    </div>
   </div>
 </header>
+<div id="scroll">
 <div id="status" class="status"></div>
 <nav id="pages" class="pages"></nav>
 <main>
@@ -41,6 +47,7 @@
   <section id="page-options"></section>
 </main>
 <footer>Développé par <a href="https://x.com/zkyxykz" target="_blank" rel="noopener">ZKYXYKZ</a></footer>
+</div>
 <div id="tip" class="tip"></div>
 <div id="modal" class="modal hidden">
   <div class="box">

@@ -433,7 +433,7 @@ function renderHeader() {
 }
 
 function render() {
-  const y = window.scrollY;
+  const y = $("scroll").scrollTop;
   hideTip();
   renderHeader();
   const b = active();
@@ -459,7 +459,7 @@ function render() {
       sec.appendChild(part);
     });
   });
-  window.scrollTo(0, y);
+  $("scroll").scrollTop = y;
 }
 
 async function poll() {
@@ -505,7 +505,23 @@ document.addEventListener("click", (e) => {
   fetch("/api/open", { method: "POST", body: a.href }).catch(() => window.open(a.href));
 });
 
+function windowFrame() {
+  const wv = window.chrome && window.chrome.webview;
+  if (!wv) return;
+  document.body.classList.add("framed");
+  $("winCtl").classList.remove("hidden");
+  $("winCtl").querySelectorAll("button").forEach((b) => (b.onclick = () => wv.postMessage(b.dataset.w)));
+  const head = document.querySelector("header");
+  head.addEventListener("mousedown", (e) => {
+    if (e.button !== 0 || e.target.closest("button, a, select, input")) return;
+    wv.postMessage(e.clientY < 5 ? "resize-top" : "drag");
+  });
+  head.addEventListener("dblclick", (e) => { if (!e.target.closest("button, a, select, input")) wv.postMessage("max"); });
+  wv.addEventListener("message", (e) => document.body.classList.toggle("maximized", e.data === "maximized"));
+}
+
 async function init() {
+  windowFrame();
   [DATA, STATE] = await Promise.all([fetch("data.json").then((r) => r.json()), fetch("/api/state").then((r) => r.json())]);
   STATE.builds = STATE.builds || [];
   STATE.active = STATE.active || {};

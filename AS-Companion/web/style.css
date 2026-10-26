@@ -157,3 +157,19 @@ footer { padding: 10px 18px; border-top: 1px solid var(--line); color: var(--mut
 .anotes { color: var(--text); font-size: 13px; line-height: 1.45; }
 .ameta { color: var(--mute); font-size: 12px; }
 .warnline { color: #fab219; font-size: 13px; margin: 6px 0; }
+.hidden { display: none !important; }
+.framed header { padding-right: 0; user-select: none; }
+.framed header .row.right { align-self: stretch; align-items: center; }
+.winctl { display: flex; align-self: stretch; margin-left: 10px; margin-top: -12px; margin-bottom: -12px; }
+.winctl button { width: 46px; border: 0; border-radius: 0; background: transparent; color: var(--mute); padding: 0; display: flex; align-items: center; justify-content: center; }
+.winctl button:hover { background: #2a2a30; color: var(--text); }
+.winctl button.close:hover { background: #c42b1c; color: #fff; }
+.winctl svg { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1; }
+html, body { height: 100%; }
+body { display: flex; flex-direction: column; overflow: hidden; }
+header { flex: none; }
+#scroll { flex: 1; overflow-y: auto; min-height: 0; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2e2e35; border-radius: 5px; border: 2px solid var(--bg); }
+::-webkit-scrollbar-thumb:hover { background: #3c3c45; }
