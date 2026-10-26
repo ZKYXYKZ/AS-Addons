@@ -15,7 +15,8 @@
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 "Segoe UI", system-ui, sans-serif; }
 header { display: flex; align-items: center; gap: 16px; padding: 12px 18px; background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
-.brand { font-weight: 700; letter-spacing: .5px; color: var(--gold); font-size: 16px; margin-right: 8px; }
+.brand { font-weight: 700; letter-spacing: .5px; color: var(--gold); font-size: 16px; margin-right: 8px; display: flex; align-items: center; gap: 8px; }
+.brand img { width: 24px; height: 24px; }
 .row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .right { margin-left: auto; }
 button, select, input[type=text], input[type=number] { background: var(--panel2); color: var(--text); border: 1px solid var(--line); border-radius: 4px; padding: 6px 10px; font: inherit; }
@@ -28,6 +29,8 @@ button.small { padding: 2px 8px; }
 select { min-width: 130px; }
 .status { padding: 6px 18px; color: var(--mute); font-size: 13px; border-bottom: 1px solid var(--line); min-height: 30px; }
 .status b { color: var(--gold); font-weight: 600; }
+.status .err { color: var(--red); }
+.status > span + span { margin-left: 10px; }
 nav { display: flex; gap: 6px; padding: 12px 18px 0; }
 main { padding: 14px 18px 30px; }
 section { display: none; }

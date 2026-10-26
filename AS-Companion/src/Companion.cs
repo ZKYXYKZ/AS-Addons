@@ -373,7 +373,7 @@ class Companion : Form
         return w;
     }
 
-    void CheckUpdate()
+    void CheckUpdate(bool autoAddons = true)
     {
         try
         {
@@ -385,13 +385,14 @@ class Companion : Form
             Dictionary<string, string> assets = new Dictionary<string, string>();
             foreach (object a in A(G(rel, "assets"))) assets[S(G(a, "name"))] = S(G(a, "browser_download_url"));
             releaseAssets = assets;
+            if (!updating) updateError = "";
             assets.TryGetValue("AzerothSurvivors-Addons.zip", out latestZip);
             assets.TryGetValue("SHA256SUMS.txt", out latestSums);
             string manifest;
             if (assets.TryGetValue("addons.json", out manifest))
                 using (WebClient w = Web()) remoteAddons = A(json.DeserializeObject(Utf8.GetString(w.DownloadData(manifest)))).Select(D).Where(x => x != null).ToList();
             FirstRunAddons();
-            AutoUpdateAddons();
+            if (autoAddons) AutoUpdateAddons();
             Version remote, local = new Version(CurrentVersion);
             if (tag == null || !Version.TryParse(tag.TrimStart('v', 'V'), out remote) || remote <= local || latestZip == null) { latestTag = null; return; }
             latestTag = tag;
@@ -1022,7 +1023,7 @@ class Companion : Form
             }
             if (path == "/api/check" && method == "POST")
             {
-                CheckUpdate();
+                CheckUpdate(ctx.Request.QueryString["addons"] == null);
                 Respond(ctx, 200, "application/json", Utf8.GetBytes(json.Serialize(new Dictionary<string, object> { { "version", CurrentVersion }, { "update", latestTag }, { "updateError", updateError } })));
                 return;
             }
@@ -1547,7 +1548,10 @@ class Companion : Form
         }
         r["spec"] = specKey;
         double time = N(G(j, "time"), 0);
-        r["dps"] = time > 0 ? Math.Round(N(G(j, "damage"), 0) / time, 1) : 0;
+        r["damageGame"] = G(j, "damage");
+        r["damageLog"] = Math.Round(totalDmg);
+        if (totalDmg > 0) r["damage"] = Math.Round(totalDmg);
+        r["dps"] = time > 0 ? Math.Round(N(r["damage"], 0) / time, 1) : 0;
         r["spells"] = owned.ToDictionary(kv => kv.Key, kv => (object)kv.Value);
         r["jewels"] = jewels.Keys.Concat(amulet != null ? new[] { amulet } : new string[0]).ToArray();
         r["luck"] = Math.Round(Luck());

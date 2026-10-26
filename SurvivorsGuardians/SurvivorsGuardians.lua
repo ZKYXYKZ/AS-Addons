@@ -11,6 +11,24 @@ local COLORS = {
   { 0.95, 0.6, 0.3 },
 }
 local BOSS = { 0.8, 0.45, 1 }
+local MARKS = { 7, 6, 1, 4, 3, 2 }
+local SKULL = 8
+local wanted = {}
+
+local function markCoords(t, i)
+  local c = math.mod(i - 1, 4) * 0.25
+  local r = math.floor((i - 1) / 4) * 0.25
+  t:SetTexCoord(c, c + 0.25, r, r + 0.25)
+end
+
+local function markTarget()
+  if SurvivorsGuardiansDB.marks == false or not SetRaidTarget or not UnitExists("target") or UnitIsDead("target") then return end
+  local tg = AZS_TARGET
+  local want
+  if tg and tg.id and wanted[tg.id] then want = wanted[tg.id] end
+  if not want and tg and (tg.kind == "boss" or tg.kind == "final") then want = SKULL end
+  if want and GetRaidTargetIndex("target") ~= want then SetRaidTarget("target", want) end
+end
 local ENGLISH = { warrior = "Warrior", paladin = "Paladin", hunter = "Hunter", rogue = "Rogue", priest = "Priest",
   shaman = "Shaman", mage = "Mage", warlock = "Warlock", druid = "Druid" }
 local T = {
@@ -97,7 +115,12 @@ local function row(i)
     if this.unitName then TargetByName(this.unitName, 1) end
   end)
   r.name = text(r, 11, "LEFT")
-  r.name:SetPoint("LEFT", r, "LEFT", 8, 1)
+  r.mark = r:CreateTexture(nil, "OVERLAY")
+  r.mark:SetTexture("Interface/TargetingFrame/UI-RaidTargetingIcons")
+  r.mark:SetWidth(12)
+  r.mark:SetHeight(12)
+  r.mark:SetPoint("LEFT", r, "LEFT", 6, 1)
+  r.name:SetPoint("LEFT", r, "LEFT", 22, 1)
   r.name:SetWidth(WIDTH - 116)
   r.name:SetHeight(11)
   r.shade = tex(r, "BACKGROUND", 0, 0, 0, 0.35)
@@ -163,6 +186,10 @@ local function render()
     n = n + 1
     local r = row(n)
     local c = COLORS[math.mod(n - 1, table.getn(COLORS)) + 1]
+    local mk = MARKS[math.mod(n - 1, table.getn(MARKS)) + 1]
+    if l.id and l.state ~= "empty" then wanted[l.id] = mk end
+    markCoords(r.mark, mk)
+    r.mark:SetAlpha(l.state == "empty" and 0.25 or 1)
     local u = l.id and byId[l.id]
     r.name:SetText(l.name or "?")
     if l.state == "empty" then
@@ -197,6 +224,9 @@ local function render()
     r.unitName = b.name
     r.shade:Hide()
     r.name:SetText(b.name)
+    markCoords(r.mark, SKULL)
+    r.mark:SetAlpha(1)
+    if b.id then wanted[b.id] = SKULL end
     r.name:SetTextColor(BOSS[1], BOSS[2], BOSS[3])
     local frac = b.hpm and b.hpm > 0 and b.hp / b.hpm
     r.info:SetTextColor(BOSS[1], BOSS[2], BOSS[3])
@@ -251,11 +281,17 @@ driver:SetScript("OnUpdate", function()
   if acc < 0.25 then return end
   acc = 0
   local ok, err = pcall(render)
+  if ok then ok, err = pcall(markTarget) end
   if not ok then SurvivorsGuardiansDB.error = tostring(err) end
 end)
 
 SLASH_SURVIVORSGUARDIANS1 = "/guardians"
-SlashCmdList["SURVIVORSGUARDIANS"] = function()
+SlashCmdList["SURVIVORSGUARDIANS"] = function(msg)
+  if msg == "marks" then
+    SurvivorsGuardiansDB.marks = SurvivorsGuardiansDB.marks == false
+    DEFAULT_CHAT_FRAME:AddMessage("Guardians marks: " .. (SurvivorsGuardiansDB.marks == false and "off" or "on"))
+    return
+  end
   if SurvivorsUI and SurvivorsUI.movers.guardians then
     SurvivorsUI.Reset(SurvivorsUI.movers.guardians)
     return

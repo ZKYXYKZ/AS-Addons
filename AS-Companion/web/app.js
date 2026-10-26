@@ -351,7 +351,12 @@ function renderOptions(sec) {
   const res = el("span", "hint");
   chk.onclick = async () => {
     const r = await (await fetch("/api/check", { method: "POST" })).json();
-    res.textContent = r.update ? T("updateAvail", { v: r.update }) : r.updateError || T("upToDate");
+    res.textContent = r.update ? T("updateAvail", { v: r.update }) + " " : r.updateError || T("upToDate");
+    if (r.update) {
+      const go = el("button", "small primary", esc(T("updateBtn")));
+      go.onclick = () => startUpdate(r.update);
+      res.appendChild(go);
+    }
   };
   ver.appendChild(chk);
   ver.appendChild(res);
@@ -462,6 +467,15 @@ function render() {
   $("scroll").scrollTop = y;
 }
 
+let statusKey = "", updClicked = 0;
+function startUpdate(v) {
+  updClicked = Date.now();
+  $("updModal").classList.remove("hidden");
+  $("updText").textContent = T("stage_download", { v });
+  $("updBar").style.width = "0%";
+  statusKey = "";
+  fetch("/api/update", { method: "POST" });
+}
 async function poll() {
   try {
     const s = await (await fetch("/api/status")).json();
@@ -470,39 +484,44 @@ async function poll() {
     lb.disabled = !!s.running;
     if (VERSION && s.version && s.version !== VERSION) return location.reload();
     VERSION = s.version || VERSION;
-    const st = $("status");
-    st.innerHTML = s.running ? (s.advice ? `${T("advice")} : <b>${esc(s.advice)}</b>` : T("running")) : s.error ? `<span style="color:var(--red)">${esc(s.error)}</span>` : "";
+    const key = JSON.stringify([s.running, s.advice, s.error, s.updating, s.update, s.updatedFrom, s.game, s.addonsUpdated, s.updateError, lang()]);
     const um = $("updModal");
     if (s.updating) {
       um.classList.remove("hidden");
       $("updText").textContent = T("stage_" + (s.updateStage || "download"), { v: s.update || "" });
       $("updBar").style.width = (s.updateStage === "download" ? s.updateProgress || 0 : s.updateStage ? 100 : 0) + "%";
-    } else um.classList.add("hidden");
-    if (s.updatedFrom !== null && s.updatedFrom !== undefined) st.innerHTML += ` <span class="upd">${esc(T("updated", { v: s.version }))}</span>`;
+    } else if (!updClicked || Date.now() - updClicked > 4000) um.classList.add("hidden");
+    if (key === statusKey) return;
+    statusKey = key;
+    const st = $("status");
+    st.innerHTML = "";
+    const add = (cls, html) => { const x = el("span", cls, html); st.appendChild(x); return x; };
+    if (s.running) add("", s.advice ? `${T("advice")} : <b>${esc(s.advice)}</b>` : T("running"));
+    else if (s.error) add("err", esc(s.error));
+    if (s.updatedFrom !== null && s.updatedFrom !== undefined) add("upd", esc(T("updated", { v: s.version })));
     if (!s.updating && s.update) {
-      const u = el("span", "upd", esc(T("updateAvail", { v: s.update })) + " ");
-      const b = el("button", "small primary", esc(T("updateBtn")));
-      b.onclick = () => { $("updModal").classList.remove("hidden"); $("updText").textContent = T("stage_download", { v: s.update }); $("updBar").style.width = "0%"; fetch("/api/update", { method: "POST" }); };
-      u.appendChild(b);
-      st.appendChild(u);
+      const u = add("upd", esc(T("updateAvail", { v: s.update })) + " ");
+      const btn = el("button", "small primary", esc(T("updateBtn")));
+      btn.onclick = () => startUpdate(s.update);
+      u.appendChild(btn);
     }
     if (!s.running && !s.game) {
-      const g = el("span", "upd", esc(T("noGame")) + " ");
-      const b = el("button", "small primary", esc(T("browse")));
-      b.onclick = async () => {
+      const g = add("upd", esc(T("noGame")) + " ");
+      const btn = el("button", "small primary", esc(T("browse")));
+      btn.onclick = async () => {
         const r = await (await fetch("/api/browse", { method: "POST", body: "" })).json();
         if (r.path) { STATE.settings.gamePath = r.path; save(); }
       };
-      g.appendChild(b);
-      st.appendChild(g);
+      g.appendChild(btn);
     }
-    if (s.addonsUpdated) st.innerHTML += ` <span class="upd">${esc(T("addonsUpdated", { v: s.addonsUpdated }))}</span>`;
-    if (s.updateError) st.innerHTML += ` <span style="color:var(--red)">${esc(s.updateError)}</span>`;
+    if (s.addonsUpdated) add("upd", esc(T("addonsUpdated", { v: s.addonsUpdated })));
+    if (s.updateError) add("err", esc(s.updateError));
   } catch (e) {
-    $("status").innerHTML = `<span style="color:var(--red)">${esc(T("down"))}</span>`;
+    statusKey = "";
+    $("status").innerHTML = `<span class="err">${esc(T("down"))}</span>`;
   }
-  setTimeout(poll, 1500);
 }
+function loop() { poll().finally(() => setTimeout(loop, 1500)); }
 
 document.addEventListener("click", (e) => {
   const a = e.target.closest("a[target=_blank]");
@@ -556,6 +575,6 @@ async function init() {
     try { await fetch("/api/state", { method: "POST", body: JSON.stringify(STATE) }); await fetch("/api/launch", { method: "POST" }); } catch (e) { alert(T("down")); }
   };
   render();
-  poll();
+  loop();
 }
 init();

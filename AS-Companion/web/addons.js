@@ -1,7 +1,7 @@
 const ADDON_STR = {
   fr: {
     intro: "Les addons du jeu, installés dans {dir}. Les nôtres s'installent et se mettent à jour depuis la dernière version publiée sur GitHub.",
-    install: "Installer", update: "Mettre à jour", uninstall: "Désinstaller", enable: "Activer", disable: "Désactiver",
+    install: "Installer", update: "Mettre à jour", check: "Vérifier les mises à jour", checking: "Vérification…", noUpdate: "Aucune mise à jour", uninstall: "Désinstaller", enable: "Activer", disable: "Désactiver",
     installed: "Installé", notInstalled: "Non installé", latest: "Dernière version", enabled: "Activé", disabled: "Désactivé",
     upToDate: "à jour", third: "Addon tiers", running: "Fermez le jeu pour installer, mettre à jour, activer ou désinstaller un addon.",
     confirmUninstall: "Désinstaller {name} ? Le dossier part à la corbeille.", noRelease: "Aucune version publiée trouvée sur GitHub pour l'instant.",
@@ -9,7 +9,7 @@ const ADDON_STR = {
   },
   en: {
     intro: "The game addons, installed in {dir}. Ours install and update from the latest version published on GitHub.",
-    install: "Install", update: "Update", uninstall: "Uninstall", enable: "Enable", disable: "Disable",
+    install: "Install", update: "Update", check: "Check for updates", checking: "Checking…", noUpdate: "No update", uninstall: "Uninstall", enable: "Enable", disable: "Disable",
     installed: "Installed", notInstalled: "Not installed", latest: "Latest version", enabled: "Enabled", disabled: "Disabled",
     upToDate: "up to date", third: "Third-party addon", running: "Close the game to install, update, enable or uninstall an addon.",
     confirmUninstall: "Uninstall {name}? The folder goes to the Recycle Bin.", noRelease: "No published version found on GitHub yet.",
@@ -28,6 +28,7 @@ const newer = (a, b) => {
   return false;
 };
 
+const addonChecked = {};
 async function renderAddons(sec) {
   let data;
   try { data = await (await fetch("/api/addons")).json(); } catch (e) { return; }
@@ -64,6 +65,18 @@ async function renderAddons(sec) {
     const btn = (label, action, cls) => { const b = el("button", cls || "", esc(label)); b.disabled = data.running; b.onclick = () => act(a.name, action); row.appendChild(b); };
     if (a.ours && !a.installed) btn(AT("install"), "install", "primary");
     if (a.ours && a.installed && newer(a.latest, a.version)) btn(AT("update"), "install", "primary");
+    else if (a.ours && a.installed) {
+      const c = el("button", "", esc(AT("check")));
+      c.onclick = async () => {
+        c.disabled = true;
+        c.textContent = AT("checking");
+        try { await fetch("/api/check?addons=1", { method: "POST" }); } catch (e) {}
+        addonChecked[a.name] = true;
+        await renderAddons(sec);
+      };
+      row.appendChild(c);
+      if (addonChecked[a.name]) row.appendChild(el("span", "hint", esc(AT("noUpdate"))));
+    }
     if (a.installed) btn(a.enabled ? AT("disable") : AT("enable"), a.enabled ? "disable" : "enable");
     if (a.installed) btn(AT("uninstall"), "uninstall");
     card.appendChild(row);
