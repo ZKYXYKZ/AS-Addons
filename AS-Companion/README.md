@@ -14,14 +14,14 @@ Windows 10 or 11 only, nothing to install: it runs on the .NET Framework shipped
 
 - **Build**: on one page, the three talent trees of the class (51 points, milestones and capstone), the spell priorities with a weight and banned spells (the first 6 are targets, the rest fallbacks), and the target and fallback rings, trinkets and amulets, including the legendary amulet of each spell. Every piece of jewelry shows its effects, decoded from the game.
 - **Rules**: rarity weight, rerolls kept in reserve, banishes, reroll before skipping, level from which fallback rings and trinkets are accepted, legendary boost, adapt to the run.
-- **Options**: game path (with a Browse button), language, card auto-pick, overlay, account luck.
+- **Options**: game path (with a Browse button), language, card auto-pick, overlay.
 - **Sharing**: Export and Import a build as one line of text.
 
 ## In game
 
 Click **Launch game**. The companion reads the cards the game prints on its console, so the game must be started from it. A banner shows the advice without taking the focus. With auto-pick on, the keys 1, 2, 3 and R are sent to the game window, and sent again if the game did not take them. Skip and banish have no key and stay manual; a banish also refreshes the cards, so it is advised when a banned card shows up.
 
-Luck makes rarer cards: the companion adds your account luck, the luck talents of the build and the luck jewelry taken in the run, and rerolls an average card more readily when luck is high.
+Luck makes rarer cards. The SurvivorsBuilds addon records your luck from the character stats at the start of each run, and the companion reads it at the next launch, then adds the luck jewelry taken in the run. It rerolls an average card more readily when luck is high.
 
 At launch the companion writes the active builds into the SurvivorsBuilds addon saved variables: the in-game Builds tab and the guide panel show them during the run.
 

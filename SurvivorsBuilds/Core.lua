@@ -49,3 +49,21 @@ end
 function SB.Print(msg)
   DEFAULT_CHAT_FRAME:AddMessage("|cffe6b84cBuilds|r " .. msg)
 end
+
+local luckFrame = CreateFrame("Frame")
+local luckSeen = false
+luckFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+luckFrame:RegisterEvent("CHAT_MSG_ADDON")
+luckFrame:SetScript("OnEvent", function()
+  if event == "PLAYER_ENTERING_WORLD" then
+    luckSeen = false
+    return
+  end
+  if luckSeen or arg1 ~= "AZS" or not arg2 then return end
+  local _, _, v = string.find(arg2, "luck=([%-%d%.]+)")
+  if not v then return end
+  local db = SB.DB()
+  db.luck = db.luck or {}
+  db.luck[SB.PlayerClass()] = math.floor(tonumber(v) * 1000 + 0.5) / 10
+  luckSeen = true
+end)

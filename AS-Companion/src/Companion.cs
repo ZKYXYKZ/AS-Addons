@@ -407,6 +407,18 @@ class Companion : Form
         return k;
     }
 
+    Dictionary<string, double> measuredLuck = new Dictionary<string, double>();
+
+    void ReadLuck(string file)
+    {
+        if (!File.Exists(file)) return;
+        Match block = Regex.Match(File.ReadAllText(file, Utf8), @"\[""luck""\]\s*=\s*\{([^}]*)\}|\bluck\s*=\s*\{([^}]*)\}");
+        if (!block.Success) return;
+        string body = block.Groups[1].Success ? block.Groups[1].Value : block.Groups[2].Value;
+        foreach (Match m in Regex.Matches(body, @"\[?""?(\w+)""?\]?\s*=\s*([-\d.]+)"))
+            measuredLuck[m.Groups[1].Value] = double.Parse(m.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture);
+    }
+
     string[] JewelTarget(Dictionary<string, object> c, string cat, string k)
     {
         if (k.StartsWith("leg:"))
@@ -424,8 +436,9 @@ class Companion : Form
         string home = Environment.GetEnvironmentVariable("BENILLA_HOME");
         string dir = Path.Combine(string.IsNullOrEmpty(home) ? Path.Combine(gameDir, "benilla-config") : home, "saved");
         Directory.CreateDirectory(dir);
+        ReadLuck(Path.Combine(dir, "SurvivorsBuilds.lua"));
         StringBuilder L = new StringBuilder();
-        L.Append("SurvivorsBuildsDB = {\n  link = {\n");
+        L.Append("SurvivorsBuildsDB = {\n  luck = { " + string.Join(", ", measuredLuck.Select(kv => kv.Key + " = " + kv.Value.ToString(System.Globalization.CultureInfo.InvariantCulture))) + " },\n  link = {\n");
         L.Append("    launched = " + (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds + ",\n");
         L.Append("    autoPick = " + (B(G(settings, "autoPick")) ? "true" : "false") + ",\n");
         L.Append("    lang = " + LuaStr(lang) + ",\n    builds = {\n");
@@ -618,12 +631,16 @@ class Companion : Form
 
     double Luck()
     {
-        double l = N(G(settings, "baseLuck"), 0) + runLuck;
-        Dictionary<string, object> tal = D(G(build, "talents"));
-        foreach (object tree in A(G(heroClass, "trees")))
-            foreach (object t in A(G(tree, "talents")))
-                if (Regex.IsMatch(S(G(G(t, "desc"), "en")) ?? "", "your luck by \\{v\\}%") && tal != null && tal.ContainsKey(S(G(t, "key"))))
-                    l += N(G(t, "v"), 0) * N(tal[S(G(t, "key"))], 0);
+        double l = runLuck, measured;
+        if (heroClass != null && measuredLuck.TryGetValue(S(heroClass["key"]), out measured)) l += measured;
+        else
+        {
+            Dictionary<string, object> tal = D(G(build, "talents"));
+            foreach (object tree in A(G(heroClass, "trees")))
+                foreach (object t in A(G(tree, "talents")))
+                    if (Regex.IsMatch(S(G(G(t, "desc"), "en")) ?? "", "your luck by \\{v\\}%") && tal != null && tal.ContainsKey(S(G(t, "key"))))
+                        l += N(G(t, "v"), 0) * N(tal[S(G(t, "key"))], 0);
+        }
         if (amulet != null && !amulet.StartsWith("leg:")) l += JewelLuck("amulets", amulet);
         return l;
     }
