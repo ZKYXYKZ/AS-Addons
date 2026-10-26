@@ -5,7 +5,7 @@ Build planner and launcher for Azeroth Survivors. It edits your builds, starts t
 ## Start
 
 1. Put the `AS-Companion` folder next to `AzerothSurvivors.exe`.
-2. Run `Start-Companion.cmd`. The builder opens in your browser at http://localhost:47821/.
+2. Run `Start-Companion.cmd`. The builder opens in its own window (Microsoft Edge app mode, no browser bar). Closing it quits the companion, unless a game it launched is still running.
 3. Create a build for your class: talents, spell priorities, jewelry, rules.
 4. Click **Launch game**.
 

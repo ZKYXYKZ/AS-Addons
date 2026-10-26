@@ -9,6 +9,9 @@ using System.Runtime.InteropServices;
 public static class GameKeys {
   [DllImport("user32.dll")] static extern bool PostMessage(IntPtr h, uint m, IntPtr w, IntPtr l);
   [DllImport("user32.dll")] static extern uint MapVirtualKey(uint c, uint t);
+  [DllImport("user32.dll")] static extern bool ShowWindow(IntPtr h, int c);
+  [DllImport("kernel32.dll")] static extern IntPtr GetConsoleWindow();
+  public static void HideConsole() { ShowWindow(GetConsoleWindow(), 0); }
   public static void Press(IntPtr h, uint vk) {
     uint sc = MapVirtualKey(vk, 0);
     PostMessage(h, 0x100, (IntPtr)vk, (IntPtr)(1 | (sc << 16)));
@@ -318,13 +321,26 @@ function Handle($ctx) {
   }
 }
 
-$listener = New-Object System.Net.HttpListener
-$listener.Prefixes.Add("http://localhost:$Port/")
-$listener.Start()
 $url = "http://localhost:$Port/"
-Write-Host "AS Companion : $url (fermez cette fenêtre pour quitter)"
+$uiDir = Join-Path $root ".ui"
+function OpenUi {
+  $edge = @("${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe", "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
+  if (-not $edge) { Start-Process $url; return $null }
+  return Start-Process $edge -ArgumentList "--app=$url", "--user-data-dir=`"$uiDir`"", "--window-size=1280,880", "--no-first-run", "--no-default-browser-check" -PassThru
+}
+function UiAlive {
+  return [bool](Get-CimInstance Win32_Process -Filter "Name='msedge.exe'" | Where-Object { $_.CommandLine -like "*$uiDir*" } | Select-Object -First 1)
+}
+$listener = New-Object System.Net.HttpListener
+$listener.Prefixes.Add($url)
+try { $listener.Start() } catch {
+  if (-not $NoBrowser) { [void](OpenUi) }
+  exit
+}
 Log "server started on $url"
-if (-not $NoBrowser) { Start-Process $url }
+$ui = $null
+if (-not $NoBrowser) { $ui = OpenUi; if ($ui) { [GameKeys]::HideConsole() } }
+$uiCheck = [DateTime]::Now
 $pending = $listener.GetContextAsync()
 while ($listener.IsListening) {
   if ($pending.Wait(40)) {
@@ -338,5 +354,10 @@ while ($listener.IsListening) {
     $form.Hide()
     Log "game exited"
   }
+  if ($ui -and $ui.HasExited -and -not $status.running -and [DateTime]::Now -gt $uiCheck) {
+    $uiCheck = [DateTime]::Now.AddSeconds(2)
+    if (-not (UiAlive)) { Log "ui closed"; break }
+  }
   [System.Windows.Forms.Application]::DoEvents()
 }
+$listener.Stop()

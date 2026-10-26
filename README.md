@@ -12,7 +12,7 @@ All addons share one window: the gold `S` button on the minimap, `/survivors`, o
 
 ### AS Companion and SurvivorsBuilds
 
-The build planner lives in **AS Companion** (`AS-Companion` folder), a small local app that opens in your browser: talent trees, spell priorities and weights, banned spells, target and fallback jewelry including the legendary amulet of each spell, reroll, skip and banish rules, text sharing, and a **Launch game** button. See [AS-Companion/README.md](AS-Companion/README.md).
+The build planner lives in **AS Companion** (`AS-Companion` folder), a small local app with its own window: talent trees, spell priorities and weights, banned spells, target and fallback jewelry including the legendary amulet of each spell, reroll, skip and banish rules, text sharing, and a **Launch game** button. See [AS-Companion/README.md](AS-Companion/README.md).
 
 The level-up cards are drawn by the game engine and never reach addons. The companion starts the game, reads the cards from its console output, shows the best pick in a banner and can pick it for you (keys 1, 2, 3 and R; skip and banish stay manual). It weighs spells you already own and the legendary amulet you wear.
 
