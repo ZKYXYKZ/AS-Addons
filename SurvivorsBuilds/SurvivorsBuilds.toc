@@ -1,0 +1,13 @@
+## Interface: 11200
+## Title: SurvivorsBuilds
+## Notes: Builds de talents, sorts et bijoux pour Azeroth Survivors
+## Author: ZKY
+## SavedVariables: SurvivorsBuildsDB
+Hub.lua
+Data.lua
+Core.lua
+Window.lua
+Talents.lua
+Lists.lua
+Share.lua
+Guide.lua

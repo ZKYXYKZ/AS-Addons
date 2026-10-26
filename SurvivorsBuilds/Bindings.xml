@@ -1,0 +1,8 @@
+<Bindings>
+  <Binding name="SURVIVORS_HUB" header="SURVIVORS">
+    SurvivorsHub.Toggle()
+  </Binding>
+  <Binding name="SURVIVORS_BUILDS">
+    SurvivorsHub.Toggle("builds")
+  </Binding>
+</Bindings>

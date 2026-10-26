@@ -48,26 +48,57 @@ local function refresh()
   lockButton.text:SetText(S.unlocked and "Lock frames" or "Unlock frames")
 end
 
-local function build()
-  panel = CreateFrame("Frame", "SurvivorsUISettings", UIParent)
-  panel:SetWidth(WIDTH)
-  panel:SetFrameStrata("DIALOG")
-  panel:SetPoint("CENTER", UIParent, "CENTER", 0, 60)
-  panel:SetMovable(1)
-  panel:EnableMouse(1)
-  panel:RegisterForDrag("LeftButton")
-  panel:SetScript("OnDragStart", function() this:StartMoving() end)
-  panel:SetScript("OnDragStop", function() this:StopMovingOrSizing() end)
-  local bg = panel:CreateTexture(nil, "BACKGROUND")
-  bg:SetTexture(0.04, 0.04, 0.05, 0.92)
-  bg:SetAllPoints(panel)
-  local title = label(panel, 14, "LEFT")
-  title:SetPoint("TOPLEFT", panel, "TOPLEFT", 12, -10)
-  title:SetText("SurvivorsUI")
-  local close = button(panel, "x", 20, 20, function() panel:Hide() end)
-  close:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -8, -7)
+local lockBar
 
-  local y = -40
+local function showLockBar()
+  if not lockBar then
+    lockBar = CreateFrame("Frame", "SurvivorsUILockBar", UIParent)
+    lockBar:SetWidth(300)
+    lockBar:SetHeight(36)
+    lockBar:SetFrameStrata("FULLSCREEN_DIALOG")
+    lockBar:SetPoint("TOP", UIParent, "TOP", 0, -90)
+    local bg = lockBar:CreateTexture(nil, "BACKGROUND")
+    bg:SetTexture(0.04, 0.04, 0.05, 0.95)
+    bg:SetAllPoints(lockBar)
+    local lock = button(lockBar, "Lock frames", 140, 24, function()
+      S.SetUnlocked(false)
+      lockBar:Hide()
+      if SurvivorsHub then SurvivorsHub.Show("ui") end
+    end)
+    lock:SetPoint("LEFT", lockBar, "LEFT", 6, 0)
+    local resetAll = button(lockBar, "Reset all", 140, 24, function()
+      for i = 1, table.getn(S.order) do S.Reset(S.order[i]) end
+    end)
+    resetAll:SetPoint("RIGHT", lockBar, "RIGHT", -6, 0)
+  end
+  lockBar:Show()
+end
+
+local function build(parent)
+  if parent then
+    panel = CreateFrame("Frame", nil, parent)
+    panel:SetWidth(WIDTH + 60)
+    panel:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, 0)
+  else
+    panel = CreateFrame("Frame", "SurvivorsUISettings", UIParent)
+    panel:SetWidth(WIDTH)
+    panel:SetFrameStrata("DIALOG")
+    panel:SetPoint("CENTER", UIParent, "CENTER", 0, 60)
+    panel:SetMovable(1)
+    panel:EnableMouse(1)
+    panel:RegisterForDrag("LeftButton")
+    panel:SetScript("OnDragStart", function() this:StartMoving() end)
+    panel:SetScript("OnDragStop", function() this:StopMovingOrSizing() end)
+    local bg = panel:CreateTexture(nil, "BACKGROUND")
+    bg:SetTexture(0.04, 0.04, 0.05, 0.92)
+    bg:SetAllPoints(panel)
+    local title = label(panel, 14, "LEFT")
+    title:SetPoint("TOPLEFT", panel, "TOPLEFT", 12, -10)
+    title:SetText("SurvivorsUI")
+    local close = button(panel, "x", 20, 20, function() panel:Hide() end)
+    close:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -8, -7)
+  end
+  local y = parent and -4 or -40
   local head = label(panel, 11, "LEFT")
   head:SetPoint("TOPLEFT", panel, "TOPLEFT", 12, y)
   head:SetTextColor(0.6, 0.6, 0.6)
@@ -125,6 +156,10 @@ local function build()
   lockButton = button(panel, "Unlock frames", 136, 24, function()
     S.SetUnlocked(not S.unlocked)
     refresh()
+    if parent and S.unlocked then
+      SurvivorsHub.frame:Hide()
+      showLockBar()
+    end
   end)
   lockButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 12, y)
   local resetAll = button(panel, "Reset all", 128, 24, function()
@@ -139,6 +174,7 @@ local function build()
   hint:SetText("Unlocked: drag to move, wheel to resize, Shift = no snap.")
   y = y - 22
   panel:SetHeight(-y)
+  if parent then return end
   panel:Hide()
   panel:SetScript("OnHide", function()
     if S.unlocked then S.SetUnlocked(false) end
@@ -146,6 +182,10 @@ local function build()
 end
 
 function S.ToggleSettings()
+  if SurvivorsHub then
+    SurvivorsHub.Toggle("ui")
+    return
+  end
   if not panel then build() end
   if panel:IsShown() then
     panel:Hide()
@@ -156,6 +196,10 @@ function S.ToggleSettings()
 end
 
 function S.BuildMinimapButton()
+  if SurvivorsHub then
+    SurvivorsHub.MinimapButton()
+    return
+  end
   local b = button(Minimap, "UI", 22, 16, function() S.ToggleSettings() end)
   b:SetFrameLevel(Minimap:GetFrameLevel() + 5)
   b.bg:SetTexture(0, 0, 0, 0.7)
@@ -163,6 +207,13 @@ function S.BuildMinimapButton()
   b:SetScript("OnLeave", function() this.bg:SetTexture(0, 0, 0, 0.7) end)
   b.text:SetFont(FONT, 10, "OUTLINE")
   b:SetPoint("BOTTOMRIGHT", Minimap, "BOTTOMRIGHT", -3, 3)
+end
+
+if SurvivorsHub then
+  SurvivorsHub.RegisterTab("ui", "Interface", 20, function(p)
+    build(p)
+    p.Refresh = refresh
+  end)
 end
 
 SLASH_SURVIVORSUI1 = "/sui"

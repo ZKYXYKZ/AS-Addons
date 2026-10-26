@@ -52,6 +52,19 @@ Fichiers : `Movers.lua` (registre des blocs déplaçables, grille, aimantation, 
 
 Panneau déplaçable sous la minimap : une ligne par gardien avec boussole (nord en haut), temps de trajet estimé, vie si déjà ciblé, état « slain ». Clic sur une ligne : cible le gardien. Repères colorés sur le bord de la minimap. `/guardians` remet le panneau à sa place.
 
+## Fenêtre commune (Hub.lua)
+
+`Hub.lua` est copié tel quel dans chaque addon et ne s'installe qu'une fois (`SurvivorsHub.version`). Le premier chargé crée la fenêtre, le bouton minimap `S`, `/survivors` et `/sv`. Un addon ajoute un onglet avec `SurvivorsHub.RegisterTab(id, libellé, ordre, function(panel) ... end)` ; le contenu est construit à la première ouverture. Modifier Hub.lua impose d'augmenter `VERSION` et de recopier le fichier dans tous les addons.
+
+## SurvivorsBuilds
+
+- `Data.lua` est généré : `node tools/extract-loc.js <exe> <dossier loc>`, puis `node tools/extract-data.js <exe> <dossier loc> data.json`, puis `node tools/gen-lua.js data.json SurvivorsBuilds/Data.lua`. À refaire à chaque mise à jour du jeu qui touche talents, sorts ou bijoux.
+- Fichiers : `Core.lua` (modèle, règles des talents, score), `Window.lua` (onglet et sous-vues), `Talents.lua`, `Lists.lua` (sorts, bijoux, règles), `Share.lua` (export/import), `Guide.lua` (panneau en run et journal du chat), `Bindings.xml`.
+- Score d'une carte : poids du sort (1 à 5) x (1 + influence x rareté), rareté de 0 (commune) à 4 (légendaire), influence de 0 à 1.
+- Texte de partage : `SB1;classe;nom;rangs arbre1/arbre2/arbre3;sort:poids,...;bannis;anneaux;bijoux;amulettes;rareté,réserve,relance`. Les rangs suivent l'ordre des talents de `Data.lua` : un changement d'ordre côté jeu casse les anciens textes.
+- Le journal du chat compare `AZS_SPELLS` entre deux mises à jour. Les bijoux pris ne sont pas encore détectés (source côté Lua inconnue).
+- Les valeurs `{v}` des talents à effet spécial (paliers, apogées) sont estimées par heuristique à partir des flottants de l'effet : à vérifier en jeu.
+
 ## Jeu v0.119 : ce qui a changé et ce que le jeu expose (26/10/2026)
 
 - La config est maintenant à côté de l'exe : `<dossier du jeu>\benilla-config` (AddOns, saved, etc.). `BENILLA_HOME` la déplace toujours.
@@ -59,4 +72,7 @@ Panneau déplaçable sous la minimap : une ligne par gardien avec boussole (nord
 - Aucune donnée sur les cartes proposées à la montée de niveau n'arrive au Lua. L'écran de choix est natif (Bevy) et se pilote au clavier (1 2 3 pour choisir, R pour relancer). Les choix sortent en JSON sur la sortie standard (`rogue: {"type":"choices",...}`) quand le jeu est lancé avec stdout redirigé.
 - Talents : l'API Lua `GetTalentInfo` renvoie les talents de WoW vanilla, pas ceux du jeu. Les vrais talents sont des tables Rust dans `.rdata` : entrées de 160 octets (clé, nom, icône, effets, description ; rangée, colonne et rang max aux octets 104 à 106 ; prérequis). Effet type 0x24 : bonus de stat, valeur par rang en f32 ; type 0x25 : bonus sur un sort, clé du sort et valeur par rang.
 - Localisation : 14 tables JSON embarquées (anglais, français, etc.), 2979 clés dont `ability.<clé>.name`, `rarity.0..5`, et les talents indexés par leur texte anglais.
+- Le moteur dessine l'écran de choix des cartes par-dessus l'UI Lua, assombrie mais lisible : le guide de SurvivorsBuilds reste visible pendant le choix.
+- Les arbres de talents du jeu : 4 colonnes, 7 rangées, une rangée s'ouvre tous les 5 points dans l'arbre, paliers (milestone) aux rangées 2 et 4, apogée (capstone) rangée 6, 51 points au total. Le champ « clé » à l'octet 112 d'un talent n'est pas un prérequis (le jeu ne trace que la colonne des paliers) : ignoré.
+- Un run garde 6 sorts (« Takes a spell slot · 3/6 » sur les cartes).
 - Un autre addon a laissé ses variables chez l'utilisateur : `saved\ASBuilder.lua` (builds par classe, variantes, priorités de sorts et de bijoux, bannissements).

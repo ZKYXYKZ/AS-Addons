@@ -3,6 +3,7 @@
 ## Notes: Interface sobre et compacte pour Azeroth Survivors
 ## Author: ZKY
 ## SavedVariables: SurvivorsUIErrors, SurvivorsUIDB
+Hub.lua
 Movers.lua
 Settings.lua
 SurvivorsUI.lua
