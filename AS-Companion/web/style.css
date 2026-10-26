@@ -179,3 +179,8 @@ header { flex: none; }
 .updbox { width: min(460px, 90vw); display: flex; flex-direction: column; gap: 14px; }
 .updtrack { height: 8px; background: #222228; border-radius: 4px; overflow: hidden; }
 #updBar { height: 100%; width: 0; background: var(--gold); border-radius: 4px; transition: width .3s; }
+.presets { display: flex; flex-direction: column; gap: 10px; margin: 12px 0; max-height: 60vh; overflow: auto; }
+.preset { border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; }
+.preset .row { gap: 10px; align-items: center; }
+.preset .row button { margin-left: auto; }
+.hidden { display: none !important; }
