@@ -801,9 +801,24 @@ class Companion : Form
     DateTime combatRead = DateTime.MinValue;
     Dictionary<string, double> spellDmg = new Dictionary<string, double>();
     double totalDmg;
-    static readonly Regex HitLine = new Regex(@"^\S+ \S+\s+Your (.+?) (?:hits|crits) .+? for (\d+)", RegexOptions.Compiled);
-    static readonly Regex TickLine = new Regex(@"^\S+ \S+\s+.+? suffers (\d+) .*?from your (.+?)\.", RegexOptions.Compiled);
-    static readonly Regex MeleeLine = new Regex(@"^\S+ \S+\s+You (?:hit|crit) .+? for (\d+)", RegexOptions.Compiled);
+    static readonly Regex HitLine = new Regex(@"^\S+ \S+\s+Your (.+?) (?:hits|crits) (.+?) for (\d+)", RegexOptions.Compiled);
+    static readonly Regex TickLine = new Regex(@"^\S+ \S+\s+(.+?) suffers (\d+) .*?from your (.+?)\.", RegexOptions.Compiled);
+    static readonly Regex MeleeLine = new Regex(@"^\S+ \S+\s+You (?:hit|crit) (.+?) for (\d+)", RegexOptions.Compiled);
+    static readonly Regex OtherHit = new Regex(@"^\S+ \S+\s+(.+?) (?:hits|crits) (.+?) for (\d+)", RegexOptions.Compiled);
+    static readonly Regex DiesLine = new Regex(@"^\S+ \S+\s+(.+?) dies\.", RegexOptions.Compiled);
+    static readonly Dictionary<string, string[]> ClassPets = new Dictionary<string, string[]>
+    {
+        { "hunter", new[] { "Loup", "Wolf", "Raptor" } },
+        { "druid", new[] { "Tréant", "Treant" } },
+    };
+    HashSet<string> hostiles = new HashSet<string>();
+
+    bool OwnPet(string name)
+    {
+        if (coopSize <= 1) return true;
+        string[] pets;
+        return heroClass != null && ClassPets.TryGetValue(S(heroClass["key"]), out pets) && pets.Contains(name);
+    }
 
     void ReadCombat()
     {
@@ -826,17 +841,23 @@ class Companion : Form
                     if (m.Success)
                     {
                         double t = double.Parse(m.Groups[2].Value), tv;
+                        hostiles.Add(m.Groups[1].Value);
                         dmgTaken += t;
                         takenBy.TryGetValue(m.Groups[1].Value, out tv);
                         takenBy[m.Groups[1].Value] = tv + t;
                         continue;
                     }
                     m = HitLine.Match(line);
-                    if (m.Success) { AddDmg(m.Groups[1].Value, double.Parse(m.Groups[2].Value), line.Contains(" crits ")); continue; }
+                    if (m.Success) { hostiles.Add(m.Groups[2].Value); AddDmg(m.Groups[1].Value, double.Parse(m.Groups[3].Value), line.Contains(" crits ")); continue; }
                     m = TickLine.Match(line);
-                    if (m.Success) { AddDmg(m.Groups[2].Value, double.Parse(m.Groups[1].Value), false); continue; }
+                    if (m.Success) { hostiles.Add(m.Groups[1].Value); AddDmg(m.Groups[3].Value, double.Parse(m.Groups[2].Value), false); continue; }
                     m = MeleeLine.Match(line);
-                    if (m.Success) AddDmg("Attack", double.Parse(m.Groups[1].Value), line.Contains("You crit "));
+                    if (m.Success) { hostiles.Add(m.Groups[1].Value); AddDmg("Attack", double.Parse(m.Groups[2].Value), line.Contains("You crit ")); continue; }
+                    m = DiesLine.Match(line);
+                    if (m.Success) { hostiles.Add(m.Groups[1].Value); continue; }
+                    m = OtherHit.Match(line);
+                    if (m.Success && !hostiles.Contains(m.Groups[1].Value) && hostiles.Contains(m.Groups[2].Value) && OwnPet(m.Groups[1].Value))
+                        AddDmg("Pets", double.Parse(m.Groups[3].Value), line.Contains(" crits "));
                 }
             }
         }
@@ -1382,6 +1403,7 @@ class Companion : Form
                 runLuck = 0;
                 spellDmg = new Dictionary<string, double>();
                 totalDmg = 0;
+                hostiles = new HashSet<string>();
                 jewelLuck = new Dictionary<string, double>();
                 amuletLuck = 0;
                 amuletUps = 0;

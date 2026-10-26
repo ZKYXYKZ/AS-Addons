@@ -7,7 +7,7 @@ const STATS_STR = {
     timeChart: "Durée de survie par partie", dpsChart: "DPS par partie", classChart: "Survie moyenne par classe", spellChart: "Part des dégâts par sort",
     spellHint: "Sur les parties filtrées, d'après le journal de combat", bySpec: "Par spécialisation", byRace: "Par race", recent: "Dernières parties",
     spec: "Spé", race: "Race", cls: "Classe", n: "Parties", winRate: "Victoires", avgTime: "Survie moy.", maxLvl: "Niv. max", dps: "DPS moy.",
-    date: "Date", build: "Build", result: "Résultat", time: "Durée", level: "Niv.", kills: "Victimes", run: "Partie", attack: "Attaque", other: "Autres", endless: "Endless", bestEndless: "Meilleur endless",
+    date: "Date", build: "Build", result: "Résultat", time: "Durée", level: "Niv.", kills: "Victimes", run: "Partie", attack: "Attaque", pets: "Familiers", other: "Autres", endless: "Endless", bestEndless: "Meilleur endless",
     noDmg: "Pas encore de données de dégâts : activez le journal de combat (fait automatiquement par l'addon SurvivorsBuilds).",
   },
   en: {
@@ -18,7 +18,7 @@ const STATS_STR = {
     timeChart: "Survival time per run", dpsChart: "DPS per run", classChart: "Average survival by class", spellChart: "Damage share by spell",
     spellHint: "Over the filtered runs, from the combat log", bySpec: "By spec", byRace: "By race", recent: "Latest runs",
     spec: "Spec", race: "Race", cls: "Class", n: "Runs", winRate: "Victories", avgTime: "Avg survival", maxLvl: "Max lvl", dps: "Avg DPS",
-    date: "Date", build: "Build", result: "Result", time: "Time", level: "Lvl", kills: "Kills", run: "Run", attack: "Attack", other: "Others", endless: "Endless", bestEndless: "Best endless",
+    date: "Date", build: "Build", result: "Result", time: "Time", level: "Lvl", kills: "Kills", run: "Run", attack: "Attack", pets: "Pets", other: "Others", endless: "Endless", bestEndless: "Best endless",
     noDmg: "No damage data yet: the combat log must be on (the SurvivorsBuilds addon turns it on).",
   },
 };
@@ -39,6 +39,7 @@ const specName = (k) => {
 };
 const spellName = (runClass, k) => {
   if (k === "Attack") return ST("attack");
+  if (k === "Pets") return ST("pets");
   const cl = DATA.classes.find((x) => x.key === runClass);
   const s = cl && cl.spells.find((x) => x.key === k);
   return s ? L(s.name) : k;
