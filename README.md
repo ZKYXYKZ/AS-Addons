@@ -74,7 +74,7 @@ A compact interface for this game mode: target, health, resource and spell bars 
 
 <img src="docs/guardians.png" alt="Guardians panel with a boss" align="right" width="260">
 
-Tracks the four guardian lairs and the bosses: guardian health, asleep or fighting, the countdown until an empty lair fills again, and the next boss. Click a row to target it.
+Tracks the four guardian lairs and the bosses: guardian health, alive or fighting, dead with the countdown until it comes back, and the next boss. Click a row to target it.
 
 <br clear="right">
 

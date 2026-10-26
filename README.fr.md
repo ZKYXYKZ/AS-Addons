@@ -74,7 +74,7 @@ Une interface compacte pour ce mode de jeu : barres de cible, de vie, de ressour
 
 <img src="docs/guardians.png" alt="Panneau Gardiens avec un boss" align="right" width="260">
 
-Suit les quatre repaires de gardiens et les boss : vie des gardiens, endormis ou en combat, compte à rebours avant le retour d'un gardien, et prochain boss. Un clic sur une ligne le cible.
+Suit les quatre repaires de gardiens et les boss : vie des gardiens, en vie ou en combat, mort avec le compte à rebours avant son retour, et prochain boss. Un clic sur une ligne le cible.
 
 <br clear="right">
 

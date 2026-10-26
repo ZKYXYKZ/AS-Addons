@@ -1,7 +1,7 @@
 ## Interface: 11200
 ## Title: SurvivorsGuardians
-## Notes: Tracks the four guardian lairs and the bosses: guardian health, asleep or fighting, countdown until an empty lair fills again, next boss.
-## Notes-frFR: Suit les quatre repaires de gardiens et les boss : vie des gardiens, endormis ou en combat, compte à rebours avant le retour d'un gardien, prochain boss.
+## Notes: Tracks the four guardian lairs and the bosses: guardian health, alive or fighting, dead with the countdown until it comes back, next boss.
+## Notes-frFR: Suit les quatre repaires de gardiens et les boss : vie des gardiens, en vie ou en combat, mort avec le compte à rebours avant son retour, prochain boss.
 ## Author: ZKYXYKZ
 ## Version: 1.0.0
 ## SavedVariables: SurvivorsGuardiansDB

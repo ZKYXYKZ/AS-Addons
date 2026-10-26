@@ -1,5 +1,5 @@
 local FONT = "Fonts\\ARIALN.TTF"
-local WIDTH = 200
+local WIDTH = 236
 local ROW = 20
 local HEAD = 18
 local COLORS = {
@@ -14,8 +14,8 @@ local BOSS = { 0.8, 0.45, 1 }
 local ENGLISH = { warrior = "Warrior", paladin = "Paladin", hunter = "Hunter", rogue = "Rogue", priest = "Priest",
   shaman = "Shaman", mage = "Mage", warlock = "Warlock", druid = "Druid" }
 local T = {
-  en = { title = "Guardians", asleep = "asleep", awake = "fighting", empty = "back in %s", gone = "empty", boss = "boss", next = "%s in %s", final = "final" },
-  fr = { title = "Gardiens", asleep = "endormi", awake = "en combat", empty = "retour %s", gone = "vide", boss = "boss", next = "%s dans %s", final = "final" },
+  en = { title = "Guardians", asleep = "alive", awake = "fighting", empty = "dead · back in %s", gone = "dead", boss = "boss", next = "%s in %s", final = "final" },
+  fr = { title = "Gardiens", asleep = "en vie", awake = "en combat", empty = "mort · retour %s", gone = "mort", boss = "boss", next = "%s dans %s", final = "final" },
 }
 
 SurvivorsGuardiansDB = SurvivorsGuardiansDB or {}
@@ -98,7 +98,7 @@ local function row(i)
   end)
   r.name = text(r, 11, "LEFT")
   r.name:SetPoint("LEFT", r, "LEFT", 8, 1)
-  r.name:SetWidth(WIDTH - 76)
+  r.name:SetWidth(WIDTH - 116)
   r.name:SetHeight(11)
   r.shade = tex(r, "BACKGROUND", 0, 0, 0, 0.35)
   r.shade:SetAllPoints(r)
