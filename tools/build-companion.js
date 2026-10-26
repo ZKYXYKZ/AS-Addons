@@ -25,7 +25,7 @@ const args = [
   "/nologo", "/target:winexe", "/optimize+", "/platform:anycpu",
   "/out:" + out,
   "/win32icon:" + path.join(root, "src", "icon.ico"),
-  "/r:System.Web.Extensions.dll", "/r:System.Windows.Forms.dll", "/r:System.Drawing.dll", "/r:System.Core.dll", "/r:System.Management.dll", "/r:System.IO.Compression.dll",
+  "/r:System.Web.Extensions.dll", "/r:System.Windows.Forms.dll", "/r:System.Drawing.dll", "/r:System.Core.dll", "/r:System.Management.dll", "/r:System.IO.Compression.dll", "/r:Microsoft.VisualBasic.dll",
   ...files.map((f) => "/resource:" + f + ",web/" + path.relative(web, f).split(path.sep).join("/")),
   path.join(root, "src", "Companion.cs"), versionFile,
 ];

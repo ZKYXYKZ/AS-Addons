@@ -1,7 +1,9 @@
 ## Interface: 11200
 ## Title: SurvivorsBuilds
-## Notes: Passerelle entre AS Companion et le jeu : build actif, guide de choix, journal des sorts pris
-## Author: ZKY
+## Notes: Bridge with AS Companion: shows the active build, the spells and jewelry to get with their rank and quality, records your luck and turns on the combat log for the companion.
+## Notes-frFR: Passerelle avec AS Companion : affiche le build actif, les sorts et bijoux à prendre avec leur rang et leur qualité, relève votre chance et active le journal de combat pour le compagnon.
+## Author: ZKYXYKZ
+## Version: 1.0.0
 ## SavedVariables: SurvivorsBuildsDB
 Hub.lua
 Core.lua

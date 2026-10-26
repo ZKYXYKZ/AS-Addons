@@ -1,6 +1,8 @@
 ## Interface: 11200
 ## Title: SurvivorsGuardians
-## Notes: Suivi des gardiens de la carte pour Azeroth Survivors
-## Author: ZKY
+## Notes: Tracks the four guardian lairs and the bosses: guardian health, asleep or fighting, countdown until an empty lair fills again, next boss.
+## Notes-frFR: Suit les quatre repaires de gardiens et les boss : vie des gardiens, endormis ou en combat, compte à rebours avant le retour d'un gardien, prochain boss.
+## Author: ZKYXYKZ
+## Version: 1.0.0
 ## SavedVariables: SurvivorsGuardiansDB
 SurvivorsGuardians.lua

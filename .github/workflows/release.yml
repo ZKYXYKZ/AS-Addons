@@ -21,12 +21,27 @@ jobs:
       - name: Package
         shell: pwsh
         run: |
+          $version = "$env:GITHUB_REF_NAME" -replace "^v", ""
+          if ($version -notmatch '^\d+\.\d+\.\d+$') { $version = "0.0.0" }
+          $addons = "SurvivorsUI", "SurvivorsBuilds", "SurvivorsGuardians"
           $pkg = "dist/pkg"
           New-Item -ItemType Directory "$pkg/benilla-config/AddOns" -Force | Out-Null
           Copy-Item dist/ASCompanion.exe $pkg/
-          Copy-Item -Recurse SurvivorsUI, SurvivorsBuilds, SurvivorsGuardians "$pkg/benilla-config/AddOns/"
+          $manifest = @()
+          foreach ($a in $addons) {
+            Copy-Item -Recurse $a "$pkg/benilla-config/AddOns/"
+            $toc = "$pkg/benilla-config/AddOns/$a/$a.toc"
+            (Get-Content $toc) -replace "^## Version: .*", "## Version: $version" | Set-Content $toc
+            $title = ((Get-Content $toc | Select-String "^## Title: (.*)").Matches[0].Groups[1].Value)
+            $notes = ((Get-Content $toc | Select-String "^## Notes: (.*)").Matches[0].Groups[1].Value)
+            Compress-Archive -Path "$pkg/benilla-config/AddOns/$a" -DestinationPath "dist/$a.zip"
+            $notesFr = ((Get-Content $toc | Select-String "^## Notes-frFR: (.*)").Matches[0].Groups[1].Value)
+            $manifest += [ordered]@{ name = $a; title = $title; notes = $notes; notesFr = $notesFr; version = $version; file = "$a.zip" }
+          }
+          ConvertTo-Json @($manifest) | Set-Content dist/addons.json
           Compress-Archive -Path "$pkg/*" -DestinationPath dist/AzerothSurvivors-Addons.zip
-          Get-FileHash dist/ASCompanion.exe, dist/AzerothSurvivors-Addons.zip -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLower())  $(Split-Path $_.Path -Leaf)" } | Set-Content dist/SHA256SUMS.txt
+          $files = @("dist/ASCompanion.exe", "dist/AzerothSurvivors-Addons.zip", "dist/addons.json") + ($addons | ForEach-Object { "dist/$_.zip" })
+          Get-FileHash $files -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLower())  $(Split-Path $_.Path -Leaf)" } | Set-Content dist/SHA256SUMS.txt
           Get-Content dist/SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
@@ -34,6 +49,8 @@ jobs:
           path: |
             dist/ASCompanion.exe
             dist/AzerothSurvivors-Addons.zip
+            dist/Survivors*.zip
+            dist/addons.json
             dist/SHA256SUMS.txt
       - if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
@@ -41,4 +58,6 @@ jobs:
           files: |
             dist/ASCompanion.exe
             dist/AzerothSurvivors-Addons.zip
+            dist/Survivors*.zip
+            dist/addons.json
             dist/SHA256SUMS.txt

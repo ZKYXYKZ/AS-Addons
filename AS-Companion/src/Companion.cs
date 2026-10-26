@@ -206,15 +206,18 @@ class Companion : Form
             using (WebClient w = Web()) body = w.DownloadString(string.IsNullOrEmpty(api) ? "https://api.github.com/repos/" + Repo + "/releases/latest" : api);
             Dictionary<string, object> rel = D(json.DeserializeObject(body));
             string tag = S(G(rel, "tag_name"));
+            Dictionary<string, string> assets = new Dictionary<string, string>();
+            foreach (object a in A(G(rel, "assets"))) assets[S(G(a, "name"))] = S(G(a, "browser_download_url"));
+            releaseAssets = assets;
+            assets.TryGetValue("AzerothSurvivors-Addons.zip", out latestZip);
+            assets.TryGetValue("SHA256SUMS.txt", out latestSums);
+            string manifest;
+            if (assets.TryGetValue("addons.json", out manifest))
+                using (WebClient w = Web()) remoteAddons = A(json.DeserializeObject(Utf8.GetString(w.DownloadData(manifest)))).Select(D).Where(x => x != null).ToList();
             Version remote, local = new Version(CurrentVersion);
-            if (tag == null || !Version.TryParse(tag.TrimStart('v', 'V'), out remote) || remote <= local) { latestTag = null; return; }
-            foreach (object a in A(G(rel, "assets")))
-            {
-                string name = S(G(a, "name")), url = S(G(a, "browser_download_url"));
-                if (name == "AzerothSurvivors-Addons.zip") latestZip = url;
-                if (name == "SHA256SUMS.txt") latestSums = url;
-            }
-            if (latestZip != null) { latestTag = tag; Log("update available: " + tag); }
+            if (tag == null || !Version.TryParse(tag.TrimStart('v', 'V'), out remote) || remote <= local || latestZip == null) { latestTag = null; return; }
+            latestTag = tag;
+            Log("update available: " + tag);
         }
         catch (Exception ex) { Log("update check failed: " + ex.Message); }
     }
@@ -251,7 +254,13 @@ class Companion : Form
                     if (n.EndsWith("/")) continue;
                     string target = null;
                     if (n == "ASCompanion.exe") target = newExe;
-                    else if (n.StartsWith("benilla-config/AddOns/") && !n.Contains("..")) target = Path.Combine(addons, n.Substring("benilla-config/AddOns/".Length).Replace('/', '\\'));
+                    else if (n.StartsWith("benilla-config/AddOns/") && !n.Contains(".."))
+                    {
+                        string rel = n.Substring("benilla-config/AddOns/".Length);
+                        string folder = rel.Split('/')[0];
+                        if (!Directory.Exists(Path.Combine(addons, folder))) continue;
+                        target = Path.Combine(addons, rel.Replace('/', '\\'));
+                    }
                     if (target == null) continue;
                     Directory.CreateDirectory(Path.GetDirectoryName(target));
                     using (Stream src = e.Open())
@@ -276,6 +285,132 @@ class Companion : Form
             updating = false;
             Log("update failed: " + ex.Message);
         }
+    }
+
+    volatile Dictionary<string, string> releaseAssets = new Dictionary<string, string>();
+    volatile List<Dictionary<string, object>> remoteAddons = new List<Dictionary<string, object>>();
+
+    string AddonsDir()
+    {
+        Dictionary<string, object> st = D(LoadState()["settings"]);
+        string gamePath = S(G(st, "gamePath"));
+        if (string.IsNullOrEmpty(gamePath)) gamePath = DefaultGamePath();
+        string home = Environment.GetEnvironmentVariable("BENILLA_HOME");
+        return Path.Combine(string.IsNullOrEmpty(home) ? Path.Combine(Path.GetDirectoryName(gamePath), "benilla-config") : home, "AddOns");
+    }
+
+    static Dictionary<string, string> Toc(string dir, string name)
+    {
+        Dictionary<string, string> t = new Dictionary<string, string>();
+        string f = Path.Combine(dir, name, name + ".toc");
+        if (!File.Exists(f)) return null;
+        foreach (string line in File.ReadAllLines(f, Utf8))
+        {
+            Match m = Regex.Match(line, @"^##\s*([\w-]+)\s*:\s*(.*)$");
+            if (m.Success) t[m.Groups[1].Value] = m.Groups[2].Value.Trim();
+        }
+        return t;
+    }
+
+    Dictionary<string, bool> EnabledMap(string dir)
+    {
+        Dictionary<string, bool> map = new Dictionary<string, bool>();
+        string f = Path.Combine(dir, "account.txt");
+        if (File.Exists(f))
+            foreach (string line in File.ReadAllLines(f))
+            {
+                Match m = Regex.Match(line, @"^\s*([^:]+?)\s*:\s*(enabled|disabled)\s*$", RegexOptions.IgnoreCase);
+                if (m.Success) map[m.Groups[1].Value] = m.Groups[2].Value.ToLowerInvariant() == "enabled";
+            }
+        return map;
+    }
+
+    string AddonsJson()
+    {
+        string dir = AddonsDir();
+        Dictionary<string, bool> enabled = EnabledMap(dir);
+        List<string> names = remoteAddons.Select(r => S(G(r, "name"))).Where(n => n != null).ToList();
+        if (Directory.Exists(dir))
+            foreach (string d in Directory.GetDirectories(dir))
+            {
+                string n = Path.GetFileName(d);
+                if (!names.Contains(n) && Toc(dir, n) != null) names.Add(n);
+            }
+        List<object> list = new List<object>();
+        foreach (string n in names)
+        {
+            Dictionary<string, object> remote = remoteAddons.FirstOrDefault(r => S(G(r, "name")) == n);
+            Dictionary<string, string> toc = Toc(dir, n);
+            string v;
+            Dictionary<string, object> o = new Dictionary<string, object>();
+            o["name"] = n;
+            o["title"] = remote != null ? S(G(remote, "title")) : toc != null && toc.TryGetValue("Title", out v) ? v : n;
+            o["notes"] = remote != null ? S(G(remote, "notes")) : toc != null && toc.TryGetValue("Notes", out v) ? v : "";
+            o["notesFr"] = remote != null ? S(G(remote, "notesFr")) : toc != null && toc.TryGetValue("Notes-frFR", out v) ? v : "";
+            o["installed"] = toc != null;
+            o["version"] = toc != null && toc.TryGetValue("Version", out v) ? v : null;
+            o["latest"] = remote != null ? S(G(remote, "version")) : null;
+            o["ours"] = remote != null;
+            bool en;
+            o["enabled"] = !enabled.TryGetValue(n, out en) || en;
+            list.Add(o);
+        }
+        return json.Serialize(new Dictionary<string, object> { { "addons", list }, { "running", running }, { "dir", dir } });
+    }
+
+    string AddonAction(string name, string action)
+    {
+        if (running) return GameLang().StartsWith("fr") ? "Fermez le jeu d'abord" : "Close the game first";
+        if (string.IsNullOrEmpty(name) || name.Contains("..") || name.Contains("\\") || name.Contains("/")) return "bad name";
+        string dir = AddonsDir();
+        string path = Path.Combine(dir, name);
+        if (action == "uninstall")
+        {
+            if (Directory.Exists(path)) Microsoft.VisualBasic.FileIO.FileSystem.DeleteDirectory(path, Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
+            Log("addon removed: " + name);
+            return "";
+        }
+        if (action == "enable" || action == "disable")
+        {
+            string f = Path.Combine(dir, "account.txt");
+            List<string> lines = File.Exists(f) ? File.ReadAllLines(f).ToList() : new List<string>();
+            lines.RemoveAll(l => Regex.IsMatch(l, @"^\s*" + Regex.Escape(name) + @"\s*:"));
+            lines.Add(name + ": " + (action == "enable" ? "enabled" : "disabled"));
+            File.WriteAllLines(f, lines);
+            Log("addon " + action + "d: " + name);
+            return "";
+        }
+        if (action == "install")
+        {
+            Dictionary<string, object> remote = remoteAddons.FirstOrDefault(r => S(G(r, "name")) == name);
+            string file = S(G(remote, "file")), url;
+            if (file == null || !releaseAssets.TryGetValue(file, out url)) return "not in the release";
+            byte[] zip;
+            string sums;
+            using (WebClient w = Web())
+            {
+                zip = w.DownloadData(url);
+                sums = latestSums != null ? w.DownloadString(latestSums) : "";
+            }
+            string hash;
+            using (System.Security.Cryptography.SHA256 sha = System.Security.Cryptography.SHA256.Create())
+                hash = BitConverter.ToString(sha.ComputeHash(zip)).Replace("-", "").ToLowerInvariant();
+            if (!sums.ToLowerInvariant().Contains(hash + "  " + file.ToLowerInvariant())) return "SHA-256 mismatch";
+            using (MemoryStream ms = new MemoryStream(zip))
+            using (System.IO.Compression.ZipArchive za = new System.IO.Compression.ZipArchive(ms))
+                foreach (System.IO.Compression.ZipArchiveEntry e in za.Entries)
+                {
+                    string n = e.FullName.Replace('\\', '/');
+                    if (n.EndsWith("/") || n.Contains("..") || !n.StartsWith(name + "/")) continue;
+                    string target = Path.Combine(dir, n.Replace('/', '\\'));
+                    Directory.CreateDirectory(Path.GetDirectoryName(target));
+                    using (Stream src = e.Open())
+                    using (FileStream dst = File.Create(target)) src.CopyTo(dst);
+                }
+            Log("addon installed: " + name + " " + S(G(remote, "version")));
+            return "";
+        }
+        return "unknown action";
     }
 
     void Migrate()
@@ -500,6 +635,19 @@ class Companion : Form
             {
                 CheckUpdate();
                 Respond(ctx, 200, "application/json", Utf8.GetBytes(json.Serialize(new Dictionary<string, object> { { "version", CurrentVersion }, { "update", latestTag }, { "updateError", updateError } })));
+                return;
+            }
+            if (path == "/api/addons" && method == "GET")
+            {
+                Respond(ctx, 200, "application/json", Utf8.GetBytes(AddonsJson()));
+                return;
+            }
+            if (path == "/api/addons" && method == "POST")
+            {
+                Dictionary<string, object> req = D(json.DeserializeObject(new StreamReader(ctx.Request.InputStream, Utf8).ReadToEnd()));
+                string err;
+                try { err = AddonAction(S(G(req, "name")), S(G(req, "action"))); } catch (Exception ex) { err = ex.Message; }
+                Respond(ctx, 200, "application/json", Utf8.GetBytes(json.Serialize(new Dictionary<string, object> { { "error", err } })));
                 return;
             }
             if (path == "/api/open" && method == "POST")

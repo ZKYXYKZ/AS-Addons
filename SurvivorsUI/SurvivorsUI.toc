@@ -1,7 +1,9 @@
 ## Interface: 11200
 ## Title: SurvivorsUI
-## Notes: Interface sobre et compacte pour Azeroth Survivors
-## Author: ZKY
+## Notes: Compact interface for Azeroth Survivors: target, health, resource and spell bars, movable and resizable frames with a grid, farther camera zoom.
+## Notes-frFR: Interface compacte pour Azeroth Survivors : barres de cible, de vie, de ressource et de sorts, cadres déplaçables et redimensionnables sur une grille, zoom caméra plus lointain.
+## Author: ZKYXYKZ
+## Version: 1.0.0
 ## SavedVariables: SurvivorsUIErrors, SurvivorsUIDB
 Hub.lua
 Movers.lua
