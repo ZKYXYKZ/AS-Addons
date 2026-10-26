@@ -1,7 +1,7 @@
 const STATS_STR = {
   fr: {
     empty: "Aucune partie enregistrée. Les parties lancées depuis le compagnon apparaissent ici à leur fin.",
-    all: "Toutes", allZones: "Toutes les zones", allResults: "Tous les résultats", win: "Victoire", loss: "Défaite",
+    all: "Toutes", allModes: "Solo et coop", solo: "Solo", coop: "Coop", allZones: "Toutes les zones", allResults: "Tous les résultats", win: "Victoire", loss: "Défaite",
     runs: "Parties", wins: "Victoires", played: "Temps joué", bestTime: "Meilleure survie", maxLevel: "Niveau max", maxKills: "Victimes max",
     avgDps: "DPS moyen", maxDps: "DPS max", bosses: "Boss tués", guardians: "Gardiens tués",
     timeChart: "Durée de survie par partie", dpsChart: "DPS par partie", classChart: "Survie moyenne par classe", spellChart: "Part des dégâts par sort",
@@ -12,7 +12,7 @@ const STATS_STR = {
   },
   en: {
     empty: "No run recorded yet. Runs started from the companion show up here when they end.",
-    all: "All", allZones: "All zones", allResults: "All results", win: "Victory", loss: "Defeat",
+    all: "All", allModes: "Solo and co-op", solo: "Solo", coop: "Co-op", allZones: "All zones", allResults: "All results", win: "Victory", loss: "Defeat",
     runs: "Runs", wins: "Victories", played: "Time played", bestTime: "Best survival", maxLevel: "Max level", maxKills: "Max kills",
     avgDps: "Average DPS", maxDps: "Max DPS", bosses: "Bosses killed", guardians: "Guardians killed",
     timeChart: "Survival time per run", dpsChart: "DPS per run", classChart: "Average survival by class", spellChart: "Damage share by spell",
@@ -23,7 +23,7 @@ const STATS_STR = {
   },
 };
 const ST = (k) => (STATS_STR[lang()] || STATS_STR.en)[k] || k;
-const STAT_FILTER = { cls: "", zone: "", result: "" };
+const STAT_FILTER = { cls: "", zone: "", result: "", mode: "" };
 let RUNS = null;
 
 const mmss = (s) => { s = Math.round(+s || 0); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
@@ -190,7 +190,7 @@ async function renderStats(sec) {
   if (PAGE !== "stats") return;
   sec.innerHTML = "";
   if (!RUNS.length) { sec.appendChild(el("div", "empty", ST("empty"))); return; }
-  const runs = RUNS.filter((r) => (!STAT_FILTER.cls || r.class === STAT_FILTER.cls) && (!STAT_FILTER.zone || r.bg === STAT_FILTER.zone) && (!STAT_FILTER.result || r.result === STAT_FILTER.result));
+  const runs = RUNS.filter((r) => (!STAT_FILTER.cls || r.class === STAT_FILTER.cls) && (!STAT_FILTER.zone || r.bg === STAT_FILTER.zone) && (!STAT_FILTER.result || r.result === STAT_FILTER.result) && (!STAT_FILTER.mode || (STAT_FILTER.mode === "coop") === !!r.coop));
 
   const bar = el("div", "row filters");
   const sel = (opts, value, onchange) => {
@@ -204,6 +204,7 @@ async function renderStats(sec) {
   const zones = [...new Set(RUNS.map((r) => r.bg).filter(Boolean))];
   sel([["", ST("allZones")], ...zones.map((z) => [z, z])], STAT_FILTER.zone, (v) => (STAT_FILTER.zone = v));
   sel([["", ST("allResults")], ["victory", ST("win")], ["defeat", ST("loss")]], STAT_FILTER.result, (v) => (STAT_FILTER.result = v));
+  sel([["", ST("allModes")], ["solo", ST("solo")], ["coop", ST("coop")]], STAT_FILTER.mode, (v) => (STAT_FILTER.mode = v));
   sec.appendChild(bar);
   if (!runs.length) { sec.appendChild(el("div", "empty", ST("empty"))); return; }
 
@@ -227,7 +228,7 @@ async function renderStats(sec) {
 
   const last = runs.slice(-40);
   const offset = runs.length - last.length;
-  const runTip = (r, i) => `<div class="t">${esc(ST("run"))} ${offset + i + 1} · ${esc(className(r.class))}</div><div>${esc(r.date ? r.date.replace("T", " ").slice(0, 16) : "")}</div><div>${esc(ST("time"))} ${mmss(r.time)} · ${esc(ST("level"))} ${num(r.level)} · ${num(r.kills)} ${esc(ST("kills").toLowerCase())}</div><div>DPS ${num(r.dps)}</div><div class="mute">${esc(r.result === "victory" ? ST("win") : ST("loss"))}${r.endless ? " · " + esc(ST("endless")) + " +" + mmss(r.endlessTime) : ""} · ${esc(r.build || "")}</div>`;
+  const runTip = (r, i) => `<div class="t">${esc(ST("run"))} ${offset + i + 1} · ${esc(className(r.class))}</div><div>${esc(r.date ? r.date.replace("T", " ").slice(0, 16) : "")}</div><div>${esc(ST("time"))} ${mmss(r.time)} · ${esc(ST("level"))} ${num(r.level)} · ${num(r.kills)} ${esc(ST("kills").toLowerCase())}</div><div>DPS ${num(r.dps)}</div><div class="mute">${esc(r.result === "victory" ? ST("win") : ST("loss"))}${r.endless ? " · " + esc(ST("endless")) + " +" + mmss(r.endlessTime) : ""}${r.coop ? " · " + esc(ST("coop")) + " " + r.coop : ""} · ${esc(r.build || "")}</div>`;
   const grid = el("div", "charts");
   const classEntries = [...new Set(last.map((r) => r.class))].map((c) => ({ label: className(c), color: CLASS_COLORS[c] || "#3987e5" }));
   grid.appendChild(lineChart(ST("timeChart"), last.map((r, i) => ({ y: (+r.time || 0) / 60, label: String(offset + i + 1), r, i, color: CLASS_COLORS[r.class] })), (v) => Math.round(v) + " min", (p) => runTip(p.r, p.i), classEntries));
@@ -260,5 +261,5 @@ async function renderStats(sec) {
   sec.appendChild(tables);
   sec.appendChild(table(ST("recent"), [ST("date"), ST("cls"), ST("spec"), ST("build"), ST("result"), ST("time"), ST("level"), ST("kills"), "DPS"],
     runs.slice(-20).reverse().map((r) => [esc((r.date || "").replace("T", " ").slice(0, 16)), `<span style="color:${CLASS_COLORS[r.class] || "inherit"}">${esc(className(r.class))}</span>`, esc(r.spec ? specName(r.spec).replace(/ \(.*\)$/, "") : "-"), esc(r.build || "-"),
-      r.result === "victory" ? `<span class="good">${esc(ST("win"))}</span>${r.endless ? " · " + esc(ST("endless")) + " +" + mmss(r.endlessTime) : ""}` : esc(ST("loss")), mmss(r.time), num(r.level), num(r.kills), num(r.dps)])));
+      r.result === "victory" ? `<span class="good">${esc(ST("win"))}</span>${r.endless ? " · " + esc(ST("endless")) + " +" + mmss(r.endlessTime) : ""}${r.coop ? " · " + esc(ST("coop")) : ""}` : esc(ST("loss")) + (r.coop ? " · " + esc(ST("coop")) : ""), mmss(r.time), num(r.level), num(r.kills), num(r.dps)])));
 }

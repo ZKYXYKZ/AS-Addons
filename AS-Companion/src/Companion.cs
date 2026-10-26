@@ -1370,6 +1370,9 @@ class Companion : Form
         if (type == "picked" || type == "resume") screenRerolls = 0;
         switch (type)
         {
+            case "coop":
+                coopSize = S(G(j, "state")) == "off" ? 0 : (int)N(G(j, "size"), 0);
+                break;
             case "ready":
                 recordedIndex = -1;
                 build = SelectBuild(S(G(j, "class")));
@@ -1525,6 +1528,7 @@ class Companion : Form
 
 
     int recordedIndex = -1;
+    int coopSize;
     double victoryTime;
 
     void RecordRun(Dictionary<string, object> j)
@@ -1554,6 +1558,7 @@ class Companion : Form
             }
         }
         r["spec"] = specKey;
+        if (coopSize > 1) r["coop"] = coopSize;
         double time = N(G(j, "time"), 0);
         r["damageGame"] = G(j, "damage");
         r["damageLog"] = Math.Round(totalDmg);
