@@ -922,11 +922,15 @@ class Companion : Form
     void AddDmg(string spellName, double dmg, bool crit)
     {
         string key = spellName;
+        string bare = Regex.Replace(spellName, " (Aura|Effect)$", "");
         if (heroClass != null)
             foreach (object sp in A(G(heroClass, "spells")))
-                if (S(G(G(sp, "name"), "en")) == spellName) { key = S(G(sp, "key")); break; }
+            {
+                string en = S(G(G(sp, "name"), "en"));
+                if (en == spellName || en == bare) { key = S(G(sp, "key")); break; }
+            }
         int capTree;
-        if (detectedTree < 0 && !owned.ContainsKey(key) && capSpells.TryGetValue(key, out capTree)) DetectSpec(capTree, "log " + key);
+        if (detectedTree < 0 && !offeredNew.Contains(key) && !owned.ContainsKey(key) && capSpells.TryGetValue(key, out capTree)) DetectSpec(capTree, "log " + key);
         double v;
         spellDmg.TryGetValue(key, out v);
         spellDmg[key] = v + dmg;
@@ -959,6 +963,7 @@ class Companion : Form
             pendingKey = 0;
             overlay.Hide();
             Log("game exited");
+            ReadAddonRuns(savedFile);
         }
         if (pendingKey != 0 && running && (DateTime.Now - pendingAt).TotalMilliseconds > 800)
         {
@@ -1275,6 +1280,53 @@ class Companion : Form
 
     Dictionary<string, double> measuredLuck = new Dictionary<string, double>();
 
+    string savedFile;
+
+    void ReadAddonRuns(string file)
+    {
+        if (file == null || !File.Exists(file)) return;
+        string rf = Path.Combine(dataDir, "runs.json");
+        if (!File.Exists(rf)) return;
+        try
+        {
+            List<Dictionary<string, object>> runs = A(json.DeserializeObject(File.ReadAllText(rf, Utf8))).Select(D).ToList();
+            System.Globalization.CultureInfo inv = System.Globalization.CultureInfo.InvariantCulture;
+            int n = 0;
+            foreach (Match m in Regex.Matches(File.ReadAllText(file, Utf8), "\"(AZR1\\|[^\"]*)\""))
+            {
+                string[] f = m.Groups[1].Value.Split('|');
+                if (f.Length < 9) continue;
+                double lvl = double.Parse(f[2], inv), kills = double.Parse(f[3], inv), total = double.Parse(f[6], inv);
+                Dictionary<string, object> r = runs.LastOrDefault(x => x != null && G(x, "meter") == null && S(G(x, "class")) == f[1] && N(G(x, "level"), -1) == lvl && N(G(x, "kills"), -1) == kills);
+                if (r == null || total <= 0) continue;
+                List<object> meter = new List<object>();
+                foreach (string line in f[7].Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    string[] l = line.Split(',');
+                    if (l.Length >= 3) meter.Add(new Dictionary<string, object> { { "name", l[0] }, { "dmg", double.Parse(l[1], inv) }, { "proc", l[2] == "1" } });
+                }
+                Dictionary<string, object> stats = new Dictionary<string, object>();
+                foreach (string kv in f[8].Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    int eq = kv.IndexOf('=');
+                    double v;
+                    if (eq > 0 && double.TryParse(kv.Substring(eq + 1), System.Globalization.NumberStyles.Float, inv, out v)) stats[kv.Substring(0, eq)] = v;
+                }
+                double time = N(G(r, "time"), 0);
+                r["meter"] = meter;
+                r["stats"] = stats;
+                r["damageMeter"] = total;
+                r["damage"] = Math.Round(total);
+                r["dps"] = time > 0 ? Math.Round(total / time, 1) : 0;
+                n++;
+            }
+            if (n == 0) return;
+            File.WriteAllText(rf, json.Serialize(runs), Utf8);
+            Log("addon meter merged into " + n + " run(s)");
+        }
+        catch (Exception ex) { Log("addon runs: " + ex.Message); }
+    }
+
     void ReadLuck(string file)
     {
         if (!File.Exists(file)) return;
@@ -1303,6 +1355,7 @@ class Companion : Form
         string dir = Path.Combine(string.IsNullOrEmpty(home) ? Path.Combine(gameDir, "benilla-config") : home, "saved");
         Directory.CreateDirectory(dir);
         ReadLuck(Path.Combine(dir, "SurvivorsBuilds.lua"));
+        ReadAddonRuns(Path.Combine(dir, "SurvivorsBuilds.lua"));
         StringBuilder L = new StringBuilder();
         L.Append("SurvivorsBuildsDB = {\n  luck = { " + string.Join(", ", measuredLuck.Select(kv => kv.Key + " = " + kv.Value.ToString(System.Globalization.CultureInfo.InvariantCulture))) + " },\n  link = {\n");
         L.Append("    launched = " + (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds + ",\n");
@@ -1313,37 +1366,64 @@ class Companion : Form
             string ck = S(c["key"]);
             Dictionary<string, object> b = ActiveBuild(s, ck);
             if (b == null) continue;
-            Dictionary<string, object> rules = D(G(b, "rules")) ?? new Dictionary<string, object>();
-            L.Append("      " + ck + " = {\n        name = " + LuaStr(S(G(b, "name"))) + ",\n        spells = {\n");
-            foreach (object sp in A(G(b, "spells")))
+            L.Append("      " + ck + " = ");
+            BuildLua(L, c, b);
+        }
+        L.Append("    },\n    alts = {\n");
+        foreach (Dictionary<string, object> c in A(G(data, "classes")).Select(D))
+        {
+            string ck = S(c["key"]);
+            Dictionary<string, object> active = ActiveBuild(s, ck);
+            Dictionary<int, Dictionary<string, object>> byTree = new Dictionary<int, Dictionary<string, object>>();
+            foreach (Dictionary<string, object> b in A(G(s, "builds")).Select(D).Where(b => S(G(b, "class")) == ck))
             {
-                object d = A(G(c, "spells")).FirstOrDefault(x => S(G(x, "key")) == S(G(sp, "key")));
-                if (d != null) L.Append("          { key = " + LuaStr(S(G(sp, "key"))) + ", name = " + LuaStr(Loc(G(d, "name"))) + ", w = " + (int)N(G(sp, "w"), 3) + ", icon = " + LuaStr(S(G(d, "icon"))) + " },\n");
+                int ti = SpecIndex(b, c);
+                if (ti >= 0 && (!byTree.ContainsKey(ti) || b == active)) byTree[ti] = b;
             }
-            L.Append("        },\n        names = {\n");
-            foreach (object d in A(G(c, "spells"))) L.Append("          " + S(G(d, "key")) + " = " + LuaStr(Loc(G(d, "name"))) + ",\n");
-            L.Append("        },\n");
-            Dictionary<string, object> ban = D(G(b, "ban")) ?? new Dictionary<string, object>();
-            L.Append("        bans = { " + string.Join(", ", ban.Keys.Select(k => LuaStr(JewelName(c, k)))) + " },\n");
-            List<string> jw = new List<string>();
-            foreach (string cat in new[] { "rings", "trinkets", "amulets" })
+            Dictionary<string, int> caps = CapSpells(c);
+            if (byTree.Count == 0) continue;
+            L.Append("      " + ck + " = {\n        caps = { " + string.Join(", ", caps.Select(kv => kv.Key + " = " + (kv.Value + 1))) + " },\n");
+            foreach (KeyValuePair<int, Dictionary<string, object>> kv in byTree)
             {
-                object f = A(G(b, cat)).FirstOrDefault();
-                if (f != null) jw.Add(LuaStr(JewelName(c, S(f))));
+                L.Append("        [" + (kv.Key + 1) + "] = ");
+                BuildLua(L, c, kv.Value);
             }
-            L.Append("        jewels = { " + string.Join(", ", jw) + " },\n");
-            L.Append("        targets = {\n");
-            foreach (string cat in new[] { "rings", "trinkets", "amulets" })
-                foreach (object k in A(G(b, cat)).Take(cat == "amulets" ? 1 : 2))
-                {
-                    string[] t = JewelTarget(c, cat, S(k));
-                    L.Append("          { cat = " + LuaStr(cat) + ", name = " + LuaStr(t[0]) + ", item = " + LuaStr(t[1]) + ", icon = " + LuaStr(t[2]) + " },\n");
-                }
-            L.Append("        },\n");
-            L.Append("        reserve = " + (int)N(G(rules, "reserve"), 1) + ", banishes = " + (int)N(G(rules, "banishes"), 3) + ", reroll = " + (int)N(G(rules, "reroll"), 1) + ",\n      },\n");
+            L.Append("      },\n");
         }
         L.Append("    },\n  },\n}\n");
         File.WriteAllText(Path.Combine(dir, "SurvivorsBuilds.lua"), L.ToString(), Utf8);
+    }
+
+    void BuildLua(StringBuilder L, Dictionary<string, object> c, Dictionary<string, object> b)
+    {
+        Dictionary<string, object> rules = D(G(b, "rules")) ?? new Dictionary<string, object>();
+        L.Append("{\n        name = " + LuaStr(S(G(b, "name"))) + ",\n        spells = {\n");
+        foreach (object sp in A(G(b, "spells")))
+        {
+            object d = A(G(c, "spells")).FirstOrDefault(x => S(G(x, "key")) == S(G(sp, "key")));
+            if (d != null) L.Append("          { key = " + LuaStr(S(G(sp, "key"))) + ", name = " + LuaStr(Loc(G(d, "name"))) + ", w = " + (int)N(G(sp, "w"), 3) + ", icon = " + LuaStr(S(G(d, "icon"))) + " },\n");
+        }
+        L.Append("        },\n        names = {\n");
+        foreach (object d in A(G(c, "spells"))) L.Append("          " + S(G(d, "key")) + " = " + LuaStr(Loc(G(d, "name"))) + ",\n");
+        L.Append("        },\n");
+        Dictionary<string, object> ban = D(G(b, "ban")) ?? new Dictionary<string, object>();
+        L.Append("        bans = { " + string.Join(", ", ban.Keys.Select(k => LuaStr(JewelName(c, k)))) + " },\n");
+        List<string> jw = new List<string>();
+        foreach (string cat in new[] { "rings", "trinkets", "amulets" })
+        {
+            object f = A(G(b, cat)).FirstOrDefault();
+            if (f != null) jw.Add(LuaStr(JewelName(c, S(f))));
+        }
+        L.Append("        jewels = { " + string.Join(", ", jw) + " },\n");
+        L.Append("        targets = {\n");
+        foreach (string cat in new[] { "rings", "trinkets", "amulets" })
+            foreach (object k in A(G(b, cat)).Take(cat == "amulets" ? 1 : 2))
+            {
+                string[] t = JewelTarget(c, cat, S(k));
+                L.Append("          { cat = " + LuaStr(cat) + ", name = " + LuaStr(t[0]) + ", item = " + LuaStr(t[1]) + ", icon = " + LuaStr(t[2]) + " },\n");
+            }
+        L.Append("        },\n");
+        L.Append("        reserve = " + (int)N(G(rules, "reserve"), 1) + ", banishes = " + (int)N(G(rules, "banishes"), 3) + ", reroll = " + (int)N(G(rules, "reroll"), 1) + ",\n      },\n");
     }
 
     void Launch()
@@ -1355,6 +1435,7 @@ class Companion : Form
         string l = S(G(settings, "lang"));
         lang = !string.IsNullOrEmpty(l) && l != "auto" ? l : GameLang().StartsWith("fr") ? "fr" : "en";
         WriteGateway(s, Path.GetDirectoryName(path));
+        savedFile = Path.Combine(string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BENILLA_HOME")) ? Path.Combine(Path.GetDirectoryName(path), "benilla-config") : Environment.GetEnvironmentVariable("BENILLA_HOME"), "saved", "SurvivorsBuilds.lua");
         string home = Environment.GetEnvironmentVariable("BENILLA_HOME");
         combatLog = Path.Combine(string.IsNullOrEmpty(home) ? Path.Combine(Path.GetDirectoryName(path), "benilla-config") : home, "Logs", "WoWCombatLog.txt");
         combatPos = File.Exists(combatLog) ? new FileInfo(combatLog).Length : 0;
@@ -1457,6 +1538,7 @@ class Companion : Form
                 recordedIndex = -1;
                 build = SelectBuild(S(G(j, "class")));
                 CapSignals();
+                offeredNew = new HashSet<string>();
                 owned = new Dictionary<string, int>();
                 amulet = null;
                 jewels = new Dictionary<string, string>();
@@ -1611,6 +1693,7 @@ class Companion : Form
 
     int recordedIndex = -1;
     int detectedTree = -1;
+    HashSet<string> offeredNew = new HashSet<string>();
     string specNote = "";
     Dictionary<string, int> capSpells = new Dictionary<string, int>(), capPets = new Dictionary<string, int>();
     static readonly Dictionary<string, string[]> CapPets = new Dictionary<string, string[]>
@@ -1625,11 +1708,16 @@ class Companion : Form
 
     int SpecIndex(Dictionary<string, object> b)
     {
+        return SpecIndex(b, heroClass);
+    }
+
+    int SpecIndex(Dictionary<string, object> b, Dictionary<string, object> cls)
+    {
         Dictionary<string, object> tal = D(G(b, "talents"));
-        if (heroClass == null || tal == null) return -1;
+        if (cls == null || tal == null) return -1;
         double best = 0;
         int found = -1, ti = 0;
-        foreach (object tree in A(G(heroClass, "trees")))
+        foreach (object tree in A(G(cls, "trees")))
         {
             double pts = A(G(tree, "talents")).Sum(t => tal.ContainsKey(S(G(t, "key"))) ? N(tal[S(G(t, "key"))], 0) : 0);
             if (pts > best) { best = pts; found = ti; }
@@ -1638,12 +1726,32 @@ class Companion : Form
         return found;
     }
 
+    Dictionary<string, int> CapSpells(Dictionary<string, object> cls)
+    {
+        Dictionary<string, int> caps = new Dictionary<string, int>();
+        if (cls == null) return caps;
+        int ti = 0;
+        foreach (object tree in A(G(cls, "trees")))
+        {
+            foreach (object t in A(G(tree, "talents")))
+            {
+                if (N(G(t, "row"), 0) != 6) continue;
+                Match m = Regex.Match(S(G(G(t, "desc"), "en")) ?? "", @"start every run with (.+?)(?: instead of|[,;.]| and )");
+                if (m.Success)
+                    foreach (object sp in A(G(cls, "spells")))
+                        if (S(G(G(sp, "name"), "en")) == m.Groups[1].Value.Trim()) caps[S(G(sp, "key"))] = ti;
+            }
+            ti++;
+        }
+        return caps;
+    }
+
     void CapSignals()
     {
-        capSpells = new Dictionary<string, int>();
         capPets = new Dictionary<string, int>();
         detectedTree = -1;
         specNote = "";
+        capSpells = CapSpells(heroClass);
         if (heroClass == null) return;
         int ti = 0;
         foreach (object tree in A(G(heroClass, "trees")))
@@ -1652,10 +1760,6 @@ class Companion : Form
             {
                 if (N(G(t, "row"), 0) != 6) continue;
                 string desc = S(G(G(t, "desc"), "en")) ?? "";
-                Match m = Regex.Match(desc, @"start every run with (.+?)(?: instead of|[,;.]| and )");
-                if (m.Success)
-                    foreach (object sp in A(G(heroClass, "spells")))
-                        if (S(G(G(sp, "name"), "en")) == m.Groups[1].Value.Trim()) capSpells[S(G(sp, "key"))] = ti;
                 foreach (KeyValuePair<string, string[]> pet in CapPets)
                     if (desc.IndexOf(pet.Key, StringComparison.OrdinalIgnoreCase) >= 0)
                         foreach (string n in pet.Value) capPets[n] = ti;
@@ -1804,7 +1908,8 @@ class Companion : Form
                 }
             }
             int capTree;
-            if (info.Type == "spell" && S(G(card, "kind")) == "upgrade" && info.Key != null && !owned.ContainsKey(info.Key) && capSpells.TryGetValue(info.Key, out capTree)) DetectSpec(capTree, "card " + info.Key);
+            if (info.Type == "spell" && S(G(card, "kind")) == "new" && info.Key != null) offeredNew.Add(info.Key);
+            if (info.Type == "spell" && S(G(card, "kind")) == "upgrade" && info.Key != null && !offeredNew.Contains(info.Key) && !owned.ContainsKey(info.Key) && capSpells.TryGetValue(info.Key, out capTree)) DetectSpec(capTree, "card " + info.Key);
             if (info.Type == "spell" && S(G(card, "kind")) == "upgrade" && info.Key != null) owned[info.Key] = (int)N(G(card, "rank"), 2) - 1;
             if (info.Key != null && ban.ContainsKey(info.Key)) { if (banIdx == 0) banIdx = i; scores.Add(i + ". " + S(G(card, "title")) + " banni"); continue; }
             double baseW = 0;

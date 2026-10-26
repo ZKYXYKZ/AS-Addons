@@ -5,7 +5,7 @@ const STATS_STR = {
     runs: "Parties", wins: "Victoires", played: "Temps joué", bestTime: "Meilleure survie", maxLevel: "Niveau max", maxKills: "Victimes max",
     avgDps: "DPS moyen", maxDps: "DPS max", bosses: "Boss tués", guardians: "Gardiens tués",
     timeChart: "Durée de survie par partie", dpsChart: "DPS par partie", classChart: "Survie moyenne par classe", spellChart: "Part des dégâts par sort",
-    spellHint: "Sur les parties filtrées, d'après le journal de combat", bySpec: "Par spécialisation", byRace: "Par race", recent: "Dernières parties",
+    spellHint: "Sur les parties filtrées, d'après le compteur du jeu (sinon le journal de combat)", bySpec: "Par spécialisation", byRace: "Par race", recent: "Dernières parties",
     spec: "Spé", race: "Race", cls: "Classe", n: "Parties", winRate: "Victoires", avgTime: "Survie moy.", maxLvl: "Niv. max", dps: "DPS moy.",
     date: "Date", build: "Build", result: "Résultat", time: "Durée", level: "Niv.", kills: "Victimes", run: "Partie", attack: "Attaque", pets: "Familiers", other: "Autres", endless: "Endless", bestEndless: "Meilleur endless",
     noDmg: "Pas encore de données de dégâts : activez le journal de combat (fait automatiquement par l'addon SurvivorsBuilds).",
@@ -16,7 +16,7 @@ const STATS_STR = {
     runs: "Runs", wins: "Victories", played: "Time played", bestTime: "Best survival", maxLevel: "Max level", maxKills: "Max kills",
     avgDps: "Average DPS", maxDps: "Max DPS", bosses: "Bosses killed", guardians: "Guardians killed",
     timeChart: "Survival time per run", dpsChart: "DPS per run", classChart: "Average survival by class", spellChart: "Damage share by spell",
-    spellHint: "Over the filtered runs, from the combat log", bySpec: "By spec", byRace: "By race", recent: "Latest runs",
+    spellHint: "Over the filtered runs, from the game meter (else the combat log)", bySpec: "By spec", byRace: "By race", recent: "Latest runs",
     spec: "Spec", race: "Race", cls: "Class", n: "Runs", winRate: "Victories", avgTime: "Avg survival", maxLvl: "Max lvl", dps: "Avg DPS",
     date: "Date", build: "Build", result: "Result", time: "Time", level: "Lvl", kills: "Kills", run: "Run", attack: "Attack", pets: "Pets", other: "Others", endless: "Endless", bestEndless: "Best endless",
     noDmg: "No damage data yet: the combat log must be on (the SurvivorsBuilds addon turns it on).",
@@ -38,6 +38,7 @@ const specName = (k) => {
   return cl && cl.trees[+i] ? L(cl.trees[+i].name) + " (" + L(cl.name) + ")" : k;
 };
 const spellName = (runClass, k) => {
+  if (k.startsWith("=")) return k.slice(1);
   if (k === "Attack") return ST("attack");
   if (k === "Pets") return ST("pets");
   const cl = DATA.classes.find((x) => x.key === runClass);
@@ -239,7 +240,10 @@ async function renderStats(sec) {
     (b) => `<div class="t">${esc(b.label)}</div><div>${num(b.rs.length)} ${esc(ST("runs").toLowerCase())}</div><div>${esc(ST("avgTime"))} ${mmss(avg(b.rs.map((r) => +r.time || 0)))}</div><div>DPS ${num(avg(b.rs.map((r) => +r.dps || 0)))}</div>`));
   const dmg = {};
   let total = 0;
-  runs.forEach((r) => Object.entries(r.dmg || {}).forEach(([k, v]) => { const key = r.class + "|" + k; dmg[key] = (dmg[key] || 0) + v; total += v; }));
+  runs.forEach((r) => {
+    if (r.meter && r.meter.length) r.meter.forEach((l) => { const key = r.class + "|=" + l.name; dmg[key] = (dmg[key] || 0) + l.dmg; total += l.dmg; });
+    else Object.entries(r.dmg || {}).forEach(([k, v]) => { const key = r.class + "|" + k; dmg[key] = (dmg[key] || 0) + v; total += v; });
+  });
   if (total > 0) {
     let rows = Object.entries(dmg).map(([k, v]) => { const [c, s] = k.split("|"); return { label: spellName(c, s) + (STAT_FILTER.cls ? "" : " · " + className(c)), v, share: v / total }; }).sort((a, b) => b.v - a.v);
     if (rows.length > 10) {
