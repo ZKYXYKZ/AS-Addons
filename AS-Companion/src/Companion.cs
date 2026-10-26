@@ -176,16 +176,16 @@ class Companion : Form
         tray.Text = "AS Companion";
         tray.Visible = true;
         ContextMenu menu = new ContextMenu();
-        menu.MenuItems.Add("Builder", delegate { ui = OpenUi(); });
+        menu.MenuItems.Add("Builder", delegate { ShowUi(); });
         menu.MenuItems.Add("Quitter / Quit", delegate { Close(); });
         tray.ContextMenu = menu;
-        tray.DoubleClick += delegate { ui = OpenUi(); };
+        tray.DoubleClick += delegate { ShowUi(); };
         listener = new HttpListener();
         listener.Prefixes.Add(Url);
         listener.Start();
         listener.BeginGetContext(OnContext, null);
         Log("server started on " + Url);
-        if (!noBrowser) ui = OpenUi();
+        if (!noBrowser) ShowUi();
         ThreadPool.QueueUserWorkItem(delegate { CheckUpdate(); });
         tick = new System.Windows.Forms.Timer { Interval = 200 };
         tick.Tick += OnTick;
@@ -460,11 +460,28 @@ class Companion : Form
         }
     }
 
+    void ShowUi()
+    {
+        ui = OpenUi();
+        if (ui == null)
+        {
+            watchUi = false;
+            Log("no Edge or Chrome found, opened the default browser; quit from the tray icon");
+        }
+    }
+
     static Process OpenUi()
     {
+        string pf86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+        string pf = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+        string local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         string[] candidates = {
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"Microsoft\Edge\Application\msedge.exe"),
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), @"Microsoft\Edge\Application\msedge.exe"),
+            Path.Combine(pf86, @"Microsoft\Edge\Application\msedge.exe"),
+            Path.Combine(pf, @"Microsoft\Edge\Application\msedge.exe"),
+            Path.Combine(local, @"Microsoft\Edge\Application\msedge.exe"),
+            Path.Combine(pf, @"Google\Chrome\Application\chrome.exe"),
+            Path.Combine(pf86, @"Google\Chrome\Application\chrome.exe"),
+            Path.Combine(local, @"Google\Chrome\Application\chrome.exe"),
         };
         string edge = candidates.FirstOrDefault(File.Exists);
         if (edge == null)
@@ -480,7 +497,7 @@ class Companion : Form
     {
         try
         {
-            using (System.Management.ManagementObjectSearcher q = new System.Management.ManagementObjectSearcher("SELECT CommandLine FROM Win32_Process WHERE Name = 'msedge.exe'"))
+            using (System.Management.ManagementObjectSearcher q = new System.Management.ManagementObjectSearcher("SELECT CommandLine FROM Win32_Process WHERE Name = 'msedge.exe' OR Name = 'chrome.exe'"))
                 foreach (System.Management.ManagementObject o in q.Get())
                 {
                     string cmd = o["CommandLine"] as string;
