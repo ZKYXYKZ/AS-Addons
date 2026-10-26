@@ -678,13 +678,20 @@ class Companion : Form
 
     double Boost() { return N(G(G(build, "rules"), "boost"), 2); }
 
+    double BuildWeight(string key)
+    {
+        List<object> sp = A(G(build, "spells")).ToList();
+        int i = sp.FindIndex(x => S(G(x, "key")) == key);
+        return i < 0 ? 0 : N(G(sp[i], "w"), 3) * (i >= 6 ? 0.5 : 1);
+    }
+
     double JewelWeight(string cat, string key)
     {
         List<string> list = A(G(build, cat)).Select(S).ToList();
         int idx = list.IndexOf(key);
         double set = N(G(G(build, "jw"), key), 0);
         double w = idx >= 0 ? (set > 0 ? set : idx < (cat == "amulets" ? 1 : 2) ? 5 : 3) * 2 : 0;
-        if (key.StartsWith("leg:") && N(G(G(build, "rules"), "adapt"), 1) != 0) w = Math.Max(w, SpellWeight(key.Substring(4)) * Boost());
+        if (key.StartsWith("leg:")) w = Math.Max(w, BuildWeight(key.Substring(4)) * Boost());
         return w;
     }
 
@@ -760,7 +767,7 @@ class Companion : Form
                 }
                 else if (info.Cat == "amulets")
                 {
-                    double wornW = amulet != null ? JewelWeight("amulets", amulet) * (1 + 0.5 * amuletUps) : 0;
+                    double wornW = amulet != null ? JewelWeight("amulets", amulet) * (1 + 0.25 * amuletUps) : 0;
                     if (w > wornW) { baseW = w; target = idx == 0 || info.Spell != null; }
                 }
                 else if (jewels.Values.Count(v => v == info.Cat) < 2)
