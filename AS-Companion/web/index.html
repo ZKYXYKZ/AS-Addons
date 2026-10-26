@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AS Companion</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="brand">AS Companion</div>
+  <div class="row">
+    <select id="classSel"></select>
+    <select id="buildSel"></select>
+    <button id="newBtn"></button>
+    <button id="dupBtn"></button>
+    <button id="renBtn"></button>
+    <button id="delBtn"></button>
+  </div>
+  <div class="row right">
+    <button id="impBtn"></button>
+    <button id="expBtn"></button>
+    <button id="launchBtn" class="primary"></button>
+  </div>
+</header>
+<div id="status" class="status"></div>
+<nav id="tabs"></nav>
+<main>
+  <section id="tab-talents"></section>
+  <section id="tab-spells"></section>
+  <section id="tab-jewels"></section>
+  <section id="tab-rules"></section>
+  <section id="tab-options"></section>
+</main>
+<div id="tip" class="tip"></div>
+<div id="modal" class="modal hidden">
+  <div class="box">
+    <div id="modalTitle"></div>
+    <textarea id="modalText" spellcheck="false"></textarea>
+    <div class="row right">
+      <button id="modalOk" class="primary"></button>
+      <button id="modalClose"></button>
+    </div>
+  </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

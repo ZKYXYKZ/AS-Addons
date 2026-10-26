@@ -1,12 +1,27 @@
-# AS-Companion
+# AS Companion
 
-Lanceur pour Azeroth Survivors qui conseille, ou prend, la meilleure carte à chaque choix selon un build SurvivorsBuilds.
+Build planner and launcher for Azeroth Survivors. It edits your builds, starts the game, reads the level-up cards and advises or picks the best one.
 
-1. Dans le jeu : Survivors > Builds > Exporter, copier le texte.
-2. Le coller dans `build.txt`, à côté de ce fichier.
-3. Lancer le jeu par `Start-Companion.cmd` (conseil seul) ou `Start-Companion.cmd -Auto` (choisit, relance tout seul).
-4. Chemin du jeu différent : `Start-Companion.cmd -GamePath "D:\...\AzerothSurvivors.exe"`.
+## Start
 
-Un bandeau au premier plan affiche le conseil pendant le choix. En `-Auto`, les touches 1, 2, 3 et R sont envoyées à la fenêtre du jeu, même si elle n'a pas le focus. Skip et bannir restent à faire à la main (pas de touche dans le jeu). Sans skip débloqué sur le compte, la carte la plus rare non bannie est prise.
+1. Put the `AS-Companion` folder next to `AzerothSurvivors.exe`.
+2. Run `Start-Companion.cmd`. The builder opens in your browser at http://localhost:47821/.
+3. Create a build for your class: talents, spell priorities, jewelry, rules.
+4. Click **Launch game**.
 
-Le jeu doit être lancé par le compagnon : c'est ainsi qu'il lit les cartes proposées, que le jeu écrit sur sa sortie console. Journal dans `companion.log`.
+## Builder
+
+- **Talents**: the three trees of the class, 51 points, milestones and capstone.
+- **Spells**: priority order with a weight, banned spells. The first 6 are targets, the rest fallbacks.
+- **Jewelry**: target and fallback rings, trinkets and amulets, including the legendary amulet of each spell.
+- **Rules**: rarity weight, rerolls kept in reserve, banishes, reroll before skipping, level from which fallback rings and trinkets are accepted, legendary boost, adapt to the run.
+- **Options**: game path, language, card auto-pick, overlay.
+- **Sharing**: Export and Import a build as one line of text.
+
+## In game
+
+The companion reads the cards the game prints on its console, so the game must be started with **Launch game**. A topmost banner shows the advice. With auto-pick on, the keys 1, 2, 3 and R are sent to the game window. Skip and banish have no key and stay manual.
+
+At launch the companion also writes the active builds into the SurvivorsBuilds addon saved variables: the in-game Builds tab and the guide panel show them during the run.
+
+Builds are stored in `state.json`, the log in `companion.log`.

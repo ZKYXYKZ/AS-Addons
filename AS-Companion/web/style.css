@@ -1,0 +1,93 @@
+:root {
+  --bg: #0e0e10;
+  --panel: #17171a;
+  --panel2: #1f1f23;
+  --line: #2b2b31;
+  --text: #e8e6e1;
+  --mute: #8d8a84;
+  --gold: #e3b54b;
+  --blue: #6fa8ff;
+  --red: #e0524a;
+  --green: #5fd06a;
+  --orange: #ff8a1f;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 "Segoe UI", system-ui, sans-serif; }
+header { display: flex; align-items: center; gap: 16px; padding: 12px 18px; background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.brand { font-weight: 700; letter-spacing: .5px; color: var(--gold); font-size: 16px; margin-right: 8px; }
+.row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.right { margin-left: auto; }
+button, select, input[type=text], input[type=number] { background: var(--panel2); color: var(--text); border: 1px solid var(--line); border-radius: 4px; padding: 6px 10px; font: inherit; }
+button { cursor: pointer; }
+button:hover { border-color: #4a4a52; background: #26262b; }
+button.primary { background: #3a2e12; border-color: var(--gold); color: var(--gold); font-weight: 600; }
+button.primary:hover { background: #4a3a15; }
+button.active { background: #3a2e12; border-color: var(--gold); color: var(--gold); }
+button.small { padding: 2px 8px; }
+select { min-width: 130px; }
+.status { padding: 6px 18px; color: var(--mute); font-size: 13px; border-bottom: 1px solid var(--line); min-height: 30px; }
+.status b { color: var(--gold); font-weight: 600; }
+nav { display: flex; gap: 6px; padding: 12px 18px 0; }
+main { padding: 14px 18px 30px; }
+section { display: none; }
+section.show { display: block; }
+h3 { margin: 0 0 8px; font-size: 14px; color: var(--gold); font-weight: 600; }
+.hint { color: var(--mute); font-size: 12px; margin-bottom: 10px; }
+.trees { display: grid; grid-template-columns: repeat(3, minmax(280px, 1fr)); gap: 14px; }
+.tree { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px; }
+.tree.spec { border-color: #6b5420; }
+.tree .head { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; }
+.grid { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 58px; justify-items: center; align-items: center; }
+.ic { position: relative; width: 42px; height: 42px; border: 2px solid #000; border-radius: 4px; background: #000 center/cover; cursor: pointer; }
+.ic img { width: 100%; height: 100%; display: block; border-radius: 2px; }
+.ic .rk { position: absolute; right: -6px; bottom: -8px; background: #000c; padding: 0 3px; border-radius: 3px; font-size: 11px; }
+.ic .badge { position: absolute; left: 2px; top: 0; font-weight: 700; font-size: 13px; text-shadow: 0 0 3px #000; }
+.ic .sub { position: absolute; right: -4px; bottom: -4px; width: 18px; height: 18px; border: 1px solid #000; }
+.ic.locked img { filter: grayscale(1) brightness(.45); }
+.ic.some { border-color: var(--green); }
+.ic.full { border-color: var(--gold); }
+.ic.ban { border-color: var(--red); }
+.ic.ban img { filter: grayscale(1) brightness(.5); }
+.ic.target { border-color: var(--gold); }
+.ic.fallback { border-color: var(--blue); }
+.ic.leg { border-color: #8a4b10; }
+.miles { margin-top: 8px; font-size: 12px; color: var(--mute); }
+.miles .on { color: var(--blue); }
+.line { position: absolute; width: 3px; background: #555; z-index: 0; }
+.line.on { background: var(--gold); }
+.grid .ic { z-index: 1; }
+.cols { display: grid; grid-template-columns: 360px 1fr; gap: 20px; }
+.list .item { display: flex; align-items: center; gap: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 5px; padding: 5px 8px; margin-bottom: 5px; }
+.list .item .ic { width: 32px; height: 32px; cursor: default; }
+.list .item .name { flex: 1; }
+.list .item .tag { font-size: 12px; color: var(--gold); }
+.list .item .tag.ban { color: var(--red); }
+.list .item.pool { cursor: pointer; }
+.list .item.pool:hover { border-color: #4a4a52; }
+.list .item .num { width: 22px; text-align: center; color: var(--gold); font-weight: 700; }
+.list .item.extra .num, .list .item.extra .name { color: var(--mute); }
+.list .sep { color: var(--mute); font-size: 12px; margin: 10px 0 6px; }
+.jcols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.jcol { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px; }
+.jgrid { display: grid; grid-template-columns: repeat(auto-fill, 46px); gap: 8px; margin-bottom: 10px; }
+.jlist { font-size: 13px; }
+.jlist div { padding: 2px 0; }
+.jlist span { color: var(--mute); font-size: 12px; }
+.legtitle { color: var(--orange); font-size: 12px; margin: 6px 0; }
+.form { display: grid; grid-template-columns: 340px 1fr; gap: 12px 18px; align-items: center; max-width: 900px; }
+.form label { color: var(--text); }
+.form .help { grid-column: 2; color: var(--mute); font-size: 12px; margin-top: -8px; }
+.form input[type=range] { width: 260px; }
+.form input[type=text] { width: 100%; }
+.val { color: var(--gold); margin-left: 8px; }
+.tip { position: fixed; pointer-events: none; background: #0b0b0dee; border: 1px solid #3a3a42; border-radius: 5px; padding: 8px 10px; max-width: 360px; font-size: 13px; display: none; z-index: 10; }
+.tip .t { color: var(--gold); font-weight: 600; margin-bottom: 4px; }
+.tip .t.leg { color: var(--orange); }
+.tip .r { color: var(--mute); font-size: 12px; }
+.tip .warn { color: var(--red); font-size: 12px; margin-top: 4px; }
+.modal { position: fixed; inset: 0; background: #000a; display: flex; align-items: center; justify-content: center; }
+.modal.hidden { display: none; }
+.modal .box { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; width: min(720px, 92vw); }
+.modal textarea { width: 100%; height: 120px; margin: 10px 0; background: #000; color: var(--text); border: 1px solid var(--line); border-radius: 4px; padding: 8px; font: 12px Consolas, monospace; }
+.empty { color: var(--mute); padding: 40px; text-align: center; }
+@media (max-width: 1000px) { .trees, .jcols { grid-template-columns: 1fr; } .cols { grid-template-columns: 1fr; } }

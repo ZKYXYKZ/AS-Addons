@@ -4,14 +4,16 @@ SB.Guide = G
 
 local T = {
   fr = {
-    title = "Build : %s", none = "Aucun build actif pour cette classe", learn = "à prendre", rank = "rang %d",
+    title = "Build : %s", none = "Aucun build reçu du compagnon pour cette classe", learn = "à prendre", rank = "rang %d",
     ban = "À bannir (%d) : %s", rerolls = "Relances : %d (garder %d)", rule = "Rien du build : %s", reroll = "relancer puis skip", skip = "skip",
     jewels = "Bijoux visés : %s", newSpell = "Nouveau sort : %s%s", upSpell = "%s rang %d%s", prio = " (priorité %d)", out = " (hors build)",
+    auto = "Sélection auto active (compagnon)",
   },
   en = {
-    title = "Build: %s", none = "No active build for this class", learn = "to take", rank = "rank %d",
+    title = "Build: %s", none = "No build received from the companion for this class", learn = "to take", rank = "rank %d",
     ban = "Banish (%d): %s", rerolls = "Rerolls: %d (keep %d)", rule = "Nothing from the build: %s", reroll = "reroll then skip", skip = "skip",
     jewels = "Target jewelry: %s", newSpell = "New spell: %s%s", upSpell = "%s rank %d%s", prio = " (priority %d)", out = " (off build)",
+    auto = "Auto-pick on (companion)",
   },
 }
 local function tl(k) return (T[SB.Lang()] or T.en)[k] end
@@ -28,16 +30,23 @@ local function ranks()
   return out
 end
 
-local function announce(b, key, rank, new)
-  local cls = SB.PlayerClass()
-  local s = SB.Spell(cls, key)
-  if not s then return end
-  local idx = b and SB.SpellIndex(b, key)
-  local suffix = idx and string.format(tl("prio"), idx) or (b and tl("out") or "")
+local function priority(b, key)
+  if not b then return end
+  for i = 1, table.getn(b.spells) do
+    if b.spells[i].key == key then return i end
+  end
+end
+
+local function announce(key, rank, new)
+  local b = SB.Build()
+  local name = b and b.names and b.names[key]
+  if not name then return end
+  local idx = priority(b, key)
+  local suffix = idx and string.format(tl("prio"), idx) or tl("out")
   if new then
-    SB.Print(string.format(tl("newSpell"), SB.T(s.name), suffix))
+    SB.Print(string.format(tl("newSpell"), name, suffix))
   else
-    SB.Print(string.format(tl("upSpell"), SB.T(s.name), rank, suffix))
+    SB.Print(string.format(tl("upSpell"), name, rank, suffix))
   end
 end
 
@@ -52,14 +61,9 @@ local function watch()
     return
   end
   lastLevel = lvl
-  local b = SB.Active(SB.PlayerClass())
   for key, r in pairs(now) do
     local before = known[key]
-    if not before then
-      announce(b, key, r, true)
-    elseif r > before then
-      announce(b, key, r, false)
-    end
+    if not before then announce(key, r, true) elseif r > before then announce(key, r, false) end
   end
   known = now
 end
@@ -93,6 +97,26 @@ local function build()
   return f
 end
 
+function G.Lines(b)
+  local have = ranks()
+  local lines = ""
+  for i = 1, math.min(6, table.getn(b.spells)) do
+    local e = b.spells[i]
+    local r = have[e.key]
+    local state = r and string.format(tl("rank"), r) or ("|cff66ff66" .. tl("learn") .. "|r")
+    lines = lines .. i .. ". " .. e.name .. "  |cff999999" .. state .. "|r\n"
+  end
+  if b.bans and table.getn(b.bans) > 0 then
+    lines = lines .. "|cffff6666" .. string.format(tl("ban"), b.banishes or 3, table.concat(b.bans, ", ")) .. "|r\n"
+  end
+  if b.jewels and table.getn(b.jewels) > 0 then lines = lines .. string.format(tl("jewels"), table.concat(b.jewels, ", ")) .. "\n" end
+  local rr = AZS_RUN and tonumber(AZS_RUN.rr)
+  if rr then lines = lines .. string.format(tl("rerolls"), rr, b.reserve or 0) .. "\n" end
+  lines = lines .. string.format(tl("rule"), b.reroll == 1 and tl("reroll") or tl("skip"))
+  if SB.Fresh() and SB.Link().autoPick then lines = lines .. "\n|cff66ccff" .. tl("auto") .. "|r" end
+  return lines
+end
+
 function G.Refresh()
   local f = G.frame
   if not f then return end
@@ -102,7 +126,7 @@ function G.Refresh()
     f:Hide()
     return
   end
-  local b = SB.Active(SB.PlayerClass())
+  local b = SB.Build()
   if not b then
     f.title:SetText(tl("none"))
     f.body:SetText("")
@@ -111,33 +135,7 @@ function G.Refresh()
     return
   end
   f.title:SetText(string.format(tl("title"), b.name))
-  local have = ranks()
-  local lines = ""
-  for i = 1, math.min(6, table.getn(b.spells)) do
-    local e = b.spells[i]
-    local s = SB.Spell(b.class, e.key)
-    if s then
-      local r = have[e.key]
-      local state = r and string.format(tl("rank"), r) or ("|cff66ff66" .. tl("learn") .. "|r")
-      lines = lines .. i .. ". " .. SB.T(s.name) .. "  |cff999999" .. state .. "|r\n"
-    end
-  end
-  local bans = ""
-  for key in pairs(b.ban) do
-    local s = SB.Spell(b.class, key) or SB.Jewel("rings", key) or SB.Jewel("trinkets", key) or SB.Jewel("amulets", key)
-    if s then bans = bans .. (bans == "" and "" or ", ") .. SB.T(s.name) end
-  end
-  if bans ~= "" then lines = lines .. "|cffff6666" .. string.format(tl("ban"), b.rules.banishes or 3, bans) .. "|r\n" end
-  local wanted = ""
-  for _, cat in ipairs({ "rings", "trinkets", "amulets" }) do
-    local j = b[cat][1] and SB.Jewel(cat, b[cat][1])
-    if j then wanted = wanted .. (wanted == "" and "" or ", ") .. SB.T(j.name) end
-  end
-  if wanted ~= "" then lines = lines .. string.format(tl("jewels"), wanted) .. "\n" end
-  local rr = AZS_RUN and tonumber(AZS_RUN.rr)
-  if rr then lines = lines .. string.format(tl("rerolls"), rr, b.rules.reserve or 0) .. "\n" end
-  lines = lines .. string.format(tl("rule"), b.rules.reroll == 1 and tl("reroll") or tl("skip"))
-  f.body:SetText(lines)
+  f.body:SetText(G.Lines(b))
   f:SetHeight(f.body:GetHeight() + 36)
   f:Show()
 end

@@ -10,18 +10,13 @@ The game loads regular WoW 1.12 addons (Lua 5.0, `## Interface: 11200`). These a
 
 All addons share one window: the gold `S` button on the minimap, `/survivors`, or a key set under Key Bindings > Survivors. Each addon adds its own tab.
 
-### SurvivorsBuilds
+### AS Companion and SurvivorsBuilds
 
-A build planner for every class, with the game's real talent trees, spells and jewelry, in English or French.
+The build planner lives in **AS Companion** (`AS-Companion` folder), a small local app that opens in your browser: talent trees, spell priorities and weights, banned spells, target and fallback jewelry including the legendary amulet of each spell, reroll, skip and banish rules, text sharing, and a **Launch game** button. See [AS-Companion/README.md](AS-Companion/README.md).
 
-- **Talents**: the three trees of the class with the in-game layout, a row opening every 5 points, milestones at 10, 20 and 30 points, 51 points in total. Left click adds a point, right click removes one. The spec is detected from the tree with the most points.
-- **Spells**: priority order with a weight from 1 to 5, and banned spells. A run holds 6 spells, so the first 6 are targets and the rest are fallbacks.
-- **Jewelry**: wishlists for 2 rings, 2 trinkets and 1 amulet, with fallbacks and banned pieces.
-- **Rules**: how much a card's rarity weighs against your priority, rerolls kept in reserve, reroll before skipping, and the game's Store Level-Ups option.
-- **Sharing**: Export gives a line of text with the whole build, Import turns that text back into a build.
-- **In a run**: while you pick a card, a small panel lists your priorities with their current rank, the spells to banish and the rerolls left. Every spell you take or rank up is written to the chat, with its priority.
+The level-up cards are drawn by the game engine and never reach addons. The companion starts the game, reads the cards from its console output, shows the best pick in a banner and can pick it for you (keys 1, 2, 3 and R; skip and banish stay manual). It weighs spells you already own and the legendary amulet you wear.
 
-The level-up cards are drawn by the game engine and never reach addons, so the planner guides your picks but does not make them.
+**SurvivorsBuilds** is the in-game side. It receives the active build of each class when the companion launches the game, then shows it in the Builds tab and in a small panel while you pick a card, and writes every spell you take or rank up to the chat.
 
 ### SurvivorsUI
 
@@ -57,6 +52,7 @@ SurvivorsGuardians works on its own. With SurvivorsUI installed, its panel is mo
 1. In game, open Options, go to the AddOns tab and click `Open AddOns Folder`.
 2. Copy the `SurvivorsBuilds`, `SurvivorsUI` and `SurvivorsGuardians` folders into it.
 3. Enable them in the AddOns list. They load at your next run.
+4. Copy the `AS-Companion` folder next to `AzerothSurvivors.exe` and start the game from `Start-Companion.cmd`.
 
 ## Known limits
 
