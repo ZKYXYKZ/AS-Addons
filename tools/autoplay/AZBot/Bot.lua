@@ -64,6 +64,7 @@ end
 
 local acc, lastErr, lastTurn, stuckT, wander = 0, nil, nil, 0, 0
 local route, step = {}, 1
+local aimX, aimY
 local f = CreateFrame("Frame")
 f:SetScript("OnUpdate", function()
   acc = acc + arg1
@@ -107,6 +108,7 @@ f:SetScript("OnUpdate", function()
     if (w[1] - x) ^ 2 + (w[2] - y) ^ 2 < 0.003 ^ 2 then step = step + 1 if step > table.getn(route) then step = 1 end w = route[step] end
     tx, ty = w[1], w[2]
   end
+  aimX, aimY = tx, ty
   local dx, dy = tx - x, ty - y
   local dist = math.sqrt(dx * dx + dy * dy)
   if t and kind == "lair" and dist < 0.006 then
@@ -143,4 +145,76 @@ f:SetScript("OnUpdate", function()
   else lastTurn = nil end
   lastErr = err
   setMask(m)
+end)
+
+local R = CreateFrame("Frame", "AZBotRadar", UIParent)
+R:SetWidth(180)
+R:SetHeight(180)
+R:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", -20, 140)
+R:SetFrameStrata("HIGH")
+R.bg = R:CreateTexture(nil, "BACKGROUND")
+R.bg:SetAllPoints(R)
+R.bg:SetTexture(0, 0, 0, 0.55)
+R.dots = {}
+local used = 0
+local function dot(px, py, r, g, b, size)
+  used = used + 1
+  local d = R.dots[used]
+  if not d then
+    d = R:CreateTexture(nil, "OVERLAY")
+    R.dots[used] = d
+  end
+  d:SetTexture(r, g, b, 1)
+  d:SetWidth(size)
+  d:SetHeight(size)
+  d:ClearAllPoints()
+  d:SetPoint("CENTER", R, "TOPLEFT", px, -py)
+  d:Show()
+end
+local box = nil
+local function toR(mx, my)
+  return 10 + (mx - box[1]) / (box[3] - box[1]) * 160, 10 + (my - box[2]) / (box[4] - box[2]) * 160
+end
+local function line(ax, ay, bx, by, r, g, b)
+  local x1, y1 = toR(ax, ay)
+  local x2, y2 = toR(bx, by)
+  local n = math.max(2, math.floor(math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2) / 5))
+  for i = 0, n do dot(x1 + (x2 - x1) * i / n, y1 + (y2 - y1) * i / n, r, g, b, 2) end
+end
+local racc = 0
+R:SetScript("OnUpdate", function()
+  racc = racc + arg1
+  if racc < 0.2 then return end
+  racc = 0
+  used = 0
+  local L = AZS_LAIRS or {}
+  if table.getn(L) == 0 then for i = 1, table.getn(R.dots) do R.dots[i]:Hide() end return end
+  local x, y = pos()
+  local x0, y0, x1, y1 = x, y, x, y
+  for i = 1, table.getn(L) do if L[i].mx and L[i].mx >= 0 then x0, y0, x1, y1 = math.min(x0, L[i].mx), math.min(y0, L[i].my), math.max(x1, L[i].mx), math.max(y1, L[i].my) end end
+  local pad = math.max(x1 - x0, y1 - y0) * 0.15 + 0.002
+  local side = math.max(x1 - x0, y1 - y0) + 2 * pad
+  local cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+  box = { cx - side / 2, cy - side / 2, cx + side / 2, cy + side / 2 }
+  if table.getn(route) >= 8 then
+    line(route[2][1], route[2][2], route[4][1], route[4][2], 0.9, 0.8, 0.2)
+    line(route[6][1], route[6][2], route[8][1], route[8][2], 0.9, 0.8, 0.2)
+  end
+  for i = 1, table.getn(L) do
+    local l = L[i]
+    if l.mx and l.mx >= 0 then
+      local px, py = toR(l.mx, l.my)
+      if l.state == "empty" then dot(px, py, 0.5, 0.5, 0.5, 8) else dot(px, py, 0.9, 0.2, 0.2, 9) end
+    end
+  end
+  for i = 1, table.getn(AZS_CHESTS or {}) do
+    local c = AZS_CHESTS[i]
+    if c.mx and c.mx >= 0 then local px, py = toR(c.mx, c.my) dot(px, py, 1, 0.82, 0.2, 6) end
+  end
+  if aimX then
+    if kind == "chest" then line(x, y, aimX, aimY, 0.3, 1, 0.3) else line(x, y, aimX, aimY, 0.3, 0.6, 1) end
+  end
+  local px, py = toR(x, y)
+  dot(px, py, 1, 1, 1, 7)
+  for i = used + 1, table.getn(R.dots) do R.dots[i]:Hide() end
 end)
