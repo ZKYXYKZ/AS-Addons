@@ -211,15 +211,17 @@ class Companion : Form
 
     bool UiAlive()
     {
-        string lockFile = Path.Combine(uiDir, "lockfile");
-        if (!File.Exists(lockFile)) return false;
         try
         {
-            using (new FileStream(lockFile, FileMode.Open, FileAccess.ReadWrite, FileShare.None)) { }
+            using (System.Management.ManagementObjectSearcher q = new System.Management.ManagementObjectSearcher("SELECT CommandLine FROM Win32_Process WHERE Name = 'msedge.exe'"))
+                foreach (System.Management.ManagementObject o in q.Get())
+                {
+                    string cmd = o["CommandLine"] as string;
+                    if (cmd != null && cmd.IndexOf(uiDir, StringComparison.OrdinalIgnoreCase) >= 0) return true;
+                }
             return false;
         }
-        catch (IOException) { return true; }
-        catch { return false; }
+        catch { return true; }
     }
 
     void OnTick(object sender, EventArgs e)
