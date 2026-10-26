@@ -161,7 +161,7 @@ class UiWindow : Form
 
 static class Native
 {
-    [DllImport("user32.dll")] static extern bool PostMessage(IntPtr h, uint m, IntPtr w, IntPtr l);
+    [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr h, uint m, IntPtr w, IntPtr l);
     [DllImport("user32.dll")] static extern uint MapVirtualKey(uint c, uint t);
 
     public static void Press(IntPtr h, uint vk)
@@ -1601,6 +1601,7 @@ class Companion : Form
         string l = S(G(settings, "lang"));
         lang = !string.IsNullOrEmpty(l) && l != "auto" ? l : GameLang().StartsWith("fr") ? "fr" : "en";
         WriteGateway(s, Path.GetDirectoryName(path));
+        SetupAutoplay(B(G(settings, "experimentalAutoplay")));
         savedFile = Path.Combine(string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BENILLA_HOME")) ? Path.Combine(Path.GetDirectoryName(path), "benilla-config") : Environment.GetEnvironmentVariable("BENILLA_HOME"), "saved", "SurvivorsBuilds.lua");
         string home = Environment.GetEnvironmentVariable("BENILLA_HOME");
         combatLog = Path.Combine(string.IsNullOrEmpty(home) ? Path.Combine(Path.GetDirectoryName(path), "benilla-config") : home, "Logs", "WoWCombatLog.txt");
@@ -1677,6 +1678,63 @@ class Companion : Form
         Log("game output " + Math.Round(secs) + "s: " + string.Join(", ", d.Select(kv => kv.Key + " " + G(kv.Value, "lines"))));
     }
 
+    System.Windows.Forms.Timer pilot;
+    int pilotHeld;
+    static readonly int[][] PilotKeys = { new[] { 1, 0x57, 0x11 }, new[] { 2, 0x53, 0x1F }, new[] { 4, 0x41, 0x1E }, new[] { 8, 0x44, 0x20 }, new[] { 16, 0x51, 0x10 }, new[] { 32, 0x26, 0x148 }, new[] { 64, 0x25, 0x14B }, new[] { 128, 0x27, 0x14D } };
+
+    void SetupAutoplay(bool on)
+    {
+        string dir = Path.Combine(AddonsDir(), "AZBot");
+        try
+        {
+            if (on)
+            {
+                Directory.CreateDirectory(dir);
+                foreach (string f in new[] { "AZBot.toc", "Bot.lua" }) File.WriteAllBytes(Path.Combine(dir, f), Resource("autoplay/AZBot/" + f));
+            }
+            else if (Directory.Exists(dir)) Directory.Delete(dir, true);
+        }
+        catch (Exception ex) { Log("autoplay addon: " + ex.Message); }
+        if (pilot != null) { pilot.Stop(); pilot.Dispose(); pilot = null; }
+        pilotHeld = 0;
+        if (!on) return;
+        pilot = new System.Windows.Forms.Timer { Interval = 80 };
+        pilot.Tick += delegate { PilotTick(); };
+        pilot.Start();
+        Log("autoplay on");
+    }
+
+    Bitmap pilotPixel = new Bitmap(1, 1);
+
+    void PilotTick()
+    {
+        if (!running || game == null || game.HasExited) { PilotKeysTo(0); return; }
+        int want = 0;
+        try
+        {
+            using (Graphics g = Graphics.FromImage(pilotPixel)) g.CopyFromScreen(4, 4, 0, 0, new Size(1, 1));
+            Color c = pilotPixel.GetPixel(0, 0);
+            if (c.G > 200) want = c.R / 16 + 16 * (c.B / 16);
+        }
+        catch { }
+        PilotKeysTo(want);
+    }
+
+    void PilotKeysTo(int want)
+    {
+        if (want == pilotHeld || game == null) return;
+        IntPtr h = IntPtr.Zero;
+        try { h = game.MainWindowHandle; } catch { }
+        if (h == IntPtr.Zero) return;
+        foreach (int[] k in PilotKeys)
+        {
+            bool on = (want & k[0]) != 0, was = (pilotHeld & k[0]) != 0;
+            if (on && !was) Native.PostMessage(h, 0x100, (IntPtr)k[1], (IntPtr)(1 | (k[2] << 16)));
+            if (was && !on) Native.PostMessage(h, 0x101, (IntPtr)k[1], (IntPtr)(1 | (k[2] << 16) | unchecked((int)0xC0000000)));
+        }
+        pilotHeld = want;
+    }
+
     void ShowAdvice(string text)
     {
         advice = text;
@@ -1721,7 +1779,7 @@ class Companion : Form
                 Research("build", new Dictionary<string, object> { { "build", build }, { "measuredLuck", measuredLuck } });
                 break;
             case "choices":
-                if (build == null) return;
+                if (build == null) { if (B(G(settings, "experimentalAutoplay"))) SendKey(0x31); return; }
                 Advice a = Advise(j);
                 if (a.Key == "r") screenRerolls++;
                 ShowAdvice(a.Text);

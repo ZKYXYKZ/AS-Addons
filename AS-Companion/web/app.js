@@ -21,6 +21,7 @@ const STR = {
     adapt: "Adapter le build à la run", adaptHelp: "Tient compte des sorts déjà pris (6 emplacements) et de l'amulette portée.",
     gamePath: "Chemin du jeu", browse: "Parcourir", lang: "Langue", auto: "Auto", autoPick: "Sélection auto des cartes", autoPickHelp: "Le compagnon choisit et relance à votre place (touches 1, 2, 3, R). Skip et bannir restent manuels.",
     overlay: "Bandeau de conseil par-dessus le jeu", importTitle: "Collez un build (texte d'export) puis validez", exportTitle: "Copiez ce texte pour partager le build", ok: "Importer", close: "Fermer", bad: "Texte de build invalide",
+    expAuto: "Expérimental : pilote automatique", expAutoHelp: "Version de test, jamais publiée. Au lancement du jeu, installe l'addon AZBot et tient les touches pour aller aux coffres (si l'or suffit) et aux gardiens, en patrouille entre les repaires. Le jeu doit rester au premier plan. Activez « Loot auto » dans les options du jeu.",
     raceRec: "Race conseillée :", raceAlt: "toutes races débloquées (succès) :",
     presets: "Builds proposés", presetsTitle: "Builds proposés : {c}", presetAdd: "Ajouter", presetHave: "Déjà ajouté", by: "par {v}",
     report: "Créer un rapport", reportLabel: "Rapport de bug", reportHelp: "Rassemble dans un zip le journal du compagnon, tes dernières parties et tes réglages, puis ouvre le dossier. Envoie ce fichier avec la description du problème.", reportDone: "Rapport créé : {v}",
@@ -42,6 +43,7 @@ const STR = {
     adapt: "Adapt the build to the run", adaptHelp: "Accounts for spells already taken (6 slots) and the worn amulet.",
     gamePath: "Game path", browse: "Browse", lang: "Language", auto: "Auto", autoPick: "Auto-pick cards", autoPickHelp: "The companion picks and rerolls for you (keys 1, 2, 3, R). Skip and banish stay manual.",
     overlay: "Advice banner over the game", importTitle: "Paste a build (export text) then confirm", exportTitle: "Copy this text to share the build", ok: "Import", close: "Close", bad: "Invalid build text",
+    expAuto: "Experimental: autopilot", expAutoHelp: "Test build, never released. When the game starts, installs the AZBot addon and holds the keys to reach caches (when gold allows) and guardians, patrolling between lairs. Keep the game in the foreground. Turn on Auto loot in the game options.",
     raceRec: "Recommended race:", raceAlt: "with every race unlocked (achievement):",
     presets: "Suggested builds", presetsTitle: "Suggested builds: {c}", presetAdd: "Add", presetHave: "Already added", by: "by {v}",
     report: "Create a report", reportLabel: "Bug report", reportHelp: "Zips the companion log, your latest runs and your settings, then opens the folder. Send this file with a description of the problem.", reportDone: "Report created: {v}",
@@ -377,6 +379,7 @@ function renderOptions(sec) {
   field(f, T("lang"), sel);
   field(f, T("autoPick"), checkInput(() => s.autoPick, (x) => (s.autoPick = x)), T("autoPickHelp"));
   field(f, T("overlay"), checkInput(() => s.overlay ?? 1, (x) => (s.overlay = x)));
+  field(f, T("expAuto"), checkInput(() => s.experimentalAutoplay, (x) => (s.experimentalAutoplay = x)), T("expAutoHelp"));
   field(f, T("autoAddons"), checkInput(() => s.autoAddons ?? 1, (x) => (s.autoAddons = x)), T("autoAddonsHelp"));
   const ver = el("div", "row");
   ver.appendChild(el("span", "", esc(VERSION || "-")));
