@@ -104,6 +104,7 @@ class Companion : Form
     Dictionary<string, string> jewels = new Dictionary<string, string>();
     int screenRerolls;
     double runLuck, amuletLuck;
+    int amuletUps;
     uint pendingKey;
     DateTime pendingAt;
     int pendingTries;
@@ -537,6 +538,7 @@ class Companion : Form
                 jewels = new Dictionary<string, string>();
                 runLuck = 0;
                 amuletLuck = 0;
+                amuletUps = 0;
                 if (build == null) ShowAdvice(lang == "fr" ? "Aucun build pour " + S(G(j, "class")) + " dans le compagnon" : "No build for " + S(G(j, "class")) + " in the companion");
                 Log("hero " + S(G(j, "class")) + ", build " + S(G(build, "name")));
                 break;
@@ -578,7 +580,7 @@ class Companion : Form
     {
         CardInfo info = Info(card);
         if (info.Type == "spell" && info.Key != null) owned[info.Key] = (int)N(G(card, "rank"), 1);
-        if (info.Cat == "amulets" && info.Key != null) amulet = info.Key;
+        if (info.Cat == "amulets" && info.Key != null) { amuletUps = info.Key == amulet ? amuletUps + 1 : 0; amulet = info.Key; }
         if (info.Type == "jewel" && info.Key != null && info.Cat != "amulets") jewels[info.Key] = info.Cat;
         if (info.Type == "jewel")
         {
@@ -755,7 +757,7 @@ class Companion : Form
                 }
                 else if (info.Cat == "amulets")
                 {
-                    double wornW = amulet != null ? JewelWeight("amulets", amulet) : 0;
+                    double wornW = amulet != null ? JewelWeight("amulets", amulet) * (1 + 0.5 * amuletUps) : 0;
                     if (w > wornW) { baseW = w; target = idx == 0 || info.Spell != null; }
                 }
                 else if (jewels.Values.Count(v => v == info.Cat) < 2)
