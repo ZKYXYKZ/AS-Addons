@@ -1116,6 +1116,11 @@ class Companion : Form
     PointF pendingClick;
     [DllImport("user32.dll")] static extern bool GetClientRect(IntPtr h, out RECT r);
     struct RECT { public int Left, Top, Right, Bottom; }
+    struct POINT { public int X, Y; }
+    [DllImport("user32.dll")] static extern bool ClientToScreen(IntPtr h, ref POINT p);
+    [DllImport("user32.dll")] static extern bool SetCursorPos(int x, int y);
+    [DllImport("user32.dll")] static extern bool SetForegroundWindow(IntPtr h);
+    [DllImport("user32.dll")] static extern void mouse_event(uint f, int x, int y, uint d, IntPtr e);
 
     void ClickGame(PointF f)
     {
@@ -1124,13 +1129,14 @@ class Companion : Form
         IntPtr h = game.MainWindowHandle;
         RECT r;
         if (h == IntPtr.Zero || !GetClientRect(h, out r)) return;
-        int x = (int)(f.X * (r.Right - r.Left)), y = (int)(f.Y * (r.Bottom - r.Top));
-        IntPtr lp = (IntPtr)((y << 16) | (x & 0xFFFF));
-        Native.PostMessage(h, 0x200, IntPtr.Zero, lp);
-        Thread.Sleep(40);
-        Native.PostMessage(h, 0x201, (IntPtr)1, lp);
+        POINT pt = new POINT { X = (int)(f.X * (r.Right - r.Left)), Y = (int)(f.Y * (r.Bottom - r.Top)) };
+        ClientToScreen(h, ref pt);
+        SetForegroundWindow(h);
+        SetCursorPos(pt.X, pt.Y);
         Thread.Sleep(60);
-        Native.PostMessage(h, 0x202, IntPtr.Zero, lp);
+        mouse_event(0x02, 0, 0, 0, IntPtr.Zero);
+        Thread.Sleep(60);
+        mouse_event(0x04, 0, 0, 0, IntPtr.Zero);
     }
 
     void SendKey(uint vk)

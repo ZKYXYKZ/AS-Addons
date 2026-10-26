@@ -116,10 +116,18 @@ f:SetScript("OnUpdate", function()
   elseif t then
     tx, ty = t.mx, t.my
   else
-    if step > table.getn(route) then step = 1 end
-    local w = route[step]
-    if (w[1] - x) ^ 2 + (w[2] - y) ^ 2 < 0.003 ^ 2 then step = step + 1 if step > table.getn(route) then step = 1 end w = route[step] end
-    tx, ty = w[1], w[2]
+    local soon
+    for i = 1, table.getn(AZS_LAIRS or {}) do
+      local l = AZS_LAIRS[i]
+      local left = tonumber(l.left) or -1
+      if l.mx and l.mx >= 0 and l.state == "empty" and left >= 0 and left <= 3 then soon = l end
+    end
+    if soon then
+      tx, ty = soon.mx, soon.my
+    else
+      tx, ty = cx, cy
+      if (cx - x) ^ 2 + (cy - y) ^ 2 < 0.0015 ^ 2 then setMask(0) aimX, aimY = cx, cy return end
+    end
   end
   aimX, aimY = tx, ty
   local dx, dy = tx - x, ty - y
