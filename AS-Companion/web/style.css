@@ -74,10 +74,10 @@ h3 { margin: 0 0 8px; font-size: 14px; color: var(--gold); font-weight: 600; }
 .jlist div { padding: 2px 0; }
 .jlist span { color: var(--mute); font-size: 12px; }
 .legtitle { color: var(--orange); font-size: 12px; margin: 6px 0; }
-.form { display: grid; grid-template-columns: 340px 1fr; gap: 12px 18px; align-items: center; max-width: 900px; }
+.form { display: grid; grid-template-columns: minmax(140px, 340px) minmax(0, 1fr); gap: 12px 18px; align-items: center; max-width: 900px; }
 .form label { color: var(--text); }
 .form .help { grid-column: 2; color: var(--mute); font-size: 12px; margin-top: -8px; }
-.form input[type=range] { width: 260px; }
+.form input[type=range] { width: 260px; max-width: 100%; }
 .form input[type=text] { width: 100%; }
 .val { color: var(--gold); margin-left: 8px; }
 .tip { position: fixed; pointer-events: none; background: #0b0b0dee; border: 1px solid #3a3a42; border-radius: 5px; padding: 8px 10px; max-width: 360px; font-size: 13px; display: none; z-index: 10; }
@@ -97,3 +97,6 @@ footer a { color: var(--gold); text-decoration: none; }
 footer a:hover { text-decoration: underline; }
 .part + .part { margin-top: 26px; }
 .part h2 { margin: 0 0 10px; font-size: 15px; font-weight: 600; color: var(--gold); letter-spacing: .5px; text-transform: uppercase; }
+.pathrow { display: flex; gap: 8px; }
+.pathrow input { flex: 1; min-width: 0; }
+@media (max-width: 640px) { .form { grid-template-columns: 1fr; } .form .help { grid-column: 1; margin-top: -6px; } }

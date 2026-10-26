@@ -19,7 +19,7 @@ const STR = {
     fallbackLevel: "Anneaux et bijoux de repli à partir du niveau", fallbackHelp: "Avant ce niveau, seuls les anneaux et bijoux visés sont pris : ils ne se remplacent plus ensuite.",
     boost: "Bonus de synergie", boostHelp: "Multiplie le poids d'un sort dont vous portez l'amulette légendaire ou que vous avez déjà monté.",
     adapt: "Adapter le build à la run", adaptHelp: "Tient compte des sorts déjà pris (6 emplacements) et de l'amulette portée.",
-    gamePath: "Chemin du jeu", lang: "Langue", auto: "Auto", autoPick: "Sélection auto des cartes", autoPickHelp: "Le compagnon choisit et relance à votre place (touches 1, 2, 3, R). Skip et bannir restent manuels.",
+    gamePath: "Chemin du jeu", browse: "Parcourir", lang: "Langue", auto: "Auto", autoPick: "Sélection auto des cartes", autoPickHelp: "Le compagnon choisit et relance à votre place (touches 1, 2, 3, R). Skip et bannir restent manuels.",
     overlay: "Bandeau de conseil par-dessus le jeu", luck: "Chance du compte", luckHelp: "Votre chance hors talents du build (fiche du personnage, améliorations du compte). Le compagnon y ajoute les talents de chance du build et les bijoux de chance pris pendant la run. Plus la chance est haute, plus une relance donne des cartes rares : le compagnon relance alors plus volontiers une carte moyenne.", importTitle: "Collez un build (texte d'export) puis validez", exportTitle: "Copiez ce texte pour partager le build", ok: "Importer", close: "Fermer", bad: "Texte de build invalide",
     renamePrompt: "Nouveau nom du build", saved: "Enregistré", gameOff: "Jeu fermé", advice: "Conseil",
   },
@@ -37,7 +37,7 @@ const STR = {
     fallbackLevel: "Fallback rings and trinkets from level", fallbackHelp: "Before this level, only target rings and trinkets are taken: they can't be swapped later.",
     boost: "Synergy bonus", boostHelp: "Multiplies the weight of a spell whose legendary amulet you wear or that you already ranked up.",
     adapt: "Adapt the build to the run", adaptHelp: "Accounts for spells already taken (6 slots) and the worn amulet.",
-    gamePath: "Game path", lang: "Language", auto: "Auto", autoPick: "Auto-pick cards", autoPickHelp: "The companion picks and rerolls for you (keys 1, 2, 3, R). Skip and banish stay manual.",
+    gamePath: "Game path", browse: "Browse", lang: "Language", auto: "Auto", autoPick: "Auto-pick cards", autoPickHelp: "The companion picks and rerolls for you (keys 1, 2, 3, R). Skip and banish stay manual.",
     overlay: "Advice banner over the game", luck: "Account luck", luckHelp: "Your luck outside the build talents (character sheet, account upgrades). The companion adds the build luck talents and the luck jewelry taken during the run. The higher the luck, the rarer the cards a reroll gives: the companion then rerolls an average card more readily.", importTitle: "Paste a build (export text) then confirm", exportTitle: "Copy this text to share the build", ok: "Import", close: "Close", bad: "Invalid build text",
     renamePrompt: "New build name", saved: "Saved", gameOff: "Game closed", advice: "Advice",
   },
@@ -317,7 +317,13 @@ function renderOptions(sec) {
   const s = STATE.settings;
   const f = el("div", "form");
   const p = el("input"); p.type = "text"; p.value = s.gamePath || ""; p.onchange = () => { s.gamePath = p.value; save(); };
-  field(f, T("gamePath"), p);
+  const br = el("button", "", T("browse"));
+  br.onclick = async () => {
+    const r = await (await fetch("/api/browse", { method: "POST", body: p.value })).json();
+    if (r.path) { p.value = r.path; s.gamePath = r.path; save(); }
+  };
+  const pw = el("div", "pathrow"); pw.appendChild(p); pw.appendChild(br);
+  field(f, T("gamePath"), pw);
   const sel = el("select");
   [["auto", T("auto")], ["fr", "Français"], ["en", "English"]].forEach(([v, l]) => { const o = el("option", "", l); o.value = v; if ((s.lang || "auto") === v) o.selected = true; sel.appendChild(o); });
   sel.onchange = () => { s.lang = sel.value; changed(); };

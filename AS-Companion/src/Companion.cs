@@ -292,6 +292,12 @@ class Companion : Form
                 Respond(ctx, 200, "application/json", Utf8.GetBytes(json.Serialize(new Dictionary<string, object> { { "running", running }, { "advice", advice }, { "error", error } })));
                 return;
             }
+            if (path == "/api/browse" && method == "POST")
+            {
+                string picked = Browse(new StreamReader(ctx.Request.InputStream, Utf8).ReadToEnd());
+                Respond(ctx, 200, "application/json", Utf8.GetBytes(json.Serialize(new Dictionary<string, object> { { "path", picked } })));
+                return;
+            }
             if (path == "/api/open" && method == "POST")
             {
                 string target = new StreamReader(ctx.Request.InputStream, Utf8).ReadToEnd();
@@ -311,6 +317,20 @@ class Companion : Form
         {
             Log("http error " + path + " : " + ex.Message);
             try { Respond(ctx, 500, "text/plain", Utf8.GetBytes(ex.Message)); } catch { }
+        }
+    }
+
+    string Browse(string current)
+    {
+        using (Form owner = new Form { TopMost = true, ShowInTaskbar = false, StartPosition = FormStartPosition.CenterScreen, Width = 1, Height = 1, FormBorderStyle = FormBorderStyle.None, Opacity = 0 })
+        using (OpenFileDialog dlg = new OpenFileDialog())
+        {
+            owner.Show();
+            owner.Activate();
+            dlg.Title = "AzerothSurvivors.exe";
+            dlg.Filter = "AzerothSurvivors.exe|AzerothSurvivors.exe|*.exe|*.exe";
+            if (!string.IsNullOrEmpty(current) && File.Exists(current)) { dlg.InitialDirectory = Path.GetDirectoryName(current); dlg.FileName = Path.GetFileName(current); }
+            return dlg.ShowDialog(owner) == DialogResult.OK ? dlg.FileName : null;
         }
     }
 
