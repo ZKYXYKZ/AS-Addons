@@ -21,7 +21,17 @@ end
 local function popup(anchor, items, onPick)
   local p = W.popup
   if not p then
+    local catcher = CreateFrame("Button", nil, UIParent)
+    catcher:SetAllPoints(UIParent)
+    catcher:SetFrameStrata("FULLSCREEN")
+    catcher:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    catcher:SetScript("OnClick", function() W.popup:Hide() end)
+    catcher:Hide()
     p = CreateFrame("Frame", nil, UIParent)
+    p.catcher = catcher
+    p:SetScript("OnShow", function() this.catcher:Show() end)
+    p:SetScript("OnHide", function() this.catcher:Hide() end)
+    p:Hide()
     p:SetFrameStrata("FULLSCREEN_DIALOG")
     p:EnableMouse(1)
     local bg = H.Fill(p, "BACKGROUND", 0.08, 0.08, 0.09, 0.98)
@@ -29,6 +39,11 @@ local function popup(anchor, items, onPick)
     p.rows = {}
     W.popup = p
   end
+  if p:IsShown() and p.anchor == anchor then
+    p:Hide()
+    return
+  end
+  p.anchor = anchor
   for i = 1, table.getn(p.rows) do p.rows[i]:Hide() end
   local w = 200
   for i = 1, table.getn(items) do
@@ -68,8 +83,18 @@ function W.Changed()
   if SB.Guide and SB.Guide.Refresh then SB.Guide.Refresh() end
 end
 
+W.labels = {}
+function W.Label(btn, key, fn)
+  table.insert(W.labels, { btn = btn, key = key, fn = fn })
+  return btn
+end
+
 function W.Refresh()
   local p = W.panel
+  for i = 1, table.getn(W.labels) do
+    local l = W.labels[i]
+    if not l.btn.armed then l.btn.text:SetText(l.fn and l.fn(l.key) or SB.L(l.key)) end
+  end
   local c = SB.Class(W.classKey)
   local col = SB.CLASS_COLORS[c.key]
   p.classBtn.text:SetText(SB.T(c.name))
@@ -156,16 +181,19 @@ function W.Create(p)
     end)
   end)
   p.buildBtn:SetPoint("LEFT", p.classBtn, "RIGHT", 6, 0)
+  p:SetScript("OnHide", function() if W.popup then W.popup:Hide() end end)
   local new = H.Button(p, SB.L("new"), 80, 24, function()
     SB.NewBuild(W.classKey)
     W.Changed()
   end)
   new:SetPoint("LEFT", p.buildBtn, "RIGHT", 6, 0)
+  W.Label(new, "new")
   local dup = H.Button(p, SB.L("dup"), 80, 24, function()
     local b = W.Build()
     if b then SB.Duplicate(b) W.Changed() end
   end)
   dup:SetPoint("LEFT", new, "RIGHT", 4, 0)
+  W.Label(dup, "dup")
   p.rename = renameBox(p)
   p.rename:SetPoint("TOPLEFT", p.buildBtn, "TOPLEFT", 0, 0)
   local ren = H.Button(p, SB.L("rename"), 80, 24, function()
@@ -176,6 +204,7 @@ function W.Create(p)
     p.rename:HighlightText()
   end)
   ren:SetPoint("LEFT", dup, "RIGHT", 4, 0)
+  W.Label(ren, "rename")
   local del = H.Button(p, SB.L("del"), 80, 24, function()
     local b = W.Build()
     if not b then return end
@@ -191,6 +220,7 @@ function W.Create(p)
     end
   end)
   del:SetPoint("LEFT", ren, "RIGHT", 4, 0)
+  W.Label(del, "del")
   del:SetScript("OnUpdate", function()
     if this.armed and this.armed < GetTime() then
       this.armed = nil
@@ -208,6 +238,7 @@ function W.Create(p)
       W.Refresh()
     end)
     v.button.viewId = v.id
+    W.Label(v.button, v.id)
     v.button:SetPoint("TOPLEFT", p, "TOPLEFT", (i - 1) * 114, -32)
     v.frame = CreateFrame("Frame", nil, p)
     v.frame:SetPoint("TOPLEFT", p, "TOPLEFT", 0, -64)

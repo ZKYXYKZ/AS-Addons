@@ -107,6 +107,7 @@ local function build(f)
     if b then b.talents = {} W.Changed() end
   end)
   f.reset:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", 0, 0)
+  W.Label(f.reset, "reset", tl)
 end
 
 local function refresh(f, b)

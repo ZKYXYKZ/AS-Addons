@@ -45,7 +45,7 @@ function SB.Encode(b)
   return table.concat({
     PREFIX, b.class, clean(b.name), table.concat(trees, "/"), table.concat(spells, ","), table.concat(bans, ","),
     table.concat(b.rings, ","), table.concat(b.trinkets, ","), table.concat(b.amulets, ","),
-    (r.rarity or 50) .. "," .. (r.reserve or 1) .. "," .. (r.reroll or 1),
+    (r.rarity or 50) .. "," .. (r.reserve or 1) .. "," .. (r.reroll or 1) .. "," .. (r.banishes or 3),
   }, ";")
 end
 
@@ -84,6 +84,7 @@ function SB.Decode(text)
   b.rules.rarity = tonumber(r[1]) or 50
   b.rules.reserve = tonumber(r[2]) or 1
   b.rules.reroll = tonumber(r[3]) or 1
+  b.rules.banishes = tonumber(r[4]) or 3
   return b
 end
 
@@ -161,9 +162,11 @@ end
 function SB.ShareButtons(p)
   local imp = H.Button(p, tl("import"), 90, 24, function() SB.ShowImport() end)
   imp:SetPoint("TOPRIGHT", p, "TOPRIGHT", 0, -32)
+  W.Label(imp, "import", tl)
   local exp = H.Button(p, tl("export"), 90, 24, function()
     local b = W.Build()
     if b then SB.ShowExport(b) end
   end)
   exp:SetPoint("RIGHT", imp, "LEFT", -4, 0)
+  W.Label(exp, "export", tl)
 end

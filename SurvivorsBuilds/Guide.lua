@@ -5,12 +5,12 @@ SB.Guide = G
 local T = {
   fr = {
     title = "Build : %s", none = "Aucun build actif pour cette classe", learn = "à prendre", rank = "rang %d",
-    ban = "À bannir : %s", rerolls = "Relances : %d (garder %d)", rule = "Rien du build : %s", reroll = "relancer puis skip", skip = "skip",
+    ban = "À bannir (%d) : %s", rerolls = "Relances : %d (garder %d)", rule = "Rien du build : %s", reroll = "relancer puis skip", skip = "skip",
     jewels = "Bijoux visés : %s", newSpell = "Nouveau sort : %s%s", upSpell = "%s rang %d%s", prio = " (priorité %d)", out = " (hors build)",
   },
   en = {
     title = "Build: %s", none = "No active build for this class", learn = "to take", rank = "rank %d",
-    ban = "Banish: %s", rerolls = "Rerolls: %d (keep %d)", rule = "Nothing from the build: %s", reroll = "reroll then skip", skip = "skip",
+    ban = "Banish (%d): %s", rerolls = "Rerolls: %d (keep %d)", rule = "Nothing from the build: %s", reroll = "reroll then skip", skip = "skip",
     jewels = "Target jewelry: %s", newSpell = "New spell: %s%s", upSpell = "%s rank %d%s", prio = " (priority %d)", out = " (off build)",
   },
 }
@@ -124,10 +124,10 @@ function G.Refresh()
   end
   local bans = ""
   for key in pairs(b.ban) do
-    local s = SB.Spell(b.class, key)
+    local s = SB.Spell(b.class, key) or SB.Jewel("rings", key) or SB.Jewel("trinkets", key) or SB.Jewel("amulets", key)
     if s then bans = bans .. (bans == "" and "" or ", ") .. SB.T(s.name) end
   end
-  if bans ~= "" then lines = lines .. "|cffff6666" .. string.format(tl("ban"), bans) .. "|r\n" end
+  if bans ~= "" then lines = lines .. "|cffff6666" .. string.format(tl("ban"), b.rules.banishes or 3, bans) .. "|r\n" end
   local wanted = ""
   for _, cat in ipairs({ "rings", "trinkets", "amulets" }) do
     local j = b[cat][1] and SB.Jewel(cat, b[cat][1])

@@ -8,7 +8,7 @@ local T = {
     rings = "Anneaux", trinkets = "Bijoux", amulets = "Amulette", hintJewel = "Clic gauche : ajouter / retirer · Clic droit : bannir. Les premiers sont visés, les suivants servent de repli.",
     target = "visé", fallback = "repli",
     rarity = "Influence de la rareté", rarityTip = "0 % : seule la priorité compte. 100 % : une légendaire vaut 5 fois une commune.",
-    reserve = "Relances gardées en réserve", reroll = "Aucune carte du build : relancer avant de skip", store = "Stocker les montées de niveau (réglage du jeu : le combat ne s'arrête plus, un bouton Level Up! les ouvre)", lang = "Langue", auto = "Auto",
+    reserve = "Relances gardées en réserve", banishes = "Bannissements disponibles par run", reroll = "Aucune carte du build : relancer avant de skip", store = "Stocker les montées de niveau (réglage du jeu : le combat ne s'arrête plus, un bouton Level Up! les ouvre)", lang = "Langue", auto = "Auto",
     example = "Exemple : %s poids %d en %s = %.1f",
   },
   en = {
@@ -17,7 +17,7 @@ local T = {
     rings = "Rings", trinkets = "Trinkets", amulets = "Amulet", hintJewel = "Left click: add / remove · Right click: ban. The first ones are targets, the rest are fallbacks.",
     target = "target", fallback = "fallback",
     rarity = "Rarity influence", rarityTip = "0%: only priority counts. 100%: a legendary is worth 5 commons.",
-    reserve = "Rerolls kept in reserve", reroll = "No card from the build: reroll before skipping", store = "Store level-ups (game setting: the fight no longer stops, a Level Up! button opens them)", lang = "Language", auto = "Auto",
+    reserve = "Rerolls kept in reserve", banishes = "Banishes available per run", reroll = "No card from the build: reroll before skipping", store = "Store level-ups (game setting: the fight no longer stops, a Level Up! button opens them)", lang = "Language", auto = "Auto",
     example = "Example: %s weight %d as %s = %.1f",
   },
 }
@@ -327,6 +327,7 @@ local function buildRules(f)
   f.example:SetWidth(900)
   f.example:SetJustifyV("TOP")
   table.insert(f.updaters, stepper(f, -130, function() return tl("reserve") end, function() return rules().reserve or 1 end, function(x) rules().reserve = x end, 0, 6, 1, "%d"))
+  table.insert(f.updaters, stepper(f, -96, function() return tl("banishes") end, function() return rules().banishes or 3 end, function(x) rules().banishes = x end, 0, 3, 1, "%d"))
   f.rerollBtn = H.Button(f, "", 22, 22, function()
     rules().reroll = rules().reroll == 1 and 0 or 1
     W.Changed()

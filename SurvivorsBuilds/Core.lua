@@ -22,16 +22,18 @@ function SB.DB()
 end
 
 function SB.Lang()
-  local l = SB.DB().lang
-  if l then return l end
+  local db = SB.DB()
+  if db.lang then return db.lang end
   local cname = AZS_ZONE and AZS_ZONE.cname
-  if cname then
+  if cname and cname ~= db.seenName then
+    db.seenName = cname
+    db.detected = "en"
     for i = 1, table.getn(SB_DATA.classes) do
-      if SB_DATA.classes[i].name.fr == cname and SB_DATA.classes[i].name.en ~= cname then return "fr" end
+      local n = SB_DATA.classes[i].name
+      if n.fr == cname and n.en ~= cname then db.detected = "fr" end
     end
   end
-  if GetLocale and GetLocale() == "frFR" then return "fr" end
-  return "en"
+  return db.detected or "en"
 end
 
 function SB.T(o)
@@ -83,7 +85,7 @@ function SB.NewBuild(classKey, name)
   local b = {
     id = db.nextId, class = classKey, name = name or "Build " .. db.nextId,
     talents = {}, spells = {}, ban = {}, rings = {}, trinkets = {}, amulets = {},
-    rules = { rarity = 50, reserve = 1, reroll = 1 },
+    rules = { rarity = 50, reserve = 1, reroll = 1, banishes = 3 },
   }
   db.nextId = db.nextId + 1
   table.insert(db.builds, b)
