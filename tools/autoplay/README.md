@@ -7,3 +7,5 @@ Branche `experimental/autoplay` uniquement, pour les tests et simulations de bui
 - `key.ps1` : envoie une touche (Entrée pour lancer la partie depuis le menu).
 
 Le jeu bloque les fonctions de déplacement Lua (`MoveForwardStart`, etc.) : seules de vraies touches font bouger le personnage, et l'orientation compte (contrôles à la WoW).
+
+Le pilote ne vise un coffre que si l'or suffit à l'ouvrir (`AZS_RUN.gold` >= `AZS_RUN.chest`). Activer l'option du jeu « loot auto » (`autoLootDefault = "1"` dans `config.toml`) pour que le coffre s'ouvre au contact.

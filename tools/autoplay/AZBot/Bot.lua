@@ -28,7 +28,9 @@ end
 local reached, target, kind = {}, nil, nil
 local function pickTarget(x, y)
   local best, bd, k
-  for i = 1, table.getn(AZS_CHESTS or {}) do
+  local run = AZS_RUN or {}
+  local afford = (tonumber(run.gold) or 0) >= (tonumber(run.chest) or 0)
+  for i = 1, (afford and table.getn(AZS_CHESTS or {}) or 0) do
     local c = AZS_CHESTS[i]
     if c.mx and c.mx >= 0 and not reached["c" .. c.id] then
       local d = (c.mx - x) ^ 2 + (c.my - y) ^ 2
