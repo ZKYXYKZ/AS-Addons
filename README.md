@@ -51,7 +51,7 @@ Every run launched from the companion is recorded when it ends, endless mode inc
 
 ### Addons
 
-Lists the game addons with their description, installed version and latest version. Install, update, enable, disable or uninstall them (uninstalled folders go to the Recycle Bin). Close the game first.
+Lists the game addons with their description, installed version and latest version. Install, update, enable, disable or uninstall them (uninstalled folders go to the Recycle Bin). Close the game first. Installed addons also update themselves at startup and every 30 minutes outside a run (option in Options).
 
 ### Options
 

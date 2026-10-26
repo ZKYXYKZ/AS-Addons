@@ -328,6 +328,7 @@ class Companion : Form
             string manifest;
             if (assets.TryGetValue("addons.json", out manifest))
                 using (WebClient w = Web()) remoteAddons = A(json.DeserializeObject(Utf8.GetString(w.DownloadData(manifest)))).Select(D).Where(x => x != null).ToList();
+            AutoUpdateAddons();
             Version remote, local = new Version(CurrentVersion);
             if (tag == null || !Version.TryParse(tag.TrimStart('v', 'V'), out remote) || remote <= local || latestZip == null) { latestTag = null; return; }
             latestTag = tag;
@@ -525,6 +526,40 @@ class Companion : Form
             return "";
         }
         return "unknown action";
+    }
+
+    volatile string addonsUpdated = "";
+    DateTime nextCheck = DateTime.Now.AddMinutes(30);
+
+    static Version ParseVersion(string v)
+    {
+        Version r;
+        return Version.TryParse((v ?? "").Trim().TrimStart('v', 'V'), out r) ? r : new Version(0, 0, 0);
+    }
+
+    void AutoUpdateAddons()
+    {
+        if (running || updating || N(G(D(LoadState()["settings"]), "autoAddons"), 1) == 0) return;
+        string dir = AddonsDir();
+        List<string> done = new List<string>();
+        foreach (Dictionary<string, object> r in remoteAddons)
+        {
+            string name = S(G(r, "name"));
+            Dictionary<string, string> toc = name == null ? null : Toc(dir, name);
+            if (toc == null) continue;
+            string installed;
+            toc.TryGetValue("Version", out installed);
+            if (ParseVersion(S(G(r, "version"))) <= ParseVersion(installed)) continue;
+            string err;
+            try { err = AddonAction(name, "install"); } catch (Exception ex) { err = ex.Message; }
+            if (string.IsNullOrEmpty(err)) done.Add(name + " " + S(G(r, "version")));
+            else Log("addon auto-update failed: " + name + ": " + err);
+        }
+        if (done.Count > 0)
+        {
+            addonsUpdated = string.Join(", ", done);
+            Log("addons auto-updated: " + addonsUpdated);
+        }
     }
 
     void Migrate()
@@ -748,6 +783,11 @@ class Companion : Form
             if (pendingTries >= 4) { Log("key not taken by the game"); pendingKey = 0; }
             else { SendKey(pendingKey); pendingTries++; Log("key resent (" + pendingTries + ")"); }
         }
+        if (!running && !updating && DateTime.Now > nextCheck)
+        {
+            nextCheck = DateTime.Now.AddMinutes(30);
+            ThreadPool.QueueUserWorkItem(delegate { CheckUpdate(); });
+        }
         if (watchUi && !running && !updating && DateTime.Now > uiCheck)
         {
             uiCheck = DateTime.Now.AddSeconds(2);
@@ -809,7 +849,7 @@ class Companion : Form
             }
             if (path == "/api/status")
             {
-                Respond(ctx, 200, "application/json", Utf8.GetBytes(json.Serialize(new Dictionary<string, object> { { "running", running }, { "advice", advice }, { "error", error }, { "version", CurrentVersion }, { "update", latestTag }, { "updating", updating }, { "updateError", updateError } })));
+                Respond(ctx, 200, "application/json", Utf8.GetBytes(json.Serialize(new Dictionary<string, object> { { "running", running }, { "advice", advice }, { "error", error }, { "version", CurrentVersion }, { "update", latestTag }, { "updating", updating }, { "updateError", updateError }, { "addonsUpdated", addonsUpdated } })));
                 return;
             }
             if (path == "/api/browse" && method == "POST")

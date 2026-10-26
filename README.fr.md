@@ -51,7 +51,7 @@ Chaque partie lancée depuis le compagnon est enregistrée à sa fin, mode endle
 
 ### Addons
 
-Liste les addons du jeu avec leur description, la version installée et la dernière version. Installez, mettez à jour, activez, désactivez ou désinstallez-les (les dossiers désinstallés partent à la corbeille). Fermez le jeu avant.
+Liste les addons du jeu avec leur description, la version installée et la dernière version. Installez, mettez à jour, activez, désactivez ou désinstallez-les (les dossiers désinstallés partent à la corbeille). Fermez le jeu avant. Les addons installés se mettent aussi à jour seuls, au démarrage puis toutes les 30 minutes hors partie (option dans Options).
 
 ### Options
 
