@@ -69,6 +69,14 @@ Panneau déplaçable sous la minimap : une ligne par gardien avec boussole (nord
 - Le journal du chat compare `AZS_SPELLS` entre deux mises à jour. Les bijoux pris ne sont pas encore détectés (source côté Lua inconnue).
 - Les valeurs `{v}` des talents à effet spécial (paliers, apogées) sont estimées par heuristique à partir des flottants de l'effet : à vérifier en jeu.
 
+## À faire (demandé le 26/10/2026 pour la session suivante)
+
+1. **Compagnon dans le dossier du jeu, builds récupérés depuis le builder.** Installer `AS-Companion` à côté de l'exe et lire le build actif de la classe dans `<jeu>\benilla-config\saved\SurvivorsBuilds.lua` (`SurvivorsBuildsDB.builds`, `.active[classe]`) au lieu de `build.txt`. Limite : le jeu n'écrit ce fichier qu'à la fermeture, donc un build modifié en jeu ne compte qu'au lancement suivant.
+2. **Option « Sélection auto » dans l'addon**, libellée « nécessite le compagnon ». Le compagnon la lit dans les variables sauvegardées au lancement. L'addon ne peut pas détecter le compagnon en direct (aucun canal entre un programme externe et le Lua) : à étudier, par exemple un fichier que le compagnon écrit dans `benilla-config` et que l'addon ne peut pas lire en cours de jeu, ou se contenter du libellé.
+3. **Pondération incohérente, adapter le build aux choix.** Exemple : amulette Inferno sur Choc de flammes déjà prise, et le conseil pousse Vague explosive. Une légendaire, un bijou ou un sort déjà obtenu doit relever le poids du sort qu'il améliore, et le conseil doit tenir compte des 6 emplacements de sorts déjà occupés. Le compagnon voit tout dans la sortie console (`picked`, `choices`, `drop`), l'addon voit `AZS_SPELLS` et les bijoux portés (`GetInventoryItemLink`).
+4. **Frappe-terre (earthstrike) jamais reconnu par le compagnon.** Son icône `Spell_Nature_AbolishMagic` est aussi celle du sort Colère : `Companion.ps1` écarte des bijoux toute icône déjà prise par un sort. Corriger en séparant la reconnaissance selon `kind` de la carte (`new`/`upgrade` pour les sorts, `ring`/`trinket`/`amulet` pour les bijoux).
+5. **Bijoux de repli seulement après N relances ou N niveaux.** Les anneaux et bijoux ne se changent pas en cours de run, seule l'amulette se remplace. Ne proposer un anneau ou bijou de repli qu'après un seuil réglable (relances ou niveaux), l'amulette pouvant être remplacée à tout moment.
+
 ## Jeu v0.119 : ce qui a changé et ce que le jeu expose (26/10/2026)
 
 - La config est maintenant à côté de l'exe : `<dossier du jeu>\benilla-config` (AddOns, saved, etc.). `BENILLA_HOME` la déplace toujours.
