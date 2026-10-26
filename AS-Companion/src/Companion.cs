@@ -253,6 +253,13 @@ class Companion : Form
     [STAThread]
     static void Main(string[] args)
     {
+        if (args.Length >= 2 && args[0] == "--replay")
+        {
+            Console.SetOut(new StreamWriter(Console.OpenStandardOutput(), new UTF8Encoding(false)) { AutoFlush = true });
+            Companion r = new Companion(args.Length > 2 ? args[2] : null);
+            r.Replay(args[1]);
+            return;
+        }
         bool first;
         bool after = args.Contains("--after-update");
         Mutex m = new Mutex(true, "AS-Companion-ZKYXYKZ-" + Port, out first);
@@ -304,6 +311,84 @@ class Companion : Form
             File.AppendAllText(Path.Combine(dir, "companion.log"), DateTime.Now.ToString("HH:mm:ss") + " error: " + ex + "\r\n");
         }
         catch { }
+    }
+
+    bool replaying;
+
+    Companion(string replayState)
+    {
+        replaying = true;
+        data = (Dictionary<string, object>)json.DeserializeObject(Utf8.GetString(Resource("data.json")));
+        state = replayState != null ? D(json.DeserializeObject(File.ReadAllText(replayState, Utf8))) : null;
+        state = state ?? new Dictionary<string, object> { { "builds", new ArrayList() }, { "active", new Dictionary<string, object>() } };
+        settings = D(G(state, "settings")) ?? new Dictionary<string, object>();
+        overlay = new Overlay();
+    }
+
+    void Replay(string file)
+    {
+        Dictionary<string, object> snapshot = null;
+        Advice last = null;
+        object lastChoices = null;
+        int same = 0, diff = 0;
+        foreach (string line in File.ReadAllLines(file, Utf8))
+        {
+            Dictionary<string, object> e;
+            try { e = D(json.DeserializeObject(line)); } catch { continue; }
+            if (e == null) continue;
+            string t = S(G(e, "t"));
+            object d = G(e, "data");
+            if (t == "build") { snapshot = D(G(d, "build")); Dictionary<string, object> ml = D(G(d, "measuredLuck")); if (ml != null) foreach (KeyValuePair<string, object> kv in ml) measuredLuck[kv.Key] = N(kv.Value, 0); continue; }
+            if (t == "spec")
+            {
+                if (detectedTree < 0) DetectSpec((int)N(G(d, "tree"), 0), "replay");
+                Dictionary<string, object> sb = D(G(d, "build"));
+                if (sb != null) build = sb;
+                continue;
+            }
+            if (t == "combat")
+            {
+                spellDmg = (D(G(d, "dmg")) ?? new Dictionary<string, object>()).ToDictionary(kv => kv.Key, kv => N(kv.Value, 0));
+                totalDmg = spellDmg.Values.Sum();
+                continue;
+            }
+            if (t == "game")
+            {
+                string type = S(G(d, "type"));
+                if (type == "defeat" || type == "victory" || type == "coop") continue;
+                if (type == "choices")
+                {
+                    foreach (object c in A(G(d, "choices")))
+                    {
+                        string rn = S(G(c, "rarityName")) ?? "";
+                        if (rn == "Common" || rn == "Uncommon" || rn == "Epic" || rn == "Legendary") lang = "en";
+                        if (rn == "Commun" || rn == "Inhabituel" || rn == "Épique" || rn == "Légendaire") lang = "fr";
+                    }
+                    lastChoices = d;
+                    last = build == null ? null : Advise(D(d));
+                    continue;
+                }
+                OnGameLine("rogue: " + json.Serialize(d));
+                if (type == "ready" && snapshot != null) { build = snapshot; heroClass = heroClass ?? SelectBuild(S(G(d, "class"))); }
+                continue;
+            }
+            if (t == "advice" && last != null)
+            {
+                string was = S(G(d, "text")) ?? "";
+                if (last.Text == was) same++;
+                else
+                {
+                    diff++;
+                    Console.WriteLine(S(G(e, "at")) + " niv " + S(G(lastChoices, "level")) + "\n  avant : " + was + "\n  après : " + last.Text + "\n  scores : " + string.Join(" | ", lastScores));
+                }
+                string key = S(G(d, "key"));
+                int k;
+                if (key == "r") screenRerolls++;
+                else if (int.TryParse(key, out k)) { object card = A(G(lastChoices, "choices")).ElementAtOrDefault(k - 1); if (card != null) Took(card); }
+                last = null;
+            }
+        }
+        Console.WriteLine(Path.GetFileName(file) + " : " + same + " identiques, " + diff + " différents" + (snapshot == null ? " (pas de build enregistré dans le fichier)" : ""));
     }
 
     Companion(bool noBrowser, bool afterUpdate)
@@ -711,6 +796,7 @@ class Companion : Form
 
     void Log(string m)
     {
+        if (replaying) return;
         try { File.AppendAllText(logFile, DateTime.Now.ToString("HH:mm:ss") + " " + m + "\r\n", Utf8); } catch { }
     }
 
@@ -926,6 +1012,7 @@ class Companion : Form
 
     void StartResearch(string cls)
     {
+        if (replaying) return;
         researchFile = null;
         spellHits = new Dictionary<string, int>();
         spellCrits = new Dictionary<string, int>();
@@ -1578,6 +1665,7 @@ class Companion : Form
     void ShowAdvice(string text)
     {
         advice = text;
+        if (replaying) return;
         overlay.Text2.Text = text;
         if (N(G(settings, "overlay"), 1) != 0 && !overlay.Visible) overlay.Show();
     }
@@ -1615,6 +1703,7 @@ class Companion : Form
                 amuletUps = 0;
                 if (build == null) ShowAdvice(lang == "fr" ? "Aucun build pour " + S(G(j, "class")) + " dans le compagnon" : "No build for " + S(G(j, "class")) + " in the companion");
                 Log("hero " + S(G(j, "class")) + ", build " + S(G(build, "name")));
+                Research("build", new Dictionary<string, object> { { "build", build }, { "measuredLuck", measuredLuck } });
                 break;
             case "choices":
                 if (build == null) return;
@@ -1848,6 +1937,7 @@ class Companion : Form
             specNote = fr ? "Spé détectée : " + treeName + ", build « " + S(G(build, "name")) + " »" : "Spec detected: " + treeName + ", build \"" + S(G(build, "name")) + "\"";
         }
         Log("spec detected (" + why + "): " + treeName + ", build " + S(G(build, "name")));
+        Research("spec", new Dictionary<string, object> { { "tree", tree }, { "why", why }, { "build", build } });
     }
     int coopSize;
     double victoryTime;
