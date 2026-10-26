@@ -614,6 +614,7 @@ class Companion : Form
         switch (type)
         {
             case "ready":
+                recordedIndex = -1;
                 build = SelectBuild(S(G(j, "class")));
                 owned = new Dictionary<string, int>();
                 amulet = null;
@@ -765,6 +766,9 @@ class Companion : Form
     double Boost() { return N(G(G(build, "rules"), "boost"), 2); }
 
 
+    int recordedIndex = -1;
+    double victoryTime;
+
     void RecordRun(Dictionary<string, object> j)
     {
         ReadCombat();
@@ -798,7 +802,19 @@ class Companion : Form
         r["jewels"] = jewels.Keys.Concat(amulet != null ? new[] { amulet } : new string[0]).ToArray();
         r["luck"] = Math.Round(Luck());
         r["dmg"] = spellDmg.OrderByDescending(kv => kv.Value).ToDictionary(kv => kv.Key, kv => (object)Math.Round(kv.Value));
-        runs.Add(r);
+        if (recordedIndex >= 0 && recordedIndex < runs.Count && S(G(runs[recordedIndex], "result")) == "victory")
+        {
+            r["result"] = "victory";
+            r["endless"] = true;
+            r["endlessTime"] = Math.Round(time - victoryTime, 1);
+            runs[recordedIndex] = r;
+        }
+        else
+        {
+            runs.Add(r);
+            recordedIndex = runs.Count - 1;
+            if (S(r["result"]) == "victory") victoryTime = time;
+        }
         File.WriteAllText(rf, json.Serialize(runs), Utf8);
         Log("run recorded: " + r["result"] + " lvl " + r["level"] + " " + Math.Round(time) + "s dps " + r["dps"]);
     }

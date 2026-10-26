@@ -7,7 +7,7 @@ const STATS_STR = {
     timeChart: "Durée de survie par partie", dpsChart: "DPS par partie", classChart: "Survie moyenne par classe", spellChart: "Part des dégâts par sort",
     spellHint: "Sur les parties filtrées, d'après le journal de combat", bySpec: "Par spécialisation", byRace: "Par race", recent: "Dernières parties",
     spec: "Spé", race: "Race", cls: "Classe", n: "Parties", winRate: "Victoires", avgTime: "Survie moy.", maxLvl: "Niv. max", dps: "DPS moy.",
-    date: "Date", build: "Build", result: "Résultat", time: "Durée", level: "Niv.", kills: "Victimes", run: "Partie", attack: "Attaque", other: "Autres",
+    date: "Date", build: "Build", result: "Résultat", time: "Durée", level: "Niv.", kills: "Victimes", run: "Partie", attack: "Attaque", other: "Autres", endless: "Endless", bestEndless: "Meilleur endless",
     noDmg: "Pas encore de données de dégâts : activez le journal de combat (fait automatiquement par l'addon SurvivorsBuilds).",
   },
   en: {
@@ -18,7 +18,7 @@ const STATS_STR = {
     timeChart: "Survival time per run", dpsChart: "DPS per run", classChart: "Average survival by class", spellChart: "Damage share by spell",
     spellHint: "Over the filtered runs, from the combat log", bySpec: "By spec", byRace: "By race", recent: "Latest runs",
     spec: "Spec", race: "Race", cls: "Class", n: "Runs", winRate: "Victories", avgTime: "Avg survival", maxLvl: "Max lvl", dps: "Avg DPS",
-    date: "Date", build: "Build", result: "Result", time: "Time", level: "Lvl", kills: "Kills", run: "Run", attack: "Attack", other: "Others",
+    date: "Date", build: "Build", result: "Result", time: "Time", level: "Lvl", kills: "Kills", run: "Run", attack: "Attack", other: "Others", endless: "Endless", bestEndless: "Best endless",
     noDmg: "No damage data yet: the combat log must be on (the SurvivorsBuilds addon turns it on).",
   },
 };
@@ -220,12 +220,14 @@ async function renderStats(sec) {
   tiles.appendChild(tile(ST("avgDps"), num(avg(dps))));
   tiles.appendChild(tile(ST("maxDps"), num(Math.max(...dps))));
   tiles.appendChild(tile(ST("bosses"), num(runs.reduce((a, r) => a + (+r.bosses || 0), 0))));
+  const endless = runs.filter((r) => r.endless);
+  if (endless.length) tiles.appendChild(tile(ST("bestEndless"), "+" + mmss(Math.max(...endless.map((r) => +r.endlessTime || 0))), num(endless.length) + " " + ST("runs").toLowerCase()));
   tiles.appendChild(tile(ST("guardians"), num(runs.reduce((a, r) => a + (+r.guardians || 0), 0))));
   sec.appendChild(tiles);
 
   const last = runs.slice(-40);
   const offset = runs.length - last.length;
-  const runTip = (r, i) => `<div class="t">${esc(ST("run"))} ${offset + i + 1} · ${esc(className(r.class))}</div><div>${esc(r.date ? r.date.replace("T", " ").slice(0, 16) : "")}</div><div>${esc(ST("time"))} ${mmss(r.time)} · ${esc(ST("level"))} ${num(r.level)} · ${num(r.kills)} ${esc(ST("kills").toLowerCase())}</div><div>DPS ${num(r.dps)}</div><div class="mute">${esc(r.result === "victory" ? ST("win") : ST("loss"))} · ${esc(r.build || "")}</div>`;
+  const runTip = (r, i) => `<div class="t">${esc(ST("run"))} ${offset + i + 1} · ${esc(className(r.class))}</div><div>${esc(r.date ? r.date.replace("T", " ").slice(0, 16) : "")}</div><div>${esc(ST("time"))} ${mmss(r.time)} · ${esc(ST("level"))} ${num(r.level)} · ${num(r.kills)} ${esc(ST("kills").toLowerCase())}</div><div>DPS ${num(r.dps)}</div><div class="mute">${esc(r.result === "victory" ? ST("win") : ST("loss"))}${r.endless ? " · " + esc(ST("endless")) + " +" + mmss(r.endlessTime) : ""} · ${esc(r.build || "")}</div>`;
   const grid = el("div", "charts");
   const classEntries = [...new Set(last.map((r) => r.class))].map((c) => ({ label: className(c), color: CLASS_COLORS[c] || "#3987e5" }));
   grid.appendChild(lineChart(ST("timeChart"), last.map((r, i) => ({ y: (+r.time || 0) / 60, label: String(offset + i + 1), r, i, color: CLASS_COLORS[r.class] })), (v) => Math.round(v) + " min", (p) => runTip(p.r, p.i), classEntries));
@@ -258,5 +260,5 @@ async function renderStats(sec) {
   sec.appendChild(tables);
   sec.appendChild(table(ST("recent"), [ST("date"), ST("cls"), ST("spec"), ST("build"), ST("result"), ST("time"), ST("level"), ST("kills"), "DPS"],
     runs.slice(-20).reverse().map((r) => [esc((r.date || "").replace("T", " ").slice(0, 16)), `<span style="color:${CLASS_COLORS[r.class] || "inherit"}">${esc(className(r.class))}</span>`, esc(r.spec ? specName(r.spec).replace(/ \(.*\)$/, "") : "-"), esc(r.build || "-"),
-      r.result === "victory" ? `<span class="good">${esc(ST("win"))}</span>` : esc(ST("loss")), mmss(r.time), num(r.level), num(r.kills), num(r.dps)])));
+      r.result === "victory" ? `<span class="good">${esc(ST("win"))}</span>${r.endless ? " · " + esc(ST("endless")) + " +" + mmss(r.endlessTime) : ""}` : esc(ST("loss")), mmss(r.time), num(r.level), num(r.kills), num(r.dps)])));
 }
