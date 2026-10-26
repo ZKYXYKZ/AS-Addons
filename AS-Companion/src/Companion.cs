@@ -1098,6 +1098,7 @@ class Companion : Form
         if (pendingKey != 0 && running && (DateTime.Now - pendingAt).TotalMilliseconds > 800)
         {
             if (pendingTries >= 6) { Log("key not taken by the game"); pendingKey = 0; }
+            else if (pendingKey == 0xFFFF) { pendingAt = DateTime.Now; ClickGame(pendingClick); pendingTries++; Log("click resent (" + pendingTries + ")"); }
             else { SendKey(pendingKey); pendingTries++; Log("key resent (" + pendingTries + ")"); }
         }
         if (!running && !updating && DateTime.Now > nextCheck)
@@ -1110,6 +1111,26 @@ class Companion : Form
             uiCheck = DateTime.Now.AddSeconds(2);
             if ((ui == null || ui.HasExited) && !UiAlive()) { Log("ui closed"); Close(); }
         }
+    }
+
+    PointF pendingClick;
+    [DllImport("user32.dll")] static extern bool GetClientRect(IntPtr h, out RECT r);
+    struct RECT { public int Left, Top, Right, Bottom; }
+
+    void ClickGame(PointF f)
+    {
+        if (game == null) return;
+        game.Refresh();
+        IntPtr h = game.MainWindowHandle;
+        RECT r;
+        if (h == IntPtr.Zero || !GetClientRect(h, out r)) return;
+        int x = (int)(f.X * (r.Right - r.Left)), y = (int)(f.Y * (r.Bottom - r.Top));
+        IntPtr lp = (IntPtr)((y << 16) | (x & 0xFFFF));
+        Native.PostMessage(h, 0x200, IntPtr.Zero, lp);
+        Thread.Sleep(40);
+        Native.PostMessage(h, 0x201, (IntPtr)1, lp);
+        Thread.Sleep(60);
+        Native.PostMessage(h, 0x202, IntPtr.Zero, lp);
     }
 
     void SendKey(uint vk)
@@ -1785,6 +1806,32 @@ class Companion : Form
                 ShowAdvice(a.Text);
                 Log(S(G(j, "why")) + " lvl " + S(G(j, "level")) + ": " + a.Text);
                 Research("advice", new Dictionary<string, object> { { "text", a.Text }, { "key", a.Key }, { "scores", lastScores }, { "luck", Math.Round(Luck(), 1) }, { "owned", owned }, { "amulet", amulet }, { "amuletUps", amuletUps } });
+                if (B(G(settings, "autoPick")) && a.Key != null && (a.Key.StartsWith("skip") || a.Key.StartsWith("ban")))
+                {
+                    if (!B(G(settings, "experimentalAutoplay"))) break;
+                    PointF pt = new PointF(0.555f, 0.864f);
+                    if (a.Key.StartsWith("ban"))
+                    {
+                        string[] bp = a.Key.Substring(3).Split('/');
+                        int bi = int.Parse(bp[0]), bn = int.Parse(bp[1]);
+                        pt = new PointF((960f + (bi - (bn + 1) / 2f) * 375f) / 1920f, 0.797f);
+                    }
+                    System.Windows.Forms.Timer ct = new System.Windows.Forms.Timer { Interval = 900 };
+                    ct.Tick += delegate
+                    {
+                        ct.Stop();
+                        ct.Dispose();
+                        if (!running) return;
+                        pendingClick = pt;
+                        pendingKey = 0xFFFF;
+                        pendingTries = 0;
+                        pendingAt = DateTime.Now;
+                        ClickGame(pt);
+                        Log("clicked " + a.Key);
+                    };
+                    ct.Start();
+                    break;
+                }
                 if (B(G(settings, "autoPick")) && a.Key != null)
                 {
                     uint vk = a.Key == "r" ? 0x52u : (uint)(0x30 + int.Parse(a.Key));
@@ -2186,7 +2233,7 @@ class Companion : Form
             if (weak && reroll && rerolls > reserve)
                 return new Advice { Text = (fr ? "Carte moyenne, relancer (R) : " + rerolls + " restantes" : "Average card, reroll (R): " + rerolls + " left") + luckTxt, Key = "r" };
             if (weak && jewelScreen && B(G(j, "skip")))
-                return new Advice { Text = fr ? "Rien d'utile : skip (+" + S(G(j, "skipGold")) + " or)" : "Nothing useful: skip (+" + S(G(j, "skipGold")) + " gold)" };
+                return new Advice { Text = fr ? "Rien d'utile : skip (+" + S(G(j, "skipGold")) + " or)" : "Nothing useful: skip (+" + S(G(j, "skipGold")) + " gold)", Key = "skip" };
         }
         if (best > 0)
         {
@@ -2196,13 +2243,13 @@ class Companion : Form
         bool canBanish = banIdx > 0 && N(G(j, "banishes"), 0) > 0;
         bool auto = B(G(settings, "autoPick"));
         if (canBanish && !(auto && reroll && rerolls > reserve))
-            return new Advice { Text = fr ? "Bannir la carte " + banIdx + " : " + S(G(cards[banIdx - 1], "title")) + " (rafraîchit les cartes)" : "Banish card " + banIdx + ": " + S(G(cards[banIdx - 1], "title")) + " (refreshes the cards)" };
+            return new Advice { Text = fr ? "Bannir la carte " + banIdx + " : " + S(G(cards[banIdx - 1], "title")) + " (rafraîchit les cartes)" : "Banish card " + banIdx + ": " + S(G(cards[banIdx - 1], "title")) + " (refreshes the cards)", Key = "ban" + banIdx + "/" + cards.Count };
         if (reroll && rerolls > reserve)
             return new Advice { Text = (fr ? "Rien du build : relancer (R), " + rerolls + " restantes" : "Nothing from the build: reroll (R), " + rerolls + " left") + luckTxt, Key = "r" };
         if (canBanish)
-            return new Advice { Text = fr ? "Bannir la carte " + banIdx + " : " + S(G(cards[banIdx - 1], "title")) + " (rafraîchit les cartes)" : "Banish card " + banIdx + ": " + S(G(cards[banIdx - 1], "title")) + " (refreshes the cards)" };
+            return new Advice { Text = fr ? "Bannir la carte " + banIdx + " : " + S(G(cards[banIdx - 1], "title")) + " (rafraîchit les cartes)" : "Banish card " + banIdx + ": " + S(G(cards[banIdx - 1], "title")) + " (refreshes the cards)", Key = "ban" + banIdx + "/" + cards.Count };
         if (B(G(j, "skip")))
-            return new Advice { Text = fr ? "Rien du build : skip (+" + S(G(j, "skipGold")) + " or)" : "Nothing from the build: skip (+" + S(G(j, "skipGold")) + " gold)" };
+            return new Advice { Text = fr ? "Rien du build : skip (+" + S(G(j, "skipGold")) + " or)" : "Nothing from the build: skip (+" + S(G(j, "skipGold")) + " gold)", Key = "skip" };
         if (rerolls > 0)
             return new Advice { Text = fr ? "Rien du build, pas de skip : relancer (R), " + rerolls + " restantes" : "Nothing from the build, no skip: reroll (R), " + rerolls + " left", Key = "r" };
         int pick = 1, pr = -1;
