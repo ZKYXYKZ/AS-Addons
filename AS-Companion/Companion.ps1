@@ -108,6 +108,7 @@ while (-not $game.HasExited) {
         $label.Text = "build.txt : build $($f[2]) pour $($m.Groups[2].Value), héros $($j.class). Exportez le bon build."
         $form.Show()
         Log "class mismatch: build $($f[1]) hero $($j.class)"
+        $mismatch = $true
       }
     } elseif ($j.type -eq "choices") {
       $a = Advise $j
@@ -122,7 +123,7 @@ while (-not $game.HasExited) {
         Log "sent key $($a.key)"
       }
     } elseif ($j.type -in @("resume", "start", "defeat", "victory")) {
-      $form.Hide()
+      if (-not $mismatch) { $form.Hide() }
     }
   }
   [System.Windows.Forms.Application]::DoEvents()
