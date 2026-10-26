@@ -1482,7 +1482,8 @@ class Companion : Form
         if (key.StartsWith("leg:"))
         {
             string sk = key.Substring(4);
-            w = Math.Max(w, BuildWeight(sk) * Boost()) * DmgFactor(sk);
+            double bw = BuildWeight(sk);
+            if (idx >= 0 || bw >= 4) w = Math.Max(w, bw * Boost()) * DmgFactor(sk);
         }
         return w;
     }
@@ -1561,7 +1562,7 @@ class Companion : Form
                 else if (info.Cat == "amulets")
                 {
                     double wornW = amulet != null ? JewelWeight("amulets", amulet) * (1 + 0.25 * amuletUps) : 0;
-                    if (w > wornW) { baseW = w; target = idx == 0 || info.Spell != null; }
+                    if (w > wornW) { baseW = w; target = idx >= 0 && idx < want; }
                 }
                 else if (jewels.Values.Count(v => v == info.Cat) < 2)
                 {
@@ -1576,11 +1577,14 @@ class Companion : Form
         Log("  scores: " + string.Join(" | ", scores));
         double luck = Luck();
         string luckTxt = luck > 0 ? (fr ? " · chance " : " · luck ") + Math.Round(luck) + " %" : "";
-        if (best > 0 && !bestTarget && reroll && rerolls > reserve)
+        if (best > 0 && !bestTarget)
         {
             double top = A(G(build, "spells")).Take(6).Select(x => N(G(x, "w"), 3)).DefaultIfEmpty(3).Max();
-            if (bestScore < 0.4 * top * ExpectedRarity(luck, infl))
+            bool weak = bestScore < 0.4 * top * ExpectedRarity(luck, infl);
+            if (weak && reroll && rerolls > reserve)
                 return new Advice { Text = (fr ? "Carte moyenne, relancer (R) : " + rerolls + " restantes" : "Average card, reroll (R): " + rerolls + " left") + luckTxt, Key = "r" };
+            if (weak && jewelScreen && B(G(j, "skip")))
+                return new Advice { Text = fr ? "Rien d'utile : skip (+" + S(G(j, "skipGold")) + " or)" : "Nothing useful: skip (+" + S(G(j, "skipGold")) + " gold)" };
         }
         if (best > 0)
         {
