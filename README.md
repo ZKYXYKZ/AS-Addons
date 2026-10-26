@@ -49,12 +49,12 @@ SurvivorsGuardians works on its own. With SurvivorsUI installed, its panel is mo
 
 ## Install
 
-Download `AS-Addons.zip` and `ASCompanion.exe` from the [latest release](https://github.com/ZKYXYKZ/AS-Addons/releases/latest).
+1. Download `AzerothSurvivors-Addons.zip` from the [latest release](https://github.com/ZKYXYKZ/AS-Addons/releases/latest).
+2. Extract it into the game folder, the one that holds `AzerothSurvivors.exe`. It adds `ASCompanion.exe` there and the three addons to `benilla-configAddOns`, the folder the game loads addons from (Options, AddOns tab, `Open AddOns Folder`).
+3. Start `ASCompanion.exe`, create your build, then click **Launch game**.
+4. In game, enable the addons in the AddOns list if needed. They load at your next run.
 
-1. In game, open Options, go to the AddOns tab and click `Open AddOns Folder`.
-2. Extract `AS-Addons.zip` into it.
-3. Enable them in the AddOns list. They load at your next run.
-4. Put `ASCompanion.exe` next to `AzerothSurvivors.exe` and start the game from it.
+To update, extract the new zip over the old files.
 
 ## Known limits
 

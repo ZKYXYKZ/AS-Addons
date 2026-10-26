@@ -4,8 +4,8 @@ Build planner and launcher for Azeroth Survivors. It edits your builds, starts t
 
 ## Install
 
-1. Download `ASCompanion.exe` from the [latest release](https://github.com/ZKYXYKZ/AS-Addons/releases/latest).
-2. Put it next to `AzerothSurvivors.exe` (or anywhere, then set the game path in Options).
+1. Download `AzerothSurvivors-Addons.zip` (exe and addons) or `ASCompanion.exe` alone from the [latest release](https://github.com/ZKYXYKZ/AS-Addons/releases/latest).
+2. Put the exe next to `AzerothSurvivors.exe` (or anywhere, then set the game path in Options with Browse).
 3. Run it. The builder opens in its own window. A tray icon reopens it.
 
 Windows 10 or 11 only, nothing to install: it runs on the .NET Framework shipped with Windows and shows its window with Microsoft Edge. The exe is not code-signed, so SmartScreen may warn on first launch: More info, Run anyway. It is built from this repository by GitHub Actions, and `SHA256SUMS.txt` in each release lets you check the file.
