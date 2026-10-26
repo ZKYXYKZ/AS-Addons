@@ -61,6 +61,7 @@ async function renderAddons(sec) {
     meta.push(a.installed ? `${esc(AT("installed"))} ${esc(a.version || "")}` : esc(AT("notInstalled")));
     if (a.latest) meta.push(`${esc(AT("latest"))} ${esc(a.latest)}${a.installed && !newer(a.latest, a.version) ? " · " + esc(AT("upToDate")) : ""}`);
     card.appendChild(el("div", "ameta", meta.join(" &nbsp;·&nbsp; ")));
+    if (addonChecked[a.name] && a.installed && !newer(a.latest, a.version)) card.appendChild(el("div", "ameta", esc(AT("noUpdate"))));
     const row = el("div", "row");
     const btn = (label, action, cls) => { const b = el("button", cls || "", esc(label)); b.disabled = data.running; b.onclick = () => act(a.name, action); row.appendChild(b); };
     if (a.ours && !a.installed) btn(AT("install"), "install", "primary");
@@ -75,7 +76,6 @@ async function renderAddons(sec) {
         await renderAddons(sec);
       };
       row.appendChild(c);
-      if (addonChecked[a.name]) row.appendChild(el("span", "hint", esc(AT("noUpdate"))));
     }
     if (a.installed) btn(a.enabled ? AT("disable") : AT("enable"), a.enabled ? "disable" : "enable");
     if (a.installed) btn(AT("uninstall"), "uninstall");
