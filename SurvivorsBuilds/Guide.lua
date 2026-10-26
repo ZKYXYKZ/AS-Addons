@@ -7,13 +7,13 @@ local T = {
     title = "Build : %s", none = "Aucun build reçu du compagnon pour cette classe", learn = "à prendre", rank = "rang %d",
     ban = "À bannir (%d) : %s", rerolls = "Relances : %d (garder %d)", rule = "Rien du build : %s", reroll = "relancer puis skip", skip = "skip",
     jewels = "Bijoux visés : %s", newSpell = "Nouveau sort : %s%s", upSpell = "%s rang %d%s", prio = " (priorité %d)", out = " (hors build)",
-    auto = "Sélection auto active (compagnon)",
+    auto = "Sélection auto active (compagnon)", worn = "porté",
   },
   en = {
     title = "Build: %s", none = "No build received from the companion for this class", learn = "to take", rank = "rank %d",
     ban = "Banish (%d): %s", rerolls = "Rerolls: %d (keep %d)", rule = "Nothing from the build: %s", reroll = "reroll then skip", skip = "skip",
     jewels = "Target jewelry: %s", newSpell = "New spell: %s%s", upSpell = "%s rank %d%s", prio = " (priority %d)", out = " (off build)",
-    auto = "Auto-pick on (companion)",
+    auto = "Auto-pick on (companion)", worn = "worn",
   },
 }
 local function tl(k) return (T[SB.Lang()] or T.en)[k] end
@@ -68,35 +68,6 @@ local function watch()
   known = now
 end
 
-local function build()
-  local f = CreateFrame("Frame", "SurvivorsBuildsGuide", UIParent)
-  f:SetWidth(260)
-  f:SetHeight(100)
-  f:SetFrameStrata("HIGH")
-  local bg = H.Fill(f, "BACKGROUND", 0.04, 0.04, 0.05, 0.85)
-  bg:SetAllPoints(f)
-  f.title = H.Text(f, 13, "LEFT")
-  f.title:SetPoint("TOPLEFT", f, "TOPLEFT", 8, -7)
-  f.title:SetTextColor(1, 0.82, 0.2)
-  f.body = H.Text(f, 12, "LEFT")
-  f.body:SetPoint("TOPLEFT", f, "TOPLEFT", 8, -26)
-  f.body:SetWidth(244)
-  f.body:SetJustifyV("TOP")
-  f:Hide()
-  if SurvivorsUI and SurvivorsUI.Register then
-    SurvivorsUI.Register("buildguide", "Build", f, "LEFT", 20, 60)
-  else
-    f:SetPoint("LEFT", UIParent, "LEFT", 20, 60)
-    f:SetMovable(1)
-    f:EnableMouse(1)
-    f:RegisterForDrag("LeftButton")
-    f:SetScript("OnDragStart", function() this:StartMoving() end)
-    f:SetScript("OnDragStop", function() this:StopMovingOrSizing() end)
-  end
-  G.frame = f
-  return f
-end
-
 function G.Lines(b)
   local have = ranks()
   local lines = ""
@@ -117,26 +88,167 @@ function G.Lines(b)
   return lines
 end
 
+local ROWH = 18
+local WIDTH = 230
+
+local function makeRow(f, i)
+  local r = CreateFrame("Frame", nil, f)
+  r:SetHeight(ROWH)
+  r:SetWidth(WIDTH - 12)
+  r.icon = r:CreateTexture(nil, "ARTWORK")
+  r.icon:SetPoint("TOPLEFT", r, "TOPLEFT", 0, -1)
+  r.icon:SetPoint("BOTTOMRIGHT", r, "TOPLEFT", 16, -17)
+  r.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+  r.name = H.Text(r, 12, "LEFT")
+  r.name:SetPoint("LEFT", r.icon, "RIGHT", 6, 0)
+  r.name:SetWidth(WIDTH - 80)
+  r.name:SetHeight(12)
+  r.info = H.Text(r, 12, "RIGHT")
+  r.info:SetPoint("RIGHT", r, "RIGHT", 0, 0)
+  return r
+end
+
+local function build()
+  local f = CreateFrame("Frame", "SurvivorsBuildsGuide", UIParent)
+  f:SetWidth(WIDTH)
+  f:SetHeight(100)
+  f:SetFrameStrata("MEDIUM")
+  local bg = H.Fill(f, "BACKGROUND", 0.04, 0.04, 0.05, 0.8)
+  bg:SetAllPoints(f)
+  f.title = H.Text(f, 13, "LEFT")
+  f.title:SetPoint("TOPLEFT", f, "TOPLEFT", 8, -7)
+  f.title:SetWidth(WIDTH - 16)
+  f.title:SetTextColor(1, 0.82, 0.2)
+  f.rows = {}
+  f.body = H.Text(f, 12, "LEFT")
+  f.body:SetWidth(WIDTH - 16)
+  f.body:SetJustifyV("TOP")
+  f:Hide()
+  if SurvivorsUI and SurvivorsUI.Register then
+    SurvivorsUI.Register("buildguide", "Build", f, "LEFT", 20, 60)
+    if SurvivorsUI.Handle then SurvivorsUI.Handle("buildguide", f) end
+  else
+    f:SetPoint("LEFT", UIParent, "LEFT", 20, 60)
+    f:SetMovable(1)
+    f:EnableMouse(1)
+    f:RegisterForDrag("LeftButton")
+    f:SetScript("OnDragStart", function() this:StartMoving() end)
+    f:SetScript("OnDragStop", function() this:StopMovingOrSizing() end)
+  end
+  G.frame = f
+  return f
+end
+
+local function worn()
+  local out = {}
+  for slot = 1, 19 do
+    local link = GetInventoryItemLink("player", slot)
+    if link then
+      local _, _, color, name = string.find(link, "|c(%x+)|H.-|h%[(.-)%]|h")
+      if name then out[name] = color end
+    end
+  end
+  return out
+end
+
+local function wornColor(items, t)
+  if not t.item or t.item == "" then return end
+  if items[t.item] then return items[t.item] end
+  for name, color in pairs(items) do
+    if string.find(name, t.item, 1, 1) then return color end
+  end
+end
+
+local function choiceLines(b)
+  local lines = ""
+  if b.bans and table.getn(b.bans) > 0 then
+    lines = lines .. "|cffff6666" .. string.format(tl("ban"), b.banishes or 3, table.concat(b.bans, ", ")) .. "|r\n"
+  end
+  local rr = AZS_RUN and tonumber(AZS_RUN.rr)
+  if rr then lines = lines .. string.format(tl("rerolls"), rr, b.reserve or 0) .. "\n" end
+  lines = lines .. string.format(tl("rule"), b.reroll == 1 and tl("reroll") or tl("skip"))
+  if SB.Fresh() and SB.Link().autoPick then lines = lines .. "\n|cff66ccff" .. tl("auto") .. "|r" end
+  return lines
+end
+
 function G.Refresh()
   local f = G.frame
   if not f then return end
   local phase = AZS_GetPhase and AZS_GetPhase()
-  local show = SB.DB().guide == "always" and phase or phase == "choosing" or (SurvivorsUI and SurvivorsUI.unlocked)
-  if not show or SB.DB().guide == "never" then
+  local unlocked = SurvivorsUI and SurvivorsUI.unlocked
+  if SB.DB().guide == "never" or not (phase or unlocked) then
     f:Hide()
     return
   end
   local b = SB.Build()
   if not b then
     f.title:SetText(tl("none"))
+    for i = 1, table.getn(f.rows) do f.rows[i]:Hide() end
     f.body:SetText("")
     f:SetHeight(30)
     f:Show()
     return
   end
   f.title:SetText(string.format(tl("title"), b.name))
-  f.body:SetText(G.Lines(b))
-  f:SetHeight(f.body:GetHeight() + 36)
+  local have = ranks()
+  local items = worn()
+  local n, y = 0, -26
+  local function nextRow()
+    n = n + 1
+    local r = f.rows[n] or makeRow(f, n)
+    f.rows[n] = r
+    r:ClearAllPoints()
+    r:SetPoint("TOPLEFT", f, "TOPLEFT", 6, y)
+    y = y - ROWH
+    r:Show()
+    return r
+  end
+  for i = 1, math.min(6, table.getn(b.spells)) do
+    local e = b.spells[i]
+    local r = nextRow()
+    local rank = have[e.key]
+    r.icon:SetTexture(e.icon and ("Interface\Icons\\" .. e.icon) or nil)
+    r.icon:SetAlpha(rank and 1 or 0.35)
+    r.name:SetText(e.name)
+    if rank then
+      r.name:SetTextColor(1, 1, 1)
+      r.info:SetText("|cffe6b84c" .. string.format(tl("rank"), rank) .. "|r")
+    else
+      r.name:SetTextColor(0.55, 0.55, 0.55)
+      r.info:SetText("|cff66ff66" .. tl("learn") .. "|r")
+    end
+  end
+  if b.targets and table.getn(b.targets) > 0 then
+    y = y - 6
+    for i = 1, table.getn(b.targets) do
+      local t = b.targets[i]
+      local r = nextRow()
+      local color = wornColor(items, t)
+      r.icon:SetTexture(t.icon and t.icon ~= "" and ("Interface\Icons\\" .. t.icon) or nil)
+      r.icon:SetAlpha(color and 1 or 0.35)
+      if color then
+        r.name:SetText("|c" .. color .. t.name .. "|r")
+        r.info:SetText("|cff66ff66" .. tl("worn") .. "|r")
+      else
+        r.name:SetText(t.name)
+        r.name:SetTextColor(0.55, 0.55, 0.55)
+        r.info:SetText("")
+      end
+    end
+  end
+  for i = n + 1, table.getn(f.rows) do f.rows[i]:Hide() end
+  local h = -y + 6
+  if phase == "choosing" then
+    f.body:ClearAllPoints()
+    f.body:SetPoint("TOPLEFT", f, "TOPLEFT", 8, y - 4)
+    f.body:SetText(choiceLines(b))
+    f.body:Show()
+    h = h + f.body:GetHeight() + 8
+  else
+    f.body:SetText("")
+    f.body:Hide()
+  end
+  f:SetHeight(h)
   f:Show()
 end
 

@@ -101,11 +101,14 @@ class Companion : Form
     Dictionary<string, object> state, settings, build, heroClass;
     Dictionary<string, int> owned = new Dictionary<string, int>();
     string amulet;
+    HashSet<string> jewels = new HashSet<string>();
+    int screenRerolls;
     double runLuck;
     uint pendingKey;
     DateTime pendingAt;
     int pendingTries;
     DateTime uiCheck = DateTime.Now;
+    DateTime lastKey = DateTime.MinValue;
 
     [STAThread]
     static void Main(string[] args)
@@ -404,6 +407,18 @@ class Companion : Form
         return k;
     }
 
+    string[] JewelTarget(Dictionary<string, object> c, string cat, string k)
+    {
+        if (k.StartsWith("leg:"))
+        {
+            object l = G(G(data, "legendaries"), k.Substring(4));
+            return new[] { JewelName(c, k), l != null ? Loc(G(l, "family")) : k, l != null ? S(G(l, "icon")) : "" };
+        }
+        object j = A(G(data, cat)).FirstOrDefault(x => S(G(x, "key")) == k);
+        string n = j != null ? Loc(G(j, "name")) : k;
+        return new[] { n, n, j != null ? S(G(j, "icon")) : "" };
+    }
+
     void WriteGateway(Dictionary<string, object> s, string gameDir)
     {
         string home = Environment.GetEnvironmentVariable("BENILLA_HOME");
@@ -424,7 +439,7 @@ class Companion : Form
             foreach (object sp in A(G(b, "spells")))
             {
                 object d = A(G(c, "spells")).FirstOrDefault(x => S(G(x, "key")) == S(G(sp, "key")));
-                if (d != null) L.Append("          { key = " + LuaStr(S(G(sp, "key"))) + ", name = " + LuaStr(Loc(G(d, "name"))) + ", w = " + (int)N(G(sp, "w"), 3) + " },\n");
+                if (d != null) L.Append("          { key = " + LuaStr(S(G(sp, "key"))) + ", name = " + LuaStr(Loc(G(d, "name"))) + ", w = " + (int)N(G(sp, "w"), 3) + ", icon = " + LuaStr(S(G(d, "icon"))) + " },\n");
             }
             L.Append("        },\n        names = {\n");
             foreach (object d in A(G(c, "spells"))) L.Append("          " + S(G(d, "key")) + " = " + LuaStr(Loc(G(d, "name"))) + ",\n");
@@ -438,6 +453,14 @@ class Companion : Form
                 if (f != null) jw.Add(LuaStr(JewelName(c, S(f))));
             }
             L.Append("        jewels = { " + string.Join(", ", jw) + " },\n");
+            L.Append("        targets = {\n");
+            foreach (string cat in new[] { "rings", "trinkets", "amulets" })
+                foreach (object k in A(G(b, cat)).Take(cat == "amulets" ? 1 : 2))
+                {
+                    string[] t = JewelTarget(c, cat, S(k));
+                    L.Append("          { cat = " + LuaStr(cat) + ", name = " + LuaStr(t[0]) + ", item = " + LuaStr(t[1]) + ", icon = " + LuaStr(t[2]) + " },\n");
+                }
+            L.Append("        },\n");
             L.Append("        reserve = " + (int)N(G(rules, "reserve"), 1) + ", banishes = " + (int)N(G(rules, "banishes"), 3) + ", reroll = " + (int)N(G(rules, "reroll"), 1) + ",\n      },\n");
         }
         L.Append("    },\n  },\n}\n");
@@ -489,12 +512,14 @@ class Companion : Form
         if (j == null) return;
         string type = S(G(j, "type"));
         if (type == "picked" || type == "resume" || type == "choices" || type == "defeat" || type == "victory" || type == "start") pendingKey = 0;
+        if (type == "picked" || type == "resume") screenRerolls = 0;
         switch (type)
         {
             case "ready":
                 build = SelectBuild(S(G(j, "class")));
                 owned = new Dictionary<string, int>();
                 amulet = null;
+                jewels = new HashSet<string>();
                 runLuck = 0;
                 if (build == null) ShowAdvice(lang == "fr" ? "Aucun build pour " + S(G(j, "class")) + " dans le compagnon" : "No build for " + S(G(j, "class")) + " in the companion");
                 Log("hero " + S(G(j, "class")) + ", build " + S(G(build, "name")));
@@ -502,12 +527,14 @@ class Companion : Form
             case "choices":
                 if (build == null) return;
                 Advice a = Advise(j);
+                if (a.Key == "r") screenRerolls++;
                 ShowAdvice(a.Text);
                 Log(S(G(j, "why")) + " lvl " + S(G(j, "level")) + ": " + a.Text);
                 if (B(G(settings, "autoPick")) && a.Key != null)
                 {
                     uint vk = a.Key == "r" ? 0x52u : (uint)(0x30 + int.Parse(a.Key));
-                    System.Windows.Forms.Timer t = new System.Windows.Forms.Timer { Interval = 600 };
+                    System.Windows.Forms.Timer t = new System.Windows.Forms.Timer { Interval = (DateTime.Now - lastKey).TotalMilliseconds < 2500 ? 1500 : 600 };
+                    lastKey = DateTime.Now;
                     t.Tick += delegate
                     {
                         t.Stop();
@@ -536,6 +563,7 @@ class Companion : Form
         CardInfo info = Info(card);
         if (info.Type == "spell" && info.Key != null) owned[info.Key] = (int)N(G(card, "rank"), 1);
         if (info.Cat == "amulets" && info.Key != null) amulet = info.Key;
+        if (info.Type == "jewel" && info.Key != null && info.Cat != "amulets") jewels.Add(info.Key);
         if (info.Type == "jewel" && info.Key != null && info.Cat != "amulets") runLuck += JewelLuck(info.Cat, info.Key);
     }
 
@@ -564,6 +592,11 @@ class Companion : Form
             object leg = G(G(data, "legendaries"), sk);
             if (leg != null && icon == S(G(leg, "icon")) && (title.Contains(S(G(G(s, "name"), "fr"))) || title.Contains(S(G(G(s, "name"), "en")))))
                 return new CardInfo { Type = "jewel", Cat = "amulets", Key = "leg:" + sk, Spell = sk };
+        }
+        if (cat == "amulets" && amulet != null && amulet.StartsWith("leg:"))
+        {
+            object worn = G(G(data, "legendaries"), amulet.Substring(4));
+            if (worn != null && icon == S(G(worn, "icon"))) return new CardInfo { Type = "jewel", Cat = "amulets", Key = amulet, Spell = amulet.Substring(4) };
         }
         foreach (object jw in A(G(data, cat)))
             if (S(G(jw, "icon")) == icon || S(G(G(jw, "name"), "en")) == name || S(G(G(jw, "name"), "fr")) == name)
@@ -635,7 +668,8 @@ class Companion : Form
         double infl = N(G(rules, "rarity"), 50) / 100;
         int lvl = (int)N(G(j, "level"), 1);
         int rerolls = (int)N(G(j, "rerolls"), 0), reserve = (int)N(G(rules, "reserve"), 1);
-        bool reroll = N(G(rules, "reroll"), 1) == 1;
+        bool jewelScreen = S(G(j, "why")) != "levelup";
+        bool reroll = N(G(rules, "reroll"), 1) == 1 && !(jewelScreen && lvl < N(G(rules, "fallbackLevel"), 10) && screenRerolls >= 2);
         bool fr = lang == "fr";
         List<object> cards = A(G(j, "choices")).ToList();
         int best = 0, banIdx = 0;
@@ -673,12 +707,18 @@ class Companion : Form
                 int idx = list.IndexOf(info.Key);
                 if (idx >= 0 && idx < want) { baseW = 10 - idx; target = true; }
                 else if (idx >= want && (info.Cat == "amulets" || lvl >= N(G(rules, "fallbackLevel"), 10))) baseW = Math.Max(1, 5 - (idx - want));
-                if (info.Cat == "amulets" && amulet != null)
+                bool upgrade = info.Cat == "amulets" ? info.Key == amulet : jewels.Contains(info.Key);
+                if (upgrade)
+                {
+                    baseW = info.Spell != null ? Math.Max(SpellWeight(info.Spell), 2) * Boost() : idx >= 0 ? 10 - idx : 4;
+                    target = true;
+                }
+                else if (info.Cat == "amulets" && amulet != null)
                 {
                     int worn = list.IndexOf(amulet);
                     if (worn >= 0 && (idx < 0 || worn <= idx)) baseW = 0;
                 }
-                if (baseW == 0 && info.Spell != null && N(G(rules, "adapt"), 1) != 0)
+                if (!upgrade && baseW == 0 && info.Spell != null && N(G(rules, "adapt"), 1) != 0)
                 {
                     double sw = SpellWeight(info.Spell);
                     if (sw > 0 && !(amulet != null && list.IndexOf(amulet) >= 0)) { baseW = sw * Boost(); target = true; }

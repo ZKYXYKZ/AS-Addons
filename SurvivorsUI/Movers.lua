@@ -159,6 +159,38 @@ local function dragUpdate(m)
   f:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", l / s, t / s)
 end
 
+local function startDrag(mv)
+  local us = UIParent:GetEffectiveScale()
+  local cx, cy = GetCursorPosition()
+  local fs = mv.frame:GetScale()
+  mv.dx = cx / us - mv.frame:GetLeft() * fs
+  mv.dy = cy / us - mv.frame:GetTop() * fs
+  mv.dragging = true
+end
+
+local function stopDrag(mv)
+  if not mv.dragging then return end
+  mv.dragging = nil
+  S.Save(mv)
+end
+
+local dragger = CreateFrame("Frame")
+dragger:SetScript("OnUpdate", function()
+  for i = 1, table.getn(S.order) do
+    local mv = S.order[i]
+    if mv.dragging then dragUpdate(mv) end
+  end
+end)
+
+function S.Handle(key, region)
+  local mv = S.movers[key]
+  if not mv then return end
+  region:EnableMouse(1)
+  region:RegisterForDrag("LeftButton")
+  region:SetScript("OnDragStart", function() startDrag(mv) end)
+  region:SetScript("OnDragStop", function() stopDrag(mv) end)
+end
+
 function S.SetUnlocked(v)
   S.unlocked = v
   if v and not grid then buildGrid() end
@@ -189,22 +221,8 @@ function S.Register(key, label, frame, point, x, y, scale)
   m.tag:SetText(label .. "  " .. string.format("%d%%", S.Scale(m) * 100))
   o.mover = m
   o:RegisterForDrag("LeftButton")
-  o:SetScript("OnDragStart", function()
-    local mv = this.mover
-    local us = UIParent:GetEffectiveScale()
-    local cx, cy = GetCursorPosition()
-    local fs = mv.frame:GetScale()
-    mv.dx = cx / us - mv.frame:GetLeft() * fs
-    mv.dy = cy / us - mv.frame:GetTop() * fs
-    mv.dragging = true
-  end)
-  o:SetScript("OnDragStop", function()
-    this.mover.dragging = nil
-    S.Save(this.mover)
-  end)
-  o:SetScript("OnUpdate", function()
-    if this.mover.dragging then dragUpdate(this.mover) end
-  end)
+  o:SetScript("OnDragStart", function() startDrag(this.mover) end)
+  o:SetScript("OnDragStop", function() stopDrag(this.mover) end)
   o:EnableMouseWheel(1)
   o:SetScript("OnMouseWheel", function()
     S.SetScale(this.mover, S.Scale(this.mover) + arg1 * 0.05)

@@ -77,6 +77,17 @@ local function row(i)
   r:SetWidth(WIDTH)
   r:SetHeight(ROW)
   r:SetPoint("TOPLEFT", panel, "TOPLEFT", 0, -HEAD - (i - 1) * ROW)
+  if SurvivorsUI and SurvivorsUI.Handle and SurvivorsUI.movers.guardians then
+    SurvivorsUI.Handle("guardians", r)
+  else
+    r:RegisterForDrag("LeftButton")
+    r:SetScript("OnDragStart", function() panel:StartMoving() end)
+    r:SetScript("OnDragStop", function()
+      panel:StopMovingOrSizing()
+      SurvivorsGuardiansDB.x = panel:GetLeft()
+      SurvivorsGuardiansDB.y = panel:GetTop()
+    end)
+  end
   r.hover = tex(r, "BACKGROUND", 1, 1, 1, 0.12)
   r.hover:SetAllPoints(r)
   r.hover:Hide()
@@ -228,6 +239,7 @@ driver:SetScript("OnEvent", function()
     panel:SetScript("OnDragStart", nil)
     panel:SetScript("OnDragStop", nil)
     SurvivorsUI.Register("guardians", "Guardians", panel, "TOPRIGHT", -14, -200)
+    if SurvivorsUI.Handle then SurvivorsUI.Handle("guardians", panel) end
   else
     place()
   end
