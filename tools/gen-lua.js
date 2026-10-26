@@ -1,6 +1,7 @@
 const fs = require("fs");
-const [inJson, outLua] = process.argv.slice(2);
+const [inJson, outLua, legJson] = process.argv.slice(2);
 const d = JSON.parse(fs.readFileSync(inJson, "utf8"));
+const legs = legJson ? JSON.parse(fs.readFileSync(legJson, "utf8")) : {};
 const q = (s) => '"' + String(s).replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n") + '"';
 const loc = (o) => `{ en = ${q(o.en)}, fr = ${q(o.fr)} }`;
 const L = [];
@@ -36,6 +37,11 @@ for (const cat of ["rings", "trinkets", "amulets"]) {
   for (const j of d[cat]) L.push(`    { key = ${q(j.key)}, icon = ${q(j.icon)}, name = ${loc(j.name)}${j.desc && j.desc.length > 2 ? `, desc = ${q(j.desc)}` : ""} },`);
   L.push(`  },`);
 }
+L.push(`  legendaries = {`);
+for (const [k, x] of Object.entries(legs)) {
+  L.push(`    [${q(k)}] = { family = ${loc(x.family)}, icon = ${q(x.icon)}, lines = { en = { ${x.lines.en.map(q).join(", ")} }, fr = { ${x.lines.fr.map(q).join(", ")} } } },`);
+}
+L.push(`  },`);
 L.push(`}`);
 fs.writeFileSync(outLua, L.join("\n") + "\n");
 console.log(outLua, fs.statSync(outLua).size);

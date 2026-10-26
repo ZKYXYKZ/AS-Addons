@@ -73,7 +73,26 @@ function SB.Spell(classKey, key)
   end
 end
 
-function SB.Jewel(cat, key)
+function SB.Legendary(classKey, spellKey)
+  local l = SB_DATA.legendaries[spellKey]
+  local s = SB.Spell(classKey, spellKey)
+  if not l or not s then return end
+  return {
+    key = "leg:" .. spellKey, spell = spellKey, spellIcon = s.icon, icon = l.icon, legendary = true, lines = l.lines,
+    name = { en = l.family.en .. " : " .. s.name.en, fr = l.family.fr .. " : " .. s.name.fr },
+  }
+end
+
+function SB.Jewel(cat, key, classKey)
+  if cat == "amulets" and string.sub(key, 1, 4) == "leg:" then
+    local spellKey = string.sub(key, 5)
+    if classKey then return SB.Legendary(classKey, spellKey) end
+    for i = 1, table.getn(SB_DATA.classes) do
+      local j = SB.Legendary(SB_DATA.classes[i].key, spellKey)
+      if j then return j end
+    end
+    return
+  end
   local list = SB_DATA[cat]
   for i = 1, table.getn(list) do
     if list[i].key == key then return list[i] end

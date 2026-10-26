@@ -6,7 +6,7 @@ local T = {
     pool = "Sorts de la classe", prio = "Ordre de priorité", weight = "Poids", ban = "Banni", hintPool = "Clic gauche : ajouter · Clic droit : bannir",
     hintPrio = "Un run garde 6 sorts : les 6 premiers sont visés, les suivants servent de repli. Le poids (1 à 5) entre dans le score avec la rareté.", empty = "Cliquez un sort à gauche pour l'ajouter.",
     rings = "Anneaux", trinkets = "Bijoux", amulets = "Amulette", hintJewel = "Clic gauche : ajouter / retirer · Clic droit : bannir. Les premiers sont visés, les suivants servent de repli.",
-    target = "visé", fallback = "repli",
+    target = "visé", fallback = "repli", legendary = "Légendaires de la classe (une par sort)",
     rarity = "Influence de la rareté", rarityTip = "0 % : seule la priorité compte. 100 % : une légendaire vaut 5 fois une commune.",
     reserve = "Relances gardées en réserve", banishes = "Bannissements disponibles par run", reroll = "Aucune carte du build : relancer avant de skip", store = "Stocker les montées de niveau (réglage du jeu : le combat ne s'arrête plus, un bouton Level Up! les ouvre)", lang = "Langue", auto = "Auto",
     example = "Exemple : %s poids %d en %s = %.1f",
@@ -15,7 +15,7 @@ local T = {
     pool = "Class spells", prio = "Priority order", weight = "Weight", ban = "Banned", hintPool = "Left click: add · Right click: ban",
     hintPrio = "A run holds 6 spells: the first 6 are targets, the rest are fallbacks. Weight (1 to 5) counts in the score with rarity.", empty = "Click a spell on the left to add it.",
     rings = "Rings", trinkets = "Trinkets", amulets = "Amulet", hintJewel = "Left click: add / remove · Right click: ban. The first ones are targets, the rest are fallbacks.",
-    target = "target", fallback = "fallback",
+    target = "target", fallback = "fallback", legendary = "Class legendaries (one per spell)",
     rarity = "Rarity influence", rarityTip = "0%: only priority counts. 100%: a legendary is worth 5 commons.",
     reserve = "Rerolls kept in reserve", banishes = "Banishes available per run", reroll = "No card from the build: reroll before skipping", store = "Store level-ups (game setting: the fight no longer stops, a Level Up! button opens them)", lang = "Language", auto = "Auto",
     example = "Example: %s weight %d as %s = %.1f",
@@ -211,6 +211,63 @@ end
 
 local CATS = { { "rings", 2 }, { "trinkets", 2 }, { "amulets", 1 } }
 
+local function jewelIcon(col, x, y)
+  local it = H.Icon(col, 40)
+  it:SetPoint("TOPLEFT", col, "TOPLEFT", x, y)
+  it.cat = col.cat
+  it.badge = H.Text(it, 14, "CENTER")
+  it.badge:SetPoint("TOPLEFT", it, "TOPLEFT", 2, -2)
+  it:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+  it:SetScript("OnClick", function()
+    local b = W.Build()
+    local list, key = b[this.cat], this.data.key
+    local idx = SB.ListIndex(list, key)
+    if arg1 == "RightButton" then
+      if idx then table.remove(list, idx) end
+      if b.ban[key] then b.ban[key] = nil else b.ban[key] = true end
+    elseif idx then
+      table.remove(list, idx)
+    else
+      b.ban[key] = nil
+      table.insert(list, key)
+    end
+    W.Changed()
+  end)
+  it:SetScript("OnEnter", function()
+    local d = this.data
+    GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+    if d.legendary then
+      GameTooltip:SetText(SB.T(d.name), 1, 0.5, 0)
+      local lines = d.lines[SB.Lang()] or d.lines.en
+      for i = 1, table.getn(lines) do GameTooltip:AddLine(lines[i], 0.9, 0.9, 0.9, 1) end
+    else
+      GameTooltip:SetText(SB.T(d.name), 1, 0.82, 0.2)
+      if d.desc then GameTooltip:AddLine((string.gsub(d.desc, "{v}", "x")), 0.9, 0.9, 0.9, 1) end
+    end
+    GameTooltip:Show()
+  end)
+  it:SetScript("OnLeave", function() GameTooltip:Hide() end)
+  return it
+end
+
+local function paintJewel(it, b, list, want)
+  local key = it.data.key
+  local idx = SB.ListIndex(list, key)
+  if b.ban[key] then
+    it:SetBorder(0.8, 0.15, 0.15)
+    it.icon:SetDesaturated(1)
+    it.badge:SetText("")
+  elseif idx then
+    it.icon:SetDesaturated(nil)
+    it.badge:SetText(idx)
+    if idx <= want then it:SetBorder(1, 0.82, 0.2) it.badge:SetTextColor(1, 0.82, 0.2) else it:SetBorder(0.4, 0.6, 0.9) it.badge:SetTextColor(0.5, 0.75, 1) end
+  else
+    if it.data.legendary then it:SetBorder(0.6, 0.3, 0) else it:SetBorder(0, 0, 0) end
+    it.icon:SetDesaturated(nil)
+    it.badge:SetText("")
+  end
+end
+
 local function buildJewels(f)
   f.hint = hint(f, 0, -4, 960)
   f.cols = {}
@@ -225,40 +282,28 @@ local function buildJewels(f)
     col.cat, col.want = CATS[ci][1], CATS[ci][2]
     col.items = {}
     for i = 1, table.getn(SB_DATA[col.cat]) do
-      local it = H.Icon(col, 40)
-      it:SetPoint("TOPLEFT", col, "TOPLEFT", 12 + math.mod(i - 1, 6) * 48, -34 - math.floor((i - 1) / 6) * 56)
+      local it = jewelIcon(col, 12 + math.mod(i - 1, 6) * 48, -34 - math.floor((i - 1) / 6) * 56)
       it.data = SB_DATA[col.cat][i]
-      it.cat = col.cat
       it:SetIcon(it.data.icon)
-      it.badge = H.Text(it, 14, "CENTER")
-      it.badge:SetPoint("TOPLEFT", it, "TOPLEFT", 2, -2)
-      it:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-      it:SetScript("OnClick", function()
-        local b = W.Build()
-        local list, key = b[this.cat], this.data.key
-        local idx = SB.ListIndex(list, key)
-        if arg1 == "RightButton" then
-          if idx then table.remove(list, idx) end
-          if b.ban[key] then b.ban[key] = nil else b.ban[key] = true end
-        elseif idx then
-          table.remove(list, idx)
-        else
-          b.ban[key] = nil
-          table.insert(list, key)
-        end
-        W.Changed()
-      end)
-      it:SetScript("OnEnter", function()
-        GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-        GameTooltip:SetText(SB.T(this.data.name), 1, 0.82, 0.2)
-        if this.data.desc then GameTooltip:AddLine(string.gsub(this.data.desc, "{v}", "x"), 0.9, 0.9, 0.9, 1) end
-        GameTooltip:Show()
-      end)
-      it:SetScript("OnLeave", function() GameTooltip:Hide() end)
       table.insert(col.items, it)
     end
+    col.rows = math.ceil(table.getn(SB_DATA[col.cat]) / 6)
+    if col.cat == "amulets" then
+      col.legTitle = H.Text(col, 12, "LEFT")
+      col.legTitle:SetPoint("TOPLEFT", col, "TOPLEFT", 12, -34 - col.rows * 56 + 6)
+      col.legTitle:SetTextColor(1, 0.5, 0)
+      col.legs = {}
+      for i = 1, 13 do
+        local it = jewelIcon(col, 12 + math.mod(i - 1, 6) * 48, -34 - col.rows * 56 - 16 - math.floor((i - 1) / 6) * 56)
+        it.spellIcon = it:CreateTexture(nil, "OVERLAY")
+        it.spellIcon:SetWidth(18)
+        it.spellIcon:SetHeight(18)
+        it.spellIcon:SetPoint("BOTTOMRIGHT", it, "BOTTOMRIGHT", 2, -2)
+        it:Hide()
+        col.legs[i] = it
+      end
+    end
     col.list = H.Text(col, 12, "LEFT")
-    col.list:SetPoint("TOPLEFT", col, "TOPLEFT", 12, -34 - 3 * 56 - 6)
     col.list:SetWidth(286)
     col.list:SetJustifyV("TOP")
     f.cols[ci] = col
@@ -271,27 +316,34 @@ local function refreshJewels(f, b)
     local col = f.cols[ci]
     local list = b[col.cat]
     col.title:SetText(tl(col.cat))
-    for i = 1, table.getn(col.items) do
-      local it = col.items[i]
-      local key = it.data.key
-      local idx = SB.ListIndex(list, key)
-      if b.ban[key] then
-        it:SetBorder(0.8, 0.15, 0.15)
-        it.icon:SetDesaturated(1)
-        it.badge:SetText("")
-      elseif idx then
-        it.icon:SetDesaturated(nil)
-        it.badge:SetText(idx)
-        if idx <= col.want then it:SetBorder(1, 0.82, 0.2) it.badge:SetTextColor(1, 0.82, 0.2) else it:SetBorder(0.4, 0.6, 0.9) it.badge:SetTextColor(0.5, 0.75, 1) end
-      else
-        it:SetBorder(0, 0, 0)
-        it.icon:SetDesaturated(nil)
-        it.badge:SetText("")
+    for i = 1, table.getn(col.items) do paintJewel(col.items[i], b, list, col.want) end
+    local bottom = -34 - col.rows * 56 - 6
+    if col.legs then
+      local c = SB.Class(b.class)
+      local n = 0
+      for i = 1, table.getn(col.legs) do
+        local it = col.legs[i]
+        local s = c.spells[i]
+        local d = s and SB.Legendary(b.class, s.key)
+        if d then
+          n = n + 1
+          it.data = d
+          it:SetIcon(d.icon)
+          it.spellIcon:SetTexture("Interface\\Icons\\" .. d.spellIcon)
+          paintJewel(it, b, list, col.want)
+          it:Show()
+        else
+          it:Hide()
+        end
       end
+      col.legTitle:SetText(tl("legendary"))
+      bottom = -34 - col.rows * 56 - 16 - math.ceil(n / 6) * 56 - 6
     end
+    col.list:ClearAllPoints()
+    col.list:SetPoint("TOPLEFT", col, "TOPLEFT", 12, bottom)
     local s = ""
     for i = 1, table.getn(list) do
-      local j = SB.Jewel(col.cat, list[i])
+      local j = SB.Jewel(col.cat, list[i], b.class)
       if j then
         local tag = i <= col.want and tl("target") or tl("fallback")
         s = s .. i .. ". " .. SB.T(j.name) .. "  |cff888888" .. tag .. "|r\n"
