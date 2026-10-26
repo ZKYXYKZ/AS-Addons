@@ -19,8 +19,6 @@ using System.Windows.Forms;
 [assembly: AssemblyDescription("Build planner and launcher for Azeroth Survivors")]
 [assembly: AssemblyCompany("ZKYXYKZ")]
 [assembly: AssemblyCopyright("ZKYXYKZ")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
 
 static class Native
 {
@@ -116,7 +114,15 @@ class Companion : Form
     static void Main(string[] args)
     {
         bool first;
-        using (Mutex m = new Mutex(true, "AS-Companion-ZKYXYKZ", out first))
+        bool after = args.Contains("--after-update");
+        Mutex m = new Mutex(true, "AS-Companion-ZKYXYKZ", out first);
+        for (int i = 0; !first && after && i < 50; i++)
+        {
+            Thread.Sleep(200);
+            m.Dispose();
+            m = new Mutex(true, "AS-Companion-ZKYXYKZ", out first);
+        }
+        using (m)
         {
             if (!first)
             {
@@ -124,12 +130,14 @@ class Companion : Form
                 return;
             }
             Application.EnableVisualStyles();
-            Application.Run(new Companion(args.Contains("-NoBrowser")));
+            Application.Run(new Companion(args.Contains("-NoBrowser") || after, after));
         }
     }
 
-    Companion(bool noBrowser)
+    Companion(bool noBrowser, bool afterUpdate)
     {
+        watchUi = !noBrowser || afterUpdate;
+        try { File.Delete(Path.Combine(exeDir, "ASCompanion.old.exe")); } catch { }
         ShowInTaskbar = false;
         WindowState = FormWindowState.Minimized;
         FormBorderStyle = FormBorderStyle.FixedToolWindow;
@@ -156,6 +164,7 @@ class Companion : Form
         listener.BeginGetContext(OnContext, null);
         Log("server started on " + Url);
         if (!noBrowser) ui = OpenUi();
+        ThreadPool.QueueUserWorkItem(delegate { CheckUpdate(); });
         tick = new System.Windows.Forms.Timer { Interval = 200 };
         tick.Tick += OnTick;
         tick.Start();
@@ -168,6 +177,105 @@ class Companion : Form
         tray.Visible = false;
         try { listener.Stop(); } catch { }
         base.OnFormClosed(e);
+    }
+
+    const string Repo = "ZKYXYKZ/AS-Addons";
+    bool watchUi;
+    volatile bool updating;
+    volatile string latestTag, latestZip, latestSums, updateError = "";
+
+    static string CurrentVersion
+    {
+        get { Version v = Assembly.GetExecutingAssembly().GetName().Version; return v.Major + "." + v.Minor + "." + v.Build; }
+    }
+
+    static WebClient Web()
+    {
+        ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072;
+        WebClient w = new WebClient();
+        w.Headers.Add("User-Agent", "AS-Companion/" + CurrentVersion);
+        return w;
+    }
+
+    void CheckUpdate()
+    {
+        try
+        {
+            string body;
+            string api = Environment.GetEnvironmentVariable("AS_COMPANION_RELEASE_URL");
+            using (WebClient w = Web()) body = w.DownloadString(string.IsNullOrEmpty(api) ? "https://api.github.com/repos/" + Repo + "/releases/latest" : api);
+            Dictionary<string, object> rel = D(json.DeserializeObject(body));
+            string tag = S(G(rel, "tag_name"));
+            Version remote, local = new Version(CurrentVersion);
+            if (tag == null || !Version.TryParse(tag.TrimStart('v', 'V'), out remote) || remote <= local) { latestTag = null; return; }
+            foreach (object a in A(G(rel, "assets")))
+            {
+                string name = S(G(a, "name")), url = S(G(a, "browser_download_url"));
+                if (name == "AzerothSurvivors-Addons.zip") latestZip = url;
+                if (name == "SHA256SUMS.txt") latestSums = url;
+            }
+            if (latestZip != null) { latestTag = tag; Log("update available: " + tag); }
+        }
+        catch (Exception ex) { Log("update check failed: " + ex.Message); }
+    }
+
+    void ApplyUpdate()
+    {
+        try
+        {
+            byte[] zip;
+            string sums = null;
+            using (WebClient w = Web())
+            {
+                zip = w.DownloadData(latestZip);
+                if (latestSums != null) sums = w.DownloadString(latestSums);
+            }
+            string hash;
+            using (System.Security.Cryptography.SHA256 sha = System.Security.Cryptography.SHA256.Create())
+                hash = BitConverter.ToString(sha.ComputeHash(zip)).Replace("-", "").ToLowerInvariant();
+            if (sums == null || !sums.ToLowerInvariant().Contains(hash + "  azerothsurvivors-addons.zip"))
+                throw new Exception("SHA-256 mismatch");
+            Dictionary<string, object> st = D(LoadState()["settings"]);
+            string gamePath = S(G(st, "gamePath"));
+            if (string.IsNullOrEmpty(gamePath)) gamePath = DefaultGamePath();
+            string gameDir = Path.GetDirectoryName(gamePath);
+            string home = Environment.GetEnvironmentVariable("BENILLA_HOME");
+            string addons = Path.Combine(string.IsNullOrEmpty(home) ? Path.Combine(gameDir, "benilla-config") : home, "AddOns");
+            string newExe = Path.Combine(exeDir, "ASCompanion.new.exe");
+            using (MemoryStream ms = new MemoryStream(zip))
+            using (System.IO.Compression.ZipArchive za = new System.IO.Compression.ZipArchive(ms))
+            {
+                foreach (System.IO.Compression.ZipArchiveEntry e in za.Entries)
+                {
+                    string n = e.FullName.Replace('\\', '/');
+                    if (n.EndsWith("/")) continue;
+                    string target = null;
+                    if (n == "ASCompanion.exe") target = newExe;
+                    else if (n.StartsWith("benilla-config/AddOns/") && !n.Contains("..")) target = Path.Combine(addons, n.Substring("benilla-config/AddOns/".Length).Replace('/', '\\'));
+                    if (target == null) continue;
+                    Directory.CreateDirectory(Path.GetDirectoryName(target));
+                    using (Stream src = e.Open())
+                    using (FileStream dst = File.Create(target)) src.CopyTo(dst);
+                }
+            }
+            Log("update " + latestTag + " extracted");
+            BeginInvoke((MethodInvoker)delegate
+            {
+                string self = Application.ExecutablePath;
+                string old = Path.Combine(exeDir, "ASCompanion.old.exe");
+                try { File.Delete(old); } catch { }
+                File.Move(self, old);
+                File.Move(newExe, self);
+                Process.Start(self, "--after-update");
+                Close();
+            });
+        }
+        catch (Exception ex)
+        {
+            updateError = ex.Message;
+            updating = false;
+            Log("update failed: " + ex.Message);
+        }
     }
 
     void Migrate()
@@ -311,10 +419,10 @@ class Companion : Form
             if (pendingTries >= 4) { Log("key not taken by the game"); pendingKey = 0; }
             else { SendKey(pendingKey); pendingTries++; Log("key resent (" + pendingTries + ")"); }
         }
-        if (ui != null && !running && DateTime.Now > uiCheck)
+        if (watchUi && !running && !updating && DateTime.Now > uiCheck)
         {
             uiCheck = DateTime.Now.AddSeconds(2);
-            if (ui.HasExited && !UiAlive()) { Log("ui closed"); Close(); }
+            if ((ui == null || ui.HasExited) && !UiAlive()) { Log("ui closed"); Close(); }
         }
     }
 
@@ -372,13 +480,26 @@ class Companion : Form
             }
             if (path == "/api/status")
             {
-                Respond(ctx, 200, "application/json", Utf8.GetBytes(json.Serialize(new Dictionary<string, object> { { "running", running }, { "advice", advice }, { "error", error } })));
+                Respond(ctx, 200, "application/json", Utf8.GetBytes(json.Serialize(new Dictionary<string, object> { { "running", running }, { "advice", advice }, { "error", error }, { "version", CurrentVersion }, { "update", latestTag }, { "updating", updating }, { "updateError", updateError } })));
                 return;
             }
             if (path == "/api/browse" && method == "POST")
             {
                 string picked = Browse(new StreamReader(ctx.Request.InputStream, Utf8).ReadToEnd());
                 Respond(ctx, 200, "application/json", Utf8.GetBytes(json.Serialize(new Dictionary<string, object> { { "path", picked } })));
+                return;
+            }
+            if (path == "/api/update" && method == "POST")
+            {
+                if (running) updateError = GameLang().StartsWith("fr") ? "Fermez le jeu avant de mettre à jour" : "Close the game before updating";
+                else if (!updating && latestZip != null) { updating = true; updateError = ""; ThreadPool.QueueUserWorkItem(delegate { ApplyUpdate(); }); }
+                Respond(ctx, 200, "application/json", Utf8.GetBytes("{\"ok\":true}"));
+                return;
+            }
+            if (path == "/api/check" && method == "POST")
+            {
+                CheckUpdate();
+                Respond(ctx, 200, "application/json", Utf8.GetBytes(json.Serialize(new Dictionary<string, object> { { "version", CurrentVersion }, { "update", latestTag }, { "updateError", updateError } })));
                 return;
             }
             if (path == "/api/open" && method == "POST")

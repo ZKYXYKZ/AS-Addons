@@ -21,7 +21,7 @@ const STR = {
     adapt: "Adapter le build à la run", adaptHelp: "Tient compte des sorts déjà pris (6 emplacements) et de l'amulette portée.",
     gamePath: "Chemin du jeu", browse: "Parcourir", lang: "Langue", auto: "Auto", autoPick: "Sélection auto des cartes", autoPickHelp: "Le compagnon choisit et relance à votre place (touches 1, 2, 3, R). Skip et bannir restent manuels.",
     overlay: "Bandeau de conseil par-dessus le jeu", importTitle: "Collez un build (texte d'export) puis validez", exportTitle: "Copiez ce texte pour partager le build", ok: "Importer", close: "Fermer", bad: "Texte de build invalide",
-    renamePrompt: "Nouveau nom du build", saved: "Enregistré", gameOff: "Jeu fermé", advice: "Conseil",
+    updateAvail: "Mise à jour {v} disponible", updateBtn: "Mettre à jour", updating: "Mise à jour en cours…", version: "Version", checkUpdate: "Rechercher une mise à jour", upToDate: "À jour", renamePrompt: "Nouveau nom du build", saved: "Enregistré", gameOff: "Jeu fermé", advice: "Conseil",
   },
   en: {
     new: "New", dup: "Duplicate", ren: "Rename", del: "Delete", delConfirm: "Delete this build?", imp: "Import", exp: "Export",
@@ -39,10 +39,11 @@ const STR = {
     adapt: "Adapt the build to the run", adaptHelp: "Accounts for spells already taken (6 slots) and the worn amulet.",
     gamePath: "Game path", browse: "Browse", lang: "Language", auto: "Auto", autoPick: "Auto-pick cards", autoPickHelp: "The companion picks and rerolls for you (keys 1, 2, 3, R). Skip and banish stay manual.",
     overlay: "Advice banner over the game", importTitle: "Paste a build (export text) then confirm", exportTitle: "Copy this text to share the build", ok: "Import", close: "Close", bad: "Invalid build text",
-    renamePrompt: "New build name", saved: "Saved", gameOff: "Game closed", advice: "Advice",
+    updateAvail: "Update {v} available", updateBtn: "Update", updating: "Updating…", version: "Version", checkUpdate: "Check for updates", upToDate: "Up to date", renamePrompt: "New build name", saved: "Saved", gameOff: "Game closed", advice: "Advice",
   },
 };
 
+let VERSION = null;
 let DATA, STATE, CLASS = null, TAB = "build", PAGE = "builds";
 const $ = (id) => document.getElementById(id);
 const lang = () => {
@@ -342,6 +343,17 @@ function renderOptions(sec) {
   field(f, T("lang"), sel);
   field(f, T("autoPick"), checkInput(() => s.autoPick, (x) => (s.autoPick = x)), T("autoPickHelp"));
   field(f, T("overlay"), checkInput(() => s.overlay ?? 1, (x) => (s.overlay = x)));
+  const ver = el("div", "row");
+  ver.appendChild(el("span", "", esc(VERSION || "-")));
+  const chk = el("button", "small", esc(T("checkUpdate")));
+  const res = el("span", "hint");
+  chk.onclick = async () => {
+    const r = await (await fetch("/api/check", { method: "POST" })).json();
+    res.textContent = r.update ? T("updateAvail", { v: r.update }) : r.updateError || T("upToDate");
+  };
+  ver.appendChild(chk);
+  ver.appendChild(res);
+  field(f, T("version"), ver);
   sec.appendChild(f);
 }
 
@@ -452,7 +464,19 @@ async function poll() {
     const lb = $("launchBtn");
     lb.textContent = s.running ? T("running") : T("launch");
     lb.disabled = !!s.running;
-    $("status").innerHTML = s.running ? (s.advice ? `${T("advice")} : <b>${esc(s.advice)}</b>` : T("running")) : s.error ? `<span style="color:var(--red)">${esc(s.error)}</span>` : "";
+    if (VERSION && s.version && s.version !== VERSION) return location.reload();
+    VERSION = s.version || VERSION;
+    const st = $("status");
+    st.innerHTML = s.running ? (s.advice ? `${T("advice")} : <b>${esc(s.advice)}</b>` : T("running")) : s.error ? `<span style="color:var(--red)">${esc(s.error)}</span>` : "";
+    if (s.updating) st.innerHTML += ` <span class="upd">${esc(T("updating"))}</span>`;
+    else if (s.update) {
+      const u = el("span", "upd", esc(T("updateAvail", { v: s.update })) + " ");
+      const b = el("button", "small primary", esc(T("updateBtn")));
+      b.onclick = () => fetch("/api/update", { method: "POST" });
+      u.appendChild(b);
+      st.appendChild(u);
+    }
+    if (s.updateError) st.innerHTML += ` <span style="color:var(--red)">${esc(s.updateError)}</span>`;
   } catch (e) {}
   setTimeout(poll, 1500);
 }

@@ -17,13 +17,17 @@ const walk = (dir) => {
 walk(web);
 
 fs.mkdirSync(path.dirname(out), { recursive: true });
+const tag = process.env.COMPANION_VERSION || (process.env.GITHUB_REF_NAME || "").replace(/^v/, "");
+const version = /^\d+\.\d+\.\d+$/.test(tag) ? tag : "0.0.0";
+const versionFile = path.join(path.dirname(out), "Version.cs");
+fs.writeFileSync(versionFile, `[assembly: System.Reflection.AssemblyVersion("${version}.0")]\n[assembly: System.Reflection.AssemblyFileVersion("${version}.0")]\n`);
 const args = [
   "/nologo", "/target:winexe", "/optimize+", "/platform:anycpu",
   "/out:" + out,
   "/win32icon:" + path.join(root, "src", "icon.ico"),
-  "/r:System.Web.Extensions.dll", "/r:System.Windows.Forms.dll", "/r:System.Drawing.dll", "/r:System.Core.dll", "/r:System.Management.dll",
+  "/r:System.Web.Extensions.dll", "/r:System.Windows.Forms.dll", "/r:System.Drawing.dll", "/r:System.Core.dll", "/r:System.Management.dll", "/r:System.IO.Compression.dll",
   ...files.map((f) => "/resource:" + f + ",web/" + path.relative(web, f).split(path.sep).join("/")),
-  path.join(root, "src", "Companion.cs"),
+  path.join(root, "src", "Companion.cs"), versionFile,
 ];
 execFileSync(csc, args, { stdio: "inherit" });
-console.log(out, fs.statSync(out).size);
+console.log(out, fs.statSync(out).size, "version", version);

@@ -16,6 +16,10 @@ Windows 10 or 11 only, nothing to install: it runs on the .NET Framework shipped
 - **Statistics**: every run launched from the companion is recorded when it ends (result, time, level, kills, elites, guardians, bosses, damage, DPS, gold, class, race, spec, build, spells and their rank, jewelry, damage per spell). Filters by class, zone and result, key figures, survival and DPS per run, survival by class, damage share by spell, tables by spec and race, and the latest runs.
 - **Options**: game settings.
 
+## Updates
+
+At startup the companion checks the latest GitHub release. When a newer version exists, an Update button shows in the status bar: it downloads the release, checks its SHA-256, updates the addons and the companion, then restarts. Options shows the current version and can check again.
+
 ## Builder
 
 - **Build**: on one page, the three talent trees of the class (51 points, milestones and capstone), the spell priorities with a weight and banned spells (the first 6 are targets, the rest fallbacks), and the target and fallback rings, trinkets and amulets, including the legendary amulet of each spell, each with a weight from 1 to 5. Every piece of jewelry shows its effects, decoded from the game.
