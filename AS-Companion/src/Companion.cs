@@ -986,8 +986,15 @@ class Companion : Form
             if (path == "/api/state" && method == "POST")
             {
                 string body = new StreamReader(ctx.Request.InputStream, Utf8).ReadToEnd();
-                json.DeserializeObject(body);
+                Dictionary<string, object> fresh = D(json.DeserializeObject(body));
                 File.WriteAllText(stateFile, body, Utf8);
+                if (running && fresh != null)
+                    BeginInvoke((MethodInvoker)delegate
+                    {
+                        state = fresh;
+                        settings = D(G(fresh, "settings")) ?? settings;
+                        if (heroClass != null) build = ActiveBuild(state, S(heroClass["key"]));
+                    });
                 Respond(ctx, 200, "application/json", Utf8.GetBytes("{\"ok\":true}"));
                 return;
             }
