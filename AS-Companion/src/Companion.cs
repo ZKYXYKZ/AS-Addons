@@ -129,9 +129,31 @@ class Companion : Form
                 OpenUi();
                 return;
             }
+            Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+            Application.ThreadException += (s, e) => CrashLog(e.Exception);
+            AppDomain.CurrentDomain.UnhandledException += (s, e) => CrashLog(e.ExceptionObject as Exception);
             Application.EnableVisualStyles();
-            Application.Run(new Companion(args.Contains("-NoBrowser") || after, after));
+            Companion app;
+            try { app = new Companion(args.Contains("-NoBrowser") || after, after); }
+            catch (Exception ex)
+            {
+                CrashLog(ex);
+                MessageBox.Show("AS Companion: " + ex.Message, "AS Companion", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            Application.Run(app);
         }
+    }
+
+    static void CrashLog(Exception ex)
+    {
+        try
+        {
+            string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "AS-Companion");
+            Directory.CreateDirectory(dir);
+            File.AppendAllText(Path.Combine(dir, "companion.log"), DateTime.Now.ToString("HH:mm:ss") + " error: " + ex + "\r\n");
+        }
+        catch { }
     }
 
     Companion(bool noBrowser, bool afterUpdate)
