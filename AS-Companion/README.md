@@ -10,6 +10,12 @@ Build planner and launcher for Azeroth Survivors. It edits your builds, starts t
 
 Windows 10 or 11 only, nothing to install: it runs on the .NET Framework shipped with Windows and shows its window with Microsoft Edge. The exe is not code-signed, so SmartScreen may warn on first launch: More info, Run anyway. It is built from this repository by GitHub Actions, and `SHA256SUMS.txt` in each release lets you check the file.
 
+## Pages
+
+- **Builds**: class and build selection, New, Duplicate, Rename, Delete, Import, Export, with the Build and Rules tabs below.
+- **Statistics**: every run launched from the companion is recorded when it ends (result, time, level, kills, elites, guardians, bosses, damage, DPS, gold, class, race, spec, build, spells and their rank, jewelry, damage per spell). Filters by class, zone and result, key figures, survival and DPS per run, survival by class, damage share by spell, tables by spec and race, and the latest runs.
+- **Options**: game settings.
+
 ## Builder
 
 - **Build**: on one page, the three talent trees of the class (51 points, milestones and capstone), the spell priorities with a weight and banned spells (the first 6 are targets, the rest fallbacks), and the target and fallback rings, trinkets and amulets, including the legendary amulet of each spell, each with a weight from 1 to 5. Every piece of jewelry shows its effects, decoded from the game.

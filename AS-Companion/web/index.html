@@ -9,28 +9,37 @@
 <body>
 <header>
   <div class="brand">AS Companion</div>
-  <div class="row">
-    <select id="classSel"></select>
-    <select id="buildSel"></select>
-    <button id="newBtn"></button>
-    <button id="dupBtn"></button>
-    <button id="renBtn"></button>
-    <button id="delBtn"></button>
-  </div>
   <div class="row right">
-    <button id="impBtn"></button>
-    <button id="expBtn"></button>
+    <a class="coffee" href="https://www.buymeacoffee.com/zkyxykz" target="_blank" rel="noopener"><img src="img/buymeacoffee.png" alt="Buy me a coffee" width="128" height="36"></a>
     <button id="launchBtn" class="primary"></button>
   </div>
 </header>
 <div id="status" class="status"></div>
-<nav id="tabs"></nav>
+<nav id="pages" class="pages"></nav>
 <main>
-  <section id="tab-build"></section>
-  <section id="tab-rules"></section>
-  <section id="tab-options"></section>
+  <section id="page-builds">
+    <div class="toolbar">
+      <div class="row">
+        <select id="classSel"></select>
+        <select id="buildSel"></select>
+        <button id="newBtn"></button>
+        <button id="dupBtn"></button>
+        <button id="renBtn"></button>
+        <button id="delBtn"></button>
+      </div>
+      <div class="row right">
+        <button id="impBtn"></button>
+        <button id="expBtn"></button>
+      </div>
+    </div>
+    <nav id="tabs"></nav>
+    <section id="tab-build"></section>
+    <section id="tab-rules"></section>
+  </section>
+  <section id="page-stats"></section>
+  <section id="page-options"></section>
 </main>
-<footer><span>Développé par ZKYXYKZ · <a href="https://x.com/zkyxykz" target="_blank" rel="noopener">X @zkyxykz</a></span><a class="coffee" href="https://www.buymeacoffee.com/zkyxykz" target="_blank" rel="noopener"><img src="img/buymeacoffee.png" alt="Buy me a coffee" width="128" height="36"></a></footer>
+<footer>Développé par <a href="https://x.com/zkyxykz" target="_blank" rel="noopener">ZKYXYKZ</a></footer>
 <div id="tip" class="tip"></div>
 <div id="modal" class="modal hidden">
   <div class="box">
@@ -42,6 +51,7 @@
     </div>
   </div>
 </div>
+<script src="stats.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

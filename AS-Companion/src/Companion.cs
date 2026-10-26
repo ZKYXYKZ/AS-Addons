@@ -364,6 +364,12 @@ class Companion : Form
                 Respond(ctx, 200, "application/json", Utf8.GetBytes("{\"ok\":true}"));
                 return;
             }
+            if (path == "/api/runs")
+            {
+                string rf = Path.Combine(dataDir, "runs.json");
+                Respond(ctx, 200, "application/json", File.Exists(rf) ? File.ReadAllBytes(rf) : Utf8.GetBytes("[]"));
+                return;
+            }
             if (path == "/api/status")
             {
                 Respond(ctx, 200, "application/json", Utf8.GetBytes(json.Serialize(new Dictionary<string, object> { { "running", running }, { "advice", advice }, { "error", error } })));
@@ -648,9 +654,12 @@ class Companion : Form
                 break;
             case "resume":
             case "start":
+                if (build != null) overlay.Hide();
+                break;
             case "defeat":
             case "victory":
                 if (build != null) overlay.Hide();
+                try { RecordRun(j); } catch (Exception ex) { Log("stats error: " + ex.Message); }
                 break;
         }
     }
@@ -754,6 +763,45 @@ class Companion : Form
     }
 
     double Boost() { return N(G(G(build, "rules"), "boost"), 2); }
+
+
+    void RecordRun(Dictionary<string, object> j)
+    {
+        ReadCombat();
+        string rf = Path.Combine(dataDir, "runs.json");
+        List<object> runs = File.Exists(rf) ? A(json.DeserializeObject(File.ReadAllText(rf, Utf8))).ToList() : new List<object>();
+        Dictionary<string, object> r = new Dictionary<string, object>();
+        foreach (string k in new[] { "time", "level", "kills", "elites", "guardians", "bosses", "damage", "taken", "gold", "chests", "hero", "race", "bg" })
+            r[k] = G(j, k);
+        r["result"] = S(G(j, "type"));
+        r["left"] = G(j, "left");
+        r["date"] = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss");
+        r["class"] = heroClass != null ? S(heroClass["key"]) : S(G(j, "class"));
+        r["build"] = S(G(build, "name"));
+        string specKey = null;
+        Dictionary<string, object> tal = D(G(build, "talents"));
+        if (heroClass != null && tal != null)
+        {
+            double best = 0;
+            int ti = 0;
+            foreach (object tree in A(G(heroClass, "trees")))
+            {
+                double pts = A(G(tree, "talents")).Sum(t => tal.ContainsKey(S(G(t, "key"))) ? N(tal[S(G(t, "key"))], 0) : 0);
+                if (pts > best) { best = pts; specKey = S(heroClass["key"]) + "-" + ti; }
+                ti++;
+            }
+        }
+        r["spec"] = specKey;
+        double time = N(G(j, "time"), 0);
+        r["dps"] = time > 0 ? Math.Round(N(G(j, "damage"), 0) / time, 1) : 0;
+        r["spells"] = owned.ToDictionary(kv => kv.Key, kv => (object)kv.Value);
+        r["jewels"] = jewels.Keys.Concat(amulet != null ? new[] { amulet } : new string[0]).ToArray();
+        r["luck"] = Math.Round(Luck());
+        r["dmg"] = spellDmg.OrderByDescending(kv => kv.Value).ToDictionary(kv => kv.Key, kv => (object)Math.Round(kv.Value));
+        runs.Add(r);
+        File.WriteAllText(rf, json.Serialize(runs), Utf8);
+        Log("run recorded: " + r["result"] + " lvl " + r["level"] + " " + Math.Round(time) + "s dps " + r["dps"]);
+    }
 
     double BuildWeight(string key)
     {

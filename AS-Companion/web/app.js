@@ -7,7 +7,7 @@ const RARITY_COLORS = ["#d9d9d9", "#1eff00", "#0070dd", "#a335ee", "#ff8000"];
 const STR = {
   fr: {
     new: "Nouveau", dup: "Dupliquer", ren: "Renommer", del: "Supprimer", delConfirm: "Supprimer ce build ?", imp: "Importer", exp: "Exporter",
-    launch: "Lancer le jeu", running: "Jeu en cours", build: "Build", talents: "Talents", spells: "Sorts", jewels: "Bijoux", rules: "Règles", options: "Options",
+    launch: "Lancer le jeu", running: "Jeu en cours", builds: "Builds", stats: "Statistiques", build: "Build", talents: "Talents", spells: "Sorts", jewels: "Bijoux", rules: "Règles", options: "Options",
     none: "Aucun build pour cette classe. Cliquez sur Nouveau.", spec: "Spé", baseVal: "Valeurs de base, plus fortes aux raretés supérieures", pts: "points", rank: "Rang", next: "Rang suivant", locked: "Rangée verrouillée : {n} points requis dans cet arbre",
     clickTalent: "Clic gauche : +1 · Clic droit : -1", reset: "Réinitialiser les talents",
     pool: "Sorts de la classe", poolHint: "Clic : ajouter · Clic droit : bannir", prio: "Ordre de priorité", prioHint: "Un run garde 6 sorts : les 6 premiers sont visés, les suivants servent de repli. Le poids (1 à 5) entre dans le score avec la rareté.",
@@ -25,7 +25,7 @@ const STR = {
   },
   en: {
     new: "New", dup: "Duplicate", ren: "Rename", del: "Delete", delConfirm: "Delete this build?", imp: "Import", exp: "Export",
-    launch: "Launch game", running: "Game running", build: "Build", talents: "Talents", spells: "Spells", jewels: "Jewelry", rules: "Rules", options: "Options",
+    launch: "Launch game", running: "Game running", builds: "Builds", stats: "Statistics", build: "Build", talents: "Talents", spells: "Spells", jewels: "Jewelry", rules: "Rules", options: "Options",
     none: "No build for this class. Click New.", spec: "Spec", baseVal: "Base values, stronger at higher rarities", pts: "points", rank: "Rank", next: "Next rank", locked: "Row locked: {n} points required in this tree",
     clickTalent: "Left click: +1 · Right click: -1", reset: "Reset talents",
     pool: "Class spells", poolHint: "Click: add · Right click: ban", prio: "Priority order", prioHint: "A run holds 6 spells: the first 6 are targets, the rest are fallbacks. Weight (1 to 5) counts in the score with rarity.",
@@ -43,7 +43,7 @@ const STR = {
   },
 };
 
-let DATA, STATE, CLASS = null, TAB = "build";
+let DATA, STATE, CLASS = null, TAB = "build", PAGE = "builds";
 const $ = (id) => document.getElementById(id);
 const lang = () => {
   const l = STATE.settings.lang || "auto";
@@ -398,9 +398,16 @@ function renderHeader() {
   builds(CLASS).forEach((x) => { const o = el("option", "", esc(x.name)); o.value = x.id; if (b && x.id === b.id) o.selected = true; bs.appendChild(o); });
   bs.disabled = !b;
   [["newBtn", "new"], ["dupBtn", "dup"], ["renBtn", "ren"], ["delBtn", "del"], ["impBtn", "imp"], ["expBtn", "exp"]].forEach(([id, k]) => ($(id).textContent = T(k)));
+  const pages = $("pages");
+  pages.innerHTML = "";
+  ["builds", "stats", "options"].forEach((p) => {
+    const x = el("button", p === PAGE ? "active" : "", T(p));
+    x.onclick = () => { PAGE = p; render(); };
+    pages.appendChild(x);
+  });
   const tabs = $("tabs");
   tabs.innerHTML = "";
-  ["build", "rules", "options"].forEach((t) => {
+  ["build", "rules"].forEach((t) => {
     const x = el("button", t === TAB ? "active" : "", T(t));
     x.onclick = () => { TAB = t; render(); };
     tabs.appendChild(x);
@@ -416,12 +423,17 @@ function render() {
   hideTip();
   renderHeader();
   const b = active();
-  ["build", "rules", "options"].forEach((t) => {
+  ["builds", "stats", "options"].forEach((p) => ($("page-" + p).className = p === PAGE ? "show" : ""));
+  const opt = $("page-options");
+  opt.innerHTML = "";
+  if (PAGE === "options") renderOptions(opt);
+  const st = $("page-stats");
+  if (PAGE === "stats") renderStats(st); else st.innerHTML = "";
+  ["build", "rules"].forEach((t) => {
     const sec = $("tab-" + t);
     sec.innerHTML = "";
     sec.className = t === TAB ? "show" : "";
-    if (t !== TAB) return;
-    if (t === "options") return renderOptions(sec);
+    if (t !== TAB || PAGE !== "builds") return;
     if (!b) { sec.appendChild(el("div", "empty", T("none"))); return; }
     if (t === "rules") return renderRules(sec, b);
     [["talents", renderTalents], ["spells", renderSpells], ["jewels", renderJewels]].forEach(([k, fn]) => {
@@ -446,7 +458,7 @@ async function poll() {
 }
 
 document.addEventListener("click", (e) => {
-  const a = e.target.closest("footer a");
+  const a = e.target.closest("a[target=_blank]");
   if (!a) return;
   e.preventDefault();
   fetch("/api/open", { method: "POST", body: a.href }).catch(() => window.open(a.href));
