@@ -1,0 +1,4 @@
+## Interface: 11200
+## Title: AZBot
+## SavedVariables: AZBotDB
+Bot.lua
