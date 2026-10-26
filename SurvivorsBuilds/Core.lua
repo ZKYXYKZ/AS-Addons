@@ -71,5 +71,5 @@ end)
 local logFrame = CreateFrame("Frame")
 logFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 logFrame:SetScript("OnEvent", function()
-  if SB.Fresh() and LoggingCombat and not LoggingCombat() then LoggingCombat(1) end
+  if SB.Fresh() and LoggingCombat then LoggingCombat(1) end
 end)

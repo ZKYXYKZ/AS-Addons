@@ -779,12 +779,21 @@ class Companion : Form
                 combatPos += last + 1;
                 foreach (string line in Utf8.GetString(buf, 0, last + 1).Split('\n'))
                 {
-                    Match m = HitLine.Match(line);
-                    if (m.Success) { AddDmg(m.Groups[1].Value, double.Parse(m.Groups[2].Value)); continue; }
+                    Match m = TakenLine.Match(line);
+                    if (m.Success)
+                    {
+                        double t = double.Parse(m.Groups[2].Value), tv;
+                        dmgTaken += t;
+                        takenBy.TryGetValue(m.Groups[1].Value, out tv);
+                        takenBy[m.Groups[1].Value] = tv + t;
+                        continue;
+                    }
+                    m = HitLine.Match(line);
+                    if (m.Success) { AddDmg(m.Groups[1].Value, double.Parse(m.Groups[2].Value), line.Contains(" crits ")); continue; }
                     m = TickLine.Match(line);
-                    if (m.Success) { AddDmg(m.Groups[2].Value, double.Parse(m.Groups[1].Value)); continue; }
+                    if (m.Success) { AddDmg(m.Groups[2].Value, double.Parse(m.Groups[1].Value), false); continue; }
                     m = MeleeLine.Match(line);
-                    if (m.Success) AddDmg("Attack", double.Parse(m.Groups[1].Value));
+                    if (m.Success) AddDmg("Attack", double.Parse(m.Groups[1].Value), line.Contains("You crit "));
                 }
             }
         }
@@ -792,13 +801,58 @@ class Companion : Form
         if (totalDmg > 0 && DateTime.Now > dpsLog)
         {
             dpsLog = DateTime.Now.AddSeconds(60);
+            ResearchCombat();
             Log("dps " + string.Join(", ", spellDmg.OrderByDescending(kv => kv.Value).Take(6).Select(kv => kv.Key + " " + Math.Round(100 * kv.Value / totalDmg) + "%")));
         }
     }
 
     DateTime dpsLog = DateTime.MinValue;
+    static readonly Regex TakenLine = new Regex(@"^\S+ \S+\s+(.+?) (?:hits|crits) you for (\d+)", RegexOptions.Compiled);
+    Dictionary<string, int> spellHits = new Dictionary<string, int>(), spellCrits = new Dictionary<string, int>();
+    Dictionary<string, double> takenBy = new Dictionary<string, double>();
+    double dmgTaken;
+    string researchFile;
+    string[] lastScores = new string[0];
 
-    void AddDmg(string spellName, double dmg)
+    void StartResearch(string cls)
+    {
+        researchFile = null;
+        spellHits = new Dictionary<string, int>();
+        spellCrits = new Dictionary<string, int>();
+        takenBy = new Dictionary<string, double>();
+        dmgTaken = 0;
+        string name = DateTime.Now.ToString("yyyyMMdd-HHmmss") + "-" + Regex.Replace(cls ?? "hero", @"[^\w-]", "") + ".jsonl";
+        foreach (string dir in new[] { Path.Combine(exeDir, "research"), Path.Combine(dataDir, "research") })
+        {
+            try
+            {
+                Directory.CreateDirectory(dir);
+                string f = Path.Combine(dir, name);
+                File.AppendAllText(f, "");
+                researchFile = f;
+                return;
+            }
+            catch { }
+        }
+    }
+
+    void Research(string kind, object payload)
+    {
+        if (researchFile == null) return;
+        try
+        {
+            Dictionary<string, object> e = new Dictionary<string, object> { { "t", kind }, { "at", DateTime.Now.ToString("HH:mm:ss") }, { "data", payload } };
+            File.AppendAllText(researchFile, json.Serialize(e) + "\n", Utf8);
+        }
+        catch { }
+    }
+
+    void ResearchCombat()
+    {
+        Research("combat", new Dictionary<string, object> { { "dmg", spellDmg.ToDictionary(kv => kv.Key, kv => (object)Math.Round(kv.Value)) }, { "hits", spellHits }, { "crits", spellCrits }, { "taken", Math.Round(dmgTaken) }, { "takenBy", takenBy.OrderByDescending(kv => kv.Value).Take(10).ToDictionary(kv => kv.Key, kv => (object)Math.Round(kv.Value)) } });
+    }
+
+    void AddDmg(string spellName, double dmg, bool crit)
     {
         string key = spellName;
         if (heroClass != null)
@@ -808,6 +862,10 @@ class Companion : Form
         spellDmg.TryGetValue(key, out v);
         spellDmg[key] = v + dmg;
         totalDmg += dmg;
+        int c;
+        spellHits.TryGetValue(key, out c);
+        spellHits[key] = c + 1;
+        if (crit) { spellCrits.TryGetValue(key, out c); spellCrits[key] = c + 1; }
     }
 
     double DmgShare(string key)
@@ -1256,6 +1314,8 @@ class Companion : Form
         try { j = D(json.DeserializeObject(line.Substring(7))); } catch { return; }
         if (j == null) return;
         string type = S(G(j, "type"));
+        if (type == "ready") StartResearch(S(G(j, "class")));
+        if (type != "hz" && type != "hzend" && type != "hzt" && type != "roster") Research("game", j);
         if (type == "picked" || type == "resume" || type == "choices" || type == "defeat" || type == "victory" || type == "start") pendingKey = 0;
         if (type == "picked" || type == "resume") screenRerolls = 0;
         switch (type)
@@ -1281,6 +1341,7 @@ class Companion : Form
                 if (a.Key == "r") screenRerolls++;
                 ShowAdvice(a.Text);
                 Log(S(G(j, "why")) + " lvl " + S(G(j, "level")) + ": " + a.Text);
+                Research("advice", new Dictionary<string, object> { { "text", a.Text }, { "key", a.Key }, { "scores", lastScores }, { "luck", Math.Round(Luck(), 1) }, { "owned", owned }, { "amulet", amulet }, { "amuletUps", amuletUps } });
                 if (B(G(settings, "autoPick")) && a.Key != null)
                 {
                     uint vk = a.Key == "r" ? 0x52u : (uint)(0x30 + int.Parse(a.Key));
@@ -1463,6 +1524,8 @@ class Companion : Form
             if (S(r["result"]) == "victory") victoryTime = time;
         }
         File.WriteAllText(rf, json.Serialize(runs), Utf8);
+        ResearchCombat();
+        Research("run", r);
         Log("run recorded: " + r["result"] + " lvl " + r["level"] + " " + Math.Round(time) + "s dps " + r["dps"]);
     }
 
@@ -1575,6 +1638,7 @@ class Companion : Form
             if (score > bestScore) { bestScore = score; best = i; bestTarget = target; }
         }
         Log("  scores: " + string.Join(" | ", scores));
+        lastScores = scores.ToArray();
         double luck = Luck();
         string luckTxt = luck > 0 ? (fr ? " · chance " : " · luck ") + Math.Round(luck) + " %" : "";
         if (best > 0 && !bestTarget)
