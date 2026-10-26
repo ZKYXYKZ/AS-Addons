@@ -89,6 +89,13 @@ Les trois partagent une fenêtre : le bouton doré **S** sur la minicarte, ou `/
 - Un problème ? **Options → Rapport de bug** rassemble dans un zip le journal du compagnon, vos dernières parties et vos réglages : envoyez ce fichier avec une description.
 - Vous préférez installer à la main ? Chaque version contient aussi `AzerothSurvivors-Addons.zip`, à extraire dans le dossier du jeu.
 
+## Est-ce sûr ?
+
+- Tout le code est dans ce dépôt. Chaque version est compilée par GitHub Actions à partir de ce code, pas sur le PC de quelqu'un, et `SHA256SUMS.txt` donne l'empreinte de chaque fichier.
+- Le compagnon ne parle qu'à GitHub (pour les mises à jour) et, s'il manque, à Microsoft pour WebView2. Pas de compte, pas de télémétrie : vos builds et statistiques restent sur votre PC.
+- L'exe n'est pas encore signé : Windows SmartScreen peut avertir au premier lancement, **Informations complémentaires → Exécuter quand même**.
+- La sélection automatique est désactivée par défaut. Les addons ne font que lire le jeu par son API officielle pour les addons.
+
 ## Pour les développeurs
 
 - Compiler le compagnon : `node tools/build-companion.js` (utilise le compilateur C# fourni avec Windows, sortie dans `dist\`).

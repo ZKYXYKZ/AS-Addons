@@ -89,6 +89,13 @@ All three share one window: the gold **S** button on the minimap, or `/survivors
 - Something wrong? **Options → Bug report** zips the companion log, your latest runs and your settings: send that file with a description.
 - Prefer a manual install? Each release also has `AzerothSurvivors-Addons.zip`: extract it into the game folder.
 
+## Is it safe?
+
+- The whole source is in this repository. Every release is built by GitHub Actions from that source, not on someone's PC, and `SHA256SUMS.txt` lists the fingerprint of each file.
+- The companion only talks to GitHub (to check for updates) and, if it is missing, to Microsoft for WebView2. No account, no telemetry: your builds and stats stay on your PC.
+- The exe is not signed yet, so Windows SmartScreen may warn on first launch: **More info → Run anyway**.
+- Auto-pick is off by default. The addons only read the game through its official addon API.
+
 ## For developers
 
 - Build the companion: `node tools/build-companion.js` (uses the C# compiler shipped with Windows, output in `dist\`).
