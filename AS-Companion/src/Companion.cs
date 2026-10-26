@@ -101,7 +101,7 @@ class Companion : Form
     Dictionary<string, object> state, settings, build, heroClass;
     Dictionary<string, int> owned = new Dictionary<string, int>();
     string amulet;
-    HashSet<string> jewels = new HashSet<string>();
+    Dictionary<string, string> jewels = new Dictionary<string, string>();
     int screenRerolls;
     double runLuck;
     uint pendingKey;
@@ -534,7 +534,7 @@ class Companion : Form
                 build = SelectBuild(S(G(j, "class")));
                 owned = new Dictionary<string, int>();
                 amulet = null;
-                jewels = new HashSet<string>();
+                jewels = new Dictionary<string, string>();
                 runLuck = 0;
                 if (build == null) ShowAdvice(lang == "fr" ? "Aucun build pour " + S(G(j, "class")) + " dans le compagnon" : "No build for " + S(G(j, "class")) + " in the companion");
                 Log("hero " + S(G(j, "class")) + ", build " + S(G(build, "name")));
@@ -578,7 +578,7 @@ class Companion : Form
         CardInfo info = Info(card);
         if (info.Type == "spell" && info.Key != null) owned[info.Key] = (int)N(G(card, "rank"), 1);
         if (info.Cat == "amulets" && info.Key != null) amulet = info.Key;
-        if (info.Type == "jewel" && info.Key != null && info.Cat != "amulets") jewels.Add(info.Key);
+        if (info.Type == "jewel" && info.Key != null && info.Cat != "amulets") jewels[info.Key] = info.Cat;
         if (info.Type == "jewel" && info.Key != null && info.Cat != "amulets") runLuck += JewelLuck(info.Cat, info.Key);
     }
 
@@ -661,6 +661,16 @@ class Companion : Form
 
     double Boost() { return N(G(G(build, "rules"), "boost"), 2); }
 
+    double JewelWeight(string cat, string key)
+    {
+        List<string> list = A(G(build, cat)).Select(S).ToList();
+        int idx = list.IndexOf(key);
+        double set = N(G(G(build, "jw"), key), 0);
+        double w = idx >= 0 ? (set > 0 ? set : idx < (cat == "amulets" ? 1 : 2) ? 5 : 3) * 2 : 0;
+        if (key.StartsWith("leg:") && N(G(G(build, "rules"), "adapt"), 1) != 0) w = Math.Max(w, SpellWeight(key.Substring(4)) * Boost());
+        return w;
+    }
+
     double SpellWeight(string key)
     {
         double w = 0;
@@ -724,23 +734,22 @@ class Companion : Form
                 int want = info.Cat == "amulets" ? 1 : 2;
                 List<string> list = A(G(build, info.Cat)).Select(S).ToList();
                 int idx = list.IndexOf(info.Key);
-                if (idx >= 0 && idx < want) { baseW = 10 - idx; target = true; }
-                else if (idx >= want && (info.Cat == "amulets" || lvl >= N(G(rules, "fallbackLevel"), 10))) baseW = Math.Max(1, 5 - (idx - want));
-                bool upgrade = info.Cat == "amulets" ? info.Key == amulet : jewels.Contains(info.Key);
+                double w = JewelWeight(info.Cat, info.Key);
+                bool upgrade = info.Cat == "amulets" ? info.Key == amulet : jewels.ContainsKey(info.Key);
                 if (upgrade)
                 {
-                    baseW = info.Spell != null ? Math.Max(SpellWeight(info.Spell), 2) * Boost() : idx >= 0 ? 10 - idx : 4;
+                    baseW = Math.Max(w, 4);
                     target = true;
                 }
-                else if (info.Cat == "amulets" && amulet != null)
+                else if (info.Cat == "amulets")
                 {
-                    int worn = list.IndexOf(amulet);
-                    if (worn >= 0 && (idx < 0 || worn <= idx)) baseW = 0;
+                    double wornW = amulet != null ? JewelWeight("amulets", amulet) : 0;
+                    if (w > wornW) { baseW = w; target = idx == 0 || info.Spell != null; }
                 }
-                if (!upgrade && baseW == 0 && info.Spell != null && N(G(rules, "adapt"), 1) != 0)
+                else if (jewels.Values.Count(v => v == info.Cat) < 2)
                 {
-                    double sw = SpellWeight(info.Spell);
-                    if (sw > 0 && !(amulet != null && list.IndexOf(amulet) >= 0)) { baseW = sw * Boost(); target = true; }
+                    if (idx >= 0 && idx < want) { baseW = w; target = true; }
+                    else if (idx >= want && lvl >= N(G(rules, "fallbackLevel"), 10)) baseW = w;
                 }
             }
             double score = baseW * (1 + infl * N(G(card, "rarity"), 0));

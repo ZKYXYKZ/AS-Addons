@@ -12,7 +12,7 @@ Windows 10 or 11 only, nothing to install: it runs on the .NET Framework shipped
 
 ## Builder
 
-- **Build**: on one page, the three talent trees of the class (51 points, milestones and capstone), the spell priorities with a weight and banned spells (the first 6 are targets, the rest fallbacks), and the target and fallback rings, trinkets and amulets, including the legendary amulet of each spell. Every piece of jewelry shows its effects, decoded from the game.
+- **Build**: on one page, the three talent trees of the class (51 points, milestones and capstone), the spell priorities with a weight and banned spells (the first 6 are targets, the rest fallbacks), and the target and fallback rings, trinkets and amulets, including the legendary amulet of each spell, each with a weight from 1 to 5. Every piece of jewelry shows its effects, decoded from the game.
 - **Rules**: rarity weight, rerolls kept in reserve, banishes, reroll before skipping, level from which fallback rings and trinkets are accepted, legendary boost, adapt to the run.
 - **Options**: game path (with a Browse button), language, card auto-pick, overlay.
 - **Sharing**: Export and Import a build as one line of text.

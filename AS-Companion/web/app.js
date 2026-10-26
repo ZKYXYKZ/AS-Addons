@@ -274,7 +274,19 @@ function renderJewels(sec, b) {
       col.appendChild(lg);
     }
     const jl = el("div", "jlist");
-    b[cat].forEach((k, i) => { const j = jewel(cat, k, c); if (j) jl.appendChild(el("div", "", `${i + 1}. ${esc(L(j.name))} <span>${i < want ? T("target") : T("fallback")}</span>`)); });
+    b.jw = b.jw || {};
+    b[cat].forEach((k, i) => {
+      const j = jewel(cat, k, c);
+      if (!j) return;
+      const row = el("div", "jrow", `<span class="jn">${i + 1}. ${esc(L(j.name))} <span>${i < want ? T("target") : T("fallback")}</span></span>`);
+      const w = () => b.jw[k] || (i < want ? 5 : 3);
+      const btn = (txt, fn) => { const x = el("button", "small", txt); x.onclick = fn; row.appendChild(x); };
+      row.appendChild(el("span", "hint", T("weight")));
+      btn("−", () => { b.jw[k] = Math.max(1, w() - 1); changed(); });
+      row.appendChild(el("b", "", w()));
+      btn("+", () => { b.jw[k] = Math.min(5, w() + 1); changed(); });
+      jl.appendChild(row);
+    });
     col.appendChild(jl);
     cols.appendChild(col);
   });
@@ -338,7 +350,7 @@ function encode(b) {
   const trees = c.trees.map((t) => t.talents.map((x) => b.talents[x.key] || 0).join("")).join("/");
   const r = b.rules;
   return ["SB1", b.class, b.name.replace(/[;|/,:]/g, " "), trees, b.spells.map((s) => s.key + ":" + (s.w || 3)).join(","), Object.keys(b.ban).sort().join(","),
-    b.rings.join(","), b.trinkets.join(","), b.amulets.join(","),
+    ...["rings", "trinkets", "amulets"].map((cat) => b[cat].map((k) => (b.jw && b.jw[k] ? k + ":" + b.jw[k] : k)).join(",")),
     [r.rarity ?? 50, r.reserve ?? 1, r.reroll ?? 1, r.banishes ?? 3, r.fallbackLevel ?? 10, r.boost ?? 2, r.adapt ?? 1].join(",")].join(";");
 }
 function decode(text) {
@@ -350,7 +362,14 @@ function decode(text) {
   f[3].split("/").forEach((s, ti) => { const tree = c.trees[ti]; if (!tree) return; tree.talents.forEach((t, i) => { const r = +s[i]; if (r > 0) b.talents[t.key] = Math.min(r, t.max); }); });
   f[4].split(",").filter(Boolean).forEach((p) => { const [k, w] = p.split(":"); if (spellOf(c, k)) b.spells.push({ key: k, w: Math.max(1, Math.min(5, +w || 3)) }); });
   f[5].split(",").filter(Boolean).forEach((k) => (b.ban[k] = true));
-  ["rings", "trinkets", "amulets"].forEach((cat, i) => f[6 + i].split(",").filter(Boolean).forEach((k) => { if (jewel(cat, k, c)) b[cat].push(k); }));
+  b.jw = {};
+  ["rings", "trinkets", "amulets"].forEach((cat, i) => f[6 + i].split(",").filter(Boolean).forEach((p) => {
+    const m = p.match(/^(.*?)(?::([1-5]))?$/);
+    const k = m[1];
+    if (!jewel(cat, k, c)) return;
+    b[cat].push(k);
+    if (m[2]) b.jw[k] = Math.max(1, Math.min(5, +m[2]));
+  }));
   const r = f[9].split(",").map(Number);
   Object.assign(b.rules, { rarity: r[0] ?? 50, reserve: r[1] ?? 1, reroll: r[2] ?? 1, banishes: r[3] ?? 3, fallbackLevel: r[4] || 10, boost: r[5] || 2, adapt: r[6] ?? 1 });
   return b;

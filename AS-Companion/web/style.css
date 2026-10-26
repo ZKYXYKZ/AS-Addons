@@ -100,3 +100,6 @@ footer a:hover { text-decoration: underline; }
 .pathrow { display: flex; gap: 8px; }
 .pathrow input { flex: 1; min-width: 0; }
 @media (max-width: 640px) { .form { grid-template-columns: 1fr; } .form .help { grid-column: 1; margin-top: -6px; } }
+.jrow { display: flex; align-items: center; gap: 6px; padding: 2px 0; }
+.jrow .jn { flex: 1; min-width: 0; }
+.jrow b { min-width: 12px; text-align: center; }
