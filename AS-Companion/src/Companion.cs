@@ -1584,7 +1584,7 @@ class Companion : Form
         double time = N(G(j, "time"), 0);
         r["damageGame"] = G(j, "damage");
         r["damageLog"] = Math.Round(totalDmg);
-        if (totalDmg > 0) r["damage"] = Math.Round(totalDmg);
+        if (totalDmg > 0 && N(r["damage"], 0) <= 0) r["damage"] = Math.Round(totalDmg);
         r["dps"] = time > 0 ? Math.Round(N(r["damage"], 0) / time, 1) : 0;
         r["spells"] = owned.ToDictionary(kv => kv.Key, kv => (object)kv.Value);
         r["jewels"] = jewels.Keys.Concat(amulet != null ? new[] { amulet } : new string[0]).ToArray();
