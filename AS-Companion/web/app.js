@@ -484,7 +484,7 @@ async function poll() {
     lb.disabled = !!s.running;
     if (VERSION && s.version && s.version !== VERSION) return location.reload();
     VERSION = s.version || VERSION;
-    const key = JSON.stringify([s.running, s.advice, s.error, s.updating, s.update, s.updatedFrom, s.game, s.addonsUpdated, s.updateError, lang()]);
+    const key = JSON.stringify([s.running, s.spec, s.advice, s.error, s.updating, s.update, s.updatedFrom, s.game, s.addonsUpdated, s.updateError, lang()]);
     const um = $("updModal");
     if (s.updating) {
       um.classList.remove("hidden");
@@ -498,6 +498,7 @@ async function poll() {
     const add = (cls, html) => { const x = el("span", cls, html); st.appendChild(x); return x; };
     if (s.running) add("", s.advice ? `${T("advice")} : <b>${esc(s.advice)}</b>` : T("running"));
     else if (s.error) add("err", esc(s.error));
+    if (s.spec) add("upd", esc(s.spec));
     if (s.updatedFrom !== null && s.updatedFrom !== undefined) add("upd", esc(T("updated", { v: s.version })));
     if (!s.updating && s.update) {
       const u = add("upd", esc(T("updateAvail", { v: s.update })) + " ");

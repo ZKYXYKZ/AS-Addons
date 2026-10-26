@@ -856,6 +856,8 @@ class Companion : Form
                     m = DiesLine.Match(line);
                     if (m.Success) { hostiles.Add(m.Groups[1].Value); continue; }
                     m = OtherHit.Match(line);
+                    int petTree;
+                    if (m.Success && detectedTree < 0 && coopSize <= 1 && !hostiles.Contains(m.Groups[1].Value) && hostiles.Contains(m.Groups[2].Value) && capPets.TryGetValue(m.Groups[1].Value, out petTree)) DetectSpec(petTree, "pet " + m.Groups[1].Value);
                     if (m.Success && !hostiles.Contains(m.Groups[1].Value) && hostiles.Contains(m.Groups[2].Value) && OwnPet(m.Groups[1].Value))
                         AddDmg("Pets", double.Parse(m.Groups[3].Value), line.Contains(" crits "));
                 }
@@ -923,6 +925,8 @@ class Companion : Form
         if (heroClass != null)
             foreach (object sp in A(G(heroClass, "spells")))
                 if (S(G(G(sp, "name"), "en")) == spellName) { key = S(G(sp, "key")); break; }
+        int capTree;
+        if (detectedTree < 0 && !owned.ContainsKey(key) && capSpells.TryGetValue(key, out capTree)) DetectSpec(capTree, "log " + key);
         double v;
         spellDmg.TryGetValue(key, out v);
         spellDmg[key] = v + dmg;
@@ -1015,7 +1019,11 @@ class Companion : Form
                     {
                         state = fresh;
                         settings = D(G(fresh, "settings")) ?? settings;
-                        if (heroClass != null) build = ActiveBuild(state, S(heroClass["key"]));
+                        if (heroClass == null) return;
+                        Dictionary<string, object> active = ActiveBuild(state, S(heroClass["key"]));
+                        string keep = detectedTree >= 0 ? S(G(build, "id")) : null;
+                        Dictionary<string, object> same = keep == null ? null : A(G(state, "builds")).Select(D).FirstOrDefault(b => S(G(b, "id")) == keep);
+                        build = same != null && SpecIndex(active) != detectedTree ? same : active;
                     });
                 Respond(ctx, 200, "application/json", Utf8.GetBytes("{\"ok\":true}"));
                 return;
@@ -1034,7 +1042,7 @@ class Companion : Form
             }
             if (path == "/api/status")
             {
-                Respond(ctx, 200, "application/json", Utf8.GetBytes(json.Serialize(new Dictionary<string, object> { { "running", running }, { "advice", advice }, { "error", error }, { "version", CurrentVersion }, { "update", latestTag }, { "updating", updating }, { "updateStage", updateStage }, { "updateProgress", updateProgress }, { "updatedFrom", (DateTime.Now - updatedAt).TotalSeconds < 60 ? updatedFrom : null }, { "updateError", updateError }, { "addonsUpdated", (DateTime.Now - addonsUpdatedAt).TotalMinutes < 2 ? addonsUpdated : "" }, { "game", GamePath() } })));
+                Respond(ctx, 200, "application/json", Utf8.GetBytes(json.Serialize(new Dictionary<string, object> { { "running", running }, { "advice", advice }, { "spec", running ? specNote : "" }, { "error", error }, { "version", CurrentVersion }, { "update", latestTag }, { "updating", updating }, { "updateStage", updateStage }, { "updateProgress", updateProgress }, { "updatedFrom", (DateTime.Now - updatedAt).TotalSeconds < 60 ? updatedFrom : null }, { "updateError", updateError }, { "addonsUpdated", (DateTime.Now - addonsUpdatedAt).TotalMinutes < 2 ? addonsUpdated : "" }, { "game", GamePath() } })));
                 return;
             }
             if (path == "/api/browse" && method == "POST")
@@ -1448,6 +1456,7 @@ class Companion : Form
             case "ready":
                 recordedIndex = -1;
                 build = SelectBuild(S(G(j, "class")));
+                CapSignals();
                 owned = new Dictionary<string, int>();
                 amulet = null;
                 jewels = new Dictionary<string, string>();
@@ -1601,6 +1610,77 @@ class Companion : Form
 
 
     int recordedIndex = -1;
+    int detectedTree = -1;
+    string specNote = "";
+    Dictionary<string, int> capSpells = new Dictionary<string, int>(), capPets = new Dictionary<string, int>();
+    static readonly Dictionary<string, string[]> CapPets = new Dictionary<string, string[]>
+    {
+        { "raptor", new[] { "Raptor" } },
+        { "treants", new[] { "Tréant", "Treant" } },
+        { "Water Elemental", new[] { "Élémentaire d'eau", "Water Elemental" } },
+        { "spirit wolves", new[] { "Loup spirituel", "Esprit du loup", "Spirit Wolf" } },
+        { "Pit Lord", new[] { "Seigneur des fosses", "Pit Lord" } },
+        { "Felguard", new[] { "Gangregarde", "Felguard" } },
+    };
+
+    int SpecIndex(Dictionary<string, object> b)
+    {
+        Dictionary<string, object> tal = D(G(b, "talents"));
+        if (heroClass == null || tal == null) return -1;
+        double best = 0;
+        int found = -1, ti = 0;
+        foreach (object tree in A(G(heroClass, "trees")))
+        {
+            double pts = A(G(tree, "talents")).Sum(t => tal.ContainsKey(S(G(t, "key"))) ? N(tal[S(G(t, "key"))], 0) : 0);
+            if (pts > best) { best = pts; found = ti; }
+            ti++;
+        }
+        return found;
+    }
+
+    void CapSignals()
+    {
+        capSpells = new Dictionary<string, int>();
+        capPets = new Dictionary<string, int>();
+        detectedTree = -1;
+        specNote = "";
+        if (heroClass == null) return;
+        int ti = 0;
+        foreach (object tree in A(G(heroClass, "trees")))
+        {
+            foreach (object t in A(G(tree, "talents")))
+            {
+                if (N(G(t, "row"), 0) != 6) continue;
+                string desc = S(G(G(t, "desc"), "en")) ?? "";
+                Match m = Regex.Match(desc, @"start every run with (.+?)(?: instead of|[,;.]| and )");
+                if (m.Success)
+                    foreach (object sp in A(G(heroClass, "spells")))
+                        if (S(G(G(sp, "name"), "en")) == m.Groups[1].Value.Trim()) capSpells[S(G(sp, "key"))] = ti;
+                foreach (KeyValuePair<string, string[]> pet in CapPets)
+                    if (desc.IndexOf(pet.Key, StringComparison.OrdinalIgnoreCase) >= 0)
+                        foreach (string n in pet.Value) capPets[n] = ti;
+            }
+            ti++;
+        }
+    }
+
+    void DetectSpec(int tree, string why)
+    {
+        if (detectedTree >= 0 || heroClass == null) return;
+        detectedTree = tree;
+        bool fr = lang == "fr";
+        object t = A(G(heroClass, "trees")).ElementAtOrDefault(tree);
+        string treeName = S(G(G(t, "name"), fr ? "fr" : "en")) ?? S(G(G(t, "name"), "en"));
+        string cls = S(heroClass["key"]);
+        Dictionary<string, object> pick = SpecIndex(build) == tree ? build : A(G(state, "builds")).Select(D).FirstOrDefault(b => S(G(b, "class")) == cls && SpecIndex(b) == tree);
+        if (pick == null) specNote = fr ? "Spé détectée : " + treeName + ", aucun build de cette spé, « " + S(G(build, "name")) + " » gardé" : "Spec detected: " + treeName + ", no build for it, keeping \"" + S(G(build, "name")) + "\"";
+        else
+        {
+            if (pick != build) build = pick;
+            specNote = fr ? "Spé détectée : " + treeName + ", build « " + S(G(build, "name")) + " »" : "Spec detected: " + treeName + ", build \"" + S(G(build, "name")) + "\"";
+        }
+        Log("spec detected (" + why + "): " + treeName + ", build " + S(G(build, "name")));
+    }
     int coopSize;
     double victoryTime;
 
@@ -1617,20 +1697,9 @@ class Companion : Form
         r["date"] = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss");
         r["class"] = heroClass != null ? S(heroClass["key"]) : S(G(j, "class"));
         r["build"] = S(G(build, "name"));
-        string specKey = null;
-        Dictionary<string, object> tal = D(G(build, "talents"));
-        if (heroClass != null && tal != null)
-        {
-            double best = 0;
-            int ti = 0;
-            foreach (object tree in A(G(heroClass, "trees")))
-            {
-                double pts = A(G(tree, "talents")).Sum(t => tal.ContainsKey(S(G(t, "key"))) ? N(tal[S(G(t, "key"))], 0) : 0);
-                if (pts > best) { best = pts; specKey = S(heroClass["key"]) + "-" + ti; }
-                ti++;
-            }
-        }
-        r["spec"] = specKey;
+        int specTree = detectedTree >= 0 ? detectedTree : SpecIndex(build);
+        r["spec"] = specTree >= 0 && heroClass != null ? S(heroClass["key"]) + "-" + specTree : null;
+        if (detectedTree >= 0) r["specDetected"] = true;
         if (coopSize > 1) r["coop"] = coopSize;
         double time = N(G(j, "time"), 0);
         r["damageGame"] = G(j, "damage");
@@ -1734,6 +1803,8 @@ class Companion : Form
                     if (leg != null && S(G(leg, "icon")) == replIcon && (replText.Contains(S(G(G(s, "name"), "fr"))) || replText.Contains(S(G(G(s, "name"), "en"))))) amulet = "leg:" + S(G(s, "key"));
                 }
             }
+            int capTree;
+            if (info.Type == "spell" && S(G(card, "kind")) == "upgrade" && info.Key != null && !owned.ContainsKey(info.Key) && capSpells.TryGetValue(info.Key, out capTree)) DetectSpec(capTree, "card " + info.Key);
             if (info.Type == "spell" && S(G(card, "kind")) == "upgrade" && info.Key != null) owned[info.Key] = (int)N(G(card, "rank"), 2) - 1;
             if (info.Key != null && ban.ContainsKey(info.Key)) { if (banIdx == 0) banIdx = i; scores.Add(i + ". " + S(G(card, "title")) + " banni"); continue; }
             double baseW = 0;
