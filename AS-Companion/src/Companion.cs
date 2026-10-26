@@ -275,7 +275,16 @@ class Companion : Form
             AppDomain.CurrentDomain.UnhandledException += (s, e) => CrashLog(e.ExceptionObject as Exception);
             Application.EnableVisualStyles();
             Companion app;
-            try { app = new Companion(args.Contains("-NoBrowser"), after); }
+            try
+            {
+                app = new Companion(args.Contains("-NoBrowser"), after);
+                if (after)
+                {
+                    int i = Array.IndexOf(args, "--after-update");
+                    app.updatedFrom = i >= 0 && i + 1 < args.Length ? args[i + 1] : "";
+                    app.updatedAt = DateTime.Now;
+                }
+            }
             catch (Exception ex)
             {
                 CrashLog(ex);
@@ -391,17 +400,43 @@ class Companion : Form
         catch (Exception ex) { Log("update check failed: " + ex.Message); }
     }
 
+    volatile string updateStage = "";
+    volatile int updateProgress;
+    string updatedFrom;
+    DateTime updatedAt = DateTime.MinValue;
+
+    byte[] Download(string url)
+    {
+        ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072;
+        HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
+        req.UserAgent = "AS-Companion/" + CurrentVersion;
+        using (WebResponse res = req.GetResponse())
+        using (Stream src = res.GetResponseStream())
+        using (MemoryStream ms = new MemoryStream())
+        {
+            long total = res.ContentLength;
+            byte[] buf = new byte[65536];
+            int n;
+            while ((n = src.Read(buf, 0, buf.Length)) > 0)
+            {
+                ms.Write(buf, 0, n);
+                if (total > 0) updateProgress = (int)(100 * ms.Length / total);
+            }
+            updateProgress = 100;
+            return ms.ToArray();
+        }
+    }
+
     void ApplyUpdate()
     {
         try
         {
-            byte[] zip;
+            updateStage = "download";
+            updateProgress = 0;
+            byte[] zip = Download(latestZip);
             string sums = null;
-            using (WebClient w = Web())
-            {
-                zip = w.DownloadData(latestZip);
-                if (latestSums != null) sums = w.DownloadString(latestSums);
-            }
+            using (WebClient w = Web()) if (latestSums != null) sums = w.DownloadString(latestSums);
+            updateStage = "verify";
             string hash;
             using (System.Security.Cryptography.SHA256 sha = System.Security.Cryptography.SHA256.Create())
                 hash = BitConverter.ToString(sha.ComputeHash(zip)).Replace("-", "").ToLowerInvariant();
@@ -414,6 +449,7 @@ class Companion : Form
             string home = Environment.GetEnvironmentVariable("BENILLA_HOME");
             string addons = Path.Combine(string.IsNullOrEmpty(home) ? Path.Combine(gameDir, "benilla-config") : home, "AddOns");
             string newExe = Path.Combine(exeDir, "ASCompanion.new.exe");
+            updateStage = "install";
             using (MemoryStream ms = new MemoryStream(zip))
             using (System.IO.Compression.ZipArchive za = new System.IO.Compression.ZipArchive(ms))
             {
@@ -437,6 +473,8 @@ class Companion : Form
                 }
             }
             Log("update " + latestTag + " extracted");
+            updateStage = "restart";
+            Thread.Sleep(900);
             BeginInvoke((MethodInvoker)delegate
             {
                 string self = Application.ExecutablePath;
@@ -444,7 +482,7 @@ class Companion : Form
                 try { File.Delete(old); } catch { }
                 File.Move(self, old);
                 File.Move(newExe, self);
-                Process.Start(self, "--after-update");
+                Process.Start(self, "--after-update " + CurrentVersion);
                 Close();
             });
         }
@@ -452,6 +490,7 @@ class Companion : Form
         {
             updateError = ex.Message;
             updating = false;
+            updateStage = "";
             Log("update failed: " + ex.Message);
         }
     }
@@ -661,6 +700,9 @@ class Companion : Form
                 uiForm = Web2.Create(Url, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AS-Companion", "webview"));
                 uiForm.FormClosing += OnUiClosing;
                 uiForm.Show();
+                uiForm.TopMost = true;
+                uiForm.Activate();
+                uiForm.TopMost = false;
                 watchUi = false;
                 return;
             }
@@ -962,7 +1004,7 @@ class Companion : Form
             }
             if (path == "/api/status")
             {
-                Respond(ctx, 200, "application/json", Utf8.GetBytes(json.Serialize(new Dictionary<string, object> { { "running", running }, { "advice", advice }, { "error", error }, { "version", CurrentVersion }, { "update", latestTag }, { "updating", updating }, { "updateError", updateError }, { "addonsUpdated", (DateTime.Now - addonsUpdatedAt).TotalMinutes < 2 ? addonsUpdated : "" }, { "game", GamePath() } })));
+                Respond(ctx, 200, "application/json", Utf8.GetBytes(json.Serialize(new Dictionary<string, object> { { "running", running }, { "advice", advice }, { "error", error }, { "version", CurrentVersion }, { "update", latestTag }, { "updating", updating }, { "updateStage", updateStage }, { "updateProgress", updateProgress }, { "updatedFrom", (DateTime.Now - updatedAt).TotalSeconds < 60 ? updatedFrom : null }, { "updateError", updateError }, { "addonsUpdated", (DateTime.Now - addonsUpdatedAt).TotalMinutes < 2 ? addonsUpdated : "" }, { "game", GamePath() } })));
                 return;
             }
             if (path == "/api/browse" && method == "POST")

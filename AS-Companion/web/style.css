@@ -173,3 +173,6 @@ header { flex: none; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #2e2e35; border-radius: 5px; border: 2px solid var(--bg); }
 ::-webkit-scrollbar-thumb:hover { background: #3c3c45; }
+.updbox { width: min(460px, 90vw); display: flex; flex-direction: column; gap: 14px; }
+.updtrack { height: 8px; background: #222228; border-radius: 4px; overflow: hidden; }
+#updBar { height: 100%; width: 0; background: var(--gold); border-radius: 4px; transition: width .3s; }
