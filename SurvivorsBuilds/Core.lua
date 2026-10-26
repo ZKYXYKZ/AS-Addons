@@ -37,9 +37,38 @@ function SB.PlayerClass()
 end
 
 function SB.Build()
+  if SB.manual then return SB.manual end
   if SB.alt then return SB.alt end
   local link = SB.Link()
   return link and link.builds and link.builds[SB.PlayerClass()]
+end
+
+function SB.CompanionBuild()
+  if SB.alt then return SB.alt end
+  local link = SB.Link()
+  return link and link.builds and link.builds[SB.PlayerClass()]
+end
+
+function SB.Builds()
+  local link = SB.Link()
+  local list = link and link.all and link.all[SB.PlayerClass()]
+  if list and table.getn(list) > 0 then return list end
+  local b = SB.CompanionBuild()
+  return b and { b } or {}
+end
+
+function SB.Cycle(dir)
+  local list = SB.Builds()
+  local n = table.getn(list)
+  if n < 2 then return end
+  local cur = SB.Build()
+  local idx = 1
+  for i = 1, n do
+    if cur and list[i].name == cur.name then idx = i end
+  end
+  idx = math.mod(idx - 1 + dir + n, n) + 1
+  local auto = SB.CompanionBuild()
+  if auto and list[idx].name == auto.name then SB.manual = nil else SB.manual = list[idx] end
 end
 
 function SB.Fresh()

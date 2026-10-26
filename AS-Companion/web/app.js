@@ -21,6 +21,7 @@ const STR = {
     adapt: "Adapter le build à la run", adaptHelp: "Tient compte des sorts déjà pris (6 emplacements) et de l'amulette portée.",
     gamePath: "Chemin du jeu", browse: "Parcourir", lang: "Langue", auto: "Auto", autoPick: "Sélection auto des cartes", autoPickHelp: "Le compagnon choisit et relance à votre place (touches 1, 2, 3, R). Skip et bannir restent manuels.",
     overlay: "Bandeau de conseil par-dessus le jeu", importTitle: "Collez un build (texte d'export) puis validez", exportTitle: "Copiez ce texte pour partager le build", ok: "Importer", close: "Fermer", bad: "Texte de build invalide",
+    report: "Créer un rapport", reportLabel: "Rapport de bug", reportHelp: "Rassemble dans un zip le journal du compagnon, tes dernières parties et tes réglages, puis ouvre le dossier. Envoie ce fichier avec la description du problème.", reportDone: "Rapport créé : {v}",
     noGame: "Jeu introuvable : indiquez où se trouve AzerothSurvivors.exe.", addonsUpdated: "Addons mis à jour : {v}. Ils prennent effet au prochain lancement du jeu.", autoAddons: "Mise à jour auto des addons", autoAddonsHelp: "Au démarrage puis toutes les 30 minutes, hors partie, les addons installés sont mis à jour depuis la dernière version publiée sur GitHub.", stage_download: "Téléchargement de la version {v}…", stage_verify: "Vérification du fichier…", stage_install: "Installation des addons et du compagnon…", stage_restart: "Redémarrage du compagnon…", updated: "Mis à jour en version {v}", updateAvail: "Mise à jour {v} disponible", updateBtn: "Mettre à jour", updating: "Mise à jour en cours…", version: "Version", checkUpdate: "Rechercher une mise à jour", upToDate: "À jour", down: "Le compagnon ne répond plus : relancez ASCompanion.exe. Si ça recommence, envoyez %APPDATA%\\AS-Companion\\companion.log.", renamePrompt: "Nouveau nom du build", saved: "Enregistré", gameOff: "Jeu fermé", advice: "Conseil",
   },
   en: {
@@ -39,6 +40,7 @@ const STR = {
     adapt: "Adapt the build to the run", adaptHelp: "Accounts for spells already taken (6 slots) and the worn amulet.",
     gamePath: "Game path", browse: "Browse", lang: "Language", auto: "Auto", autoPick: "Auto-pick cards", autoPickHelp: "The companion picks and rerolls for you (keys 1, 2, 3, R). Skip and banish stay manual.",
     overlay: "Advice banner over the game", importTitle: "Paste a build (export text) then confirm", exportTitle: "Copy this text to share the build", ok: "Import", close: "Close", bad: "Invalid build text",
+    report: "Create a report", reportLabel: "Bug report", reportHelp: "Zips the companion log, your latest runs and your settings, then opens the folder. Send this file with a description of the problem.", reportDone: "Report created: {v}",
     noGame: "Game not found: show where AzerothSurvivors.exe is.", addonsUpdated: "Addons updated: {v}. They apply at the next game launch.", autoAddons: "Auto-update addons", autoAddonsHelp: "At startup and every 30 minutes, outside a run, the installed addons are updated from the latest version published on GitHub.", stage_download: "Downloading version {v}…", stage_verify: "Checking the file…", stage_install: "Installing the addons and the companion…", stage_restart: "Restarting the companion…", updated: "Updated to version {v}", updateAvail: "Update {v} available", updateBtn: "Update", updating: "Updating…", version: "Version", checkUpdate: "Check for updates", upToDate: "Up to date", down: "The companion is not responding: restart ASCompanion.exe. If it happens again, send %APPDATA%\\AS-Companion\\companion.log.", renamePrompt: "New build name", saved: "Saved", gameOff: "Game closed", advice: "Advice",
   },
 };
@@ -361,6 +363,20 @@ function renderOptions(sec) {
   ver.appendChild(chk);
   ver.appendChild(res);
   field(f, T("version"), ver);
+  const rep = el("div", "row");
+  const rb = el("button", "small", esc(T("report")));
+  const rr = el("span", "hint");
+  rb.onclick = async () => {
+    rb.disabled = true;
+    try {
+      const r = await (await fetch("/api/report", { method: "POST", body: "" })).json();
+      rr.textContent = r.path ? T("reportDone", { v: r.path }) : r.error || "";
+    } catch (e) { rr.textContent = T("down"); }
+    rb.disabled = false;
+  };
+  rep.appendChild(rb);
+  rep.appendChild(rr);
+  field(f, T("reportLabel"), rep, T("reportHelp"));
   sec.appendChild(f);
 }
 

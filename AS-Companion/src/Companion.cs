@@ -666,6 +666,49 @@ class Companion : Form
         }
     }
 
+    string BugReport()
+    {
+        string dir = Path.Combine(exeDir, "reports");
+        try { Directory.CreateDirectory(dir); File.AppendAllText(Path.Combine(dir, ".w"), ""); File.Delete(Path.Combine(dir, ".w")); }
+        catch { dir = Path.Combine(dataDir, "reports"); Directory.CreateDirectory(dir); }
+        string zip = Path.Combine(dir, "rapport-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".zip");
+        List<string[]> files = new List<string[]>();
+        files.Add(new[] { logFile, "companion.log" });
+        files.Add(new[] { Path.Combine(dataDir, "runs.json"), "runs.json" });
+        files.Add(new[] { stateFile, "state.json" });
+        foreach (string rd in new[] { Path.Combine(exeDir, "research"), Path.Combine(dataDir, "research") })
+            if (Directory.Exists(rd))
+                foreach (string f in new DirectoryInfo(rd).GetFiles("*.jsonl").OrderByDescending(x => x.LastWriteTime).Take(3).Select(x => x.FullName))
+                    files.Add(new[] { f, "research/" + Path.GetFileName(f) });
+        string gp = GamePath();
+        if (gp != null)
+        {
+            string home = Environment.GetEnvironmentVariable("BENILLA_HOME");
+            string cfg = string.IsNullOrEmpty(home) ? Path.Combine(Path.GetDirectoryName(gp), "benilla-config") : home;
+            files.Add(new[] { Path.Combine(cfg, "saved", "SurvivorsBuilds.lua"), "saved/SurvivorsBuilds.lua" });
+            files.Add(new[] { Path.Combine(cfg, "AddOns", "account.txt"), "AddOns/account.txt" });
+        }
+        string info = "version " + CurrentVersion + "\r\nwindows " + Environment.OSVersion + "\r\ngame " + gp + "\r\nexe " + exeDir + "\r\nrunning " + running + "\r\n";
+        using (FileStream fs = File.Create(zip))
+        using (System.IO.Compression.ZipArchive za = new System.IO.Compression.ZipArchive(fs, System.IO.Compression.ZipArchiveMode.Create))
+        {
+            using (StreamWriter w = new StreamWriter(za.CreateEntry("info.txt").Open(), Utf8)) w.Write(info);
+            foreach (string[] f in files)
+            {
+                if (f[0] == null || !File.Exists(f[0])) continue;
+                try
+                {
+                    using (FileStream src = new FileStream(f[0], FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+                    using (Stream dst = za.CreateEntry(f[1]).Open()) src.CopyTo(dst);
+                }
+                catch { }
+            }
+        }
+        Log("bug report " + zip);
+        Process.Start("explorer.exe", "/select,\"" + zip + "\"");
+        return zip;
+    }
+
     void Log(string m)
     {
         try { File.AppendAllText(logFile, DateTime.Now.ToString("HH:mm:ss") + " " + m + "\r\n", Utf8); } catch { }
@@ -1088,6 +1131,13 @@ class Companion : Form
                 Respond(ctx, 200, "application/json", Utf8.GetBytes("{}"));
                 return;
             }
+            if (path == "/api/report" && method == "POST")
+            {
+                string zip = null, err = null;
+                try { zip = BugReport(); } catch (Exception ex) { err = ex.Message; }
+                Respond(ctx, 200, "application/json", Utf8.GetBytes(json.Serialize(new Dictionary<string, object> { { "path", zip }, { "error", err } })));
+                return;
+            }
             if (path == "/api/open" && method == "POST")
             {
                 string target = new StreamReader(ctx.Request.InputStream, Utf8).ReadToEnd();
@@ -1387,6 +1437,20 @@ class Companion : Form
             {
                 L.Append("        [" + (kv.Key + 1) + "] = ");
                 BuildLua(L, c, kv.Value);
+            }
+            L.Append("      },\n");
+        }
+        L.Append("    },\n    all = {\n");
+        foreach (Dictionary<string, object> c in A(G(data, "classes")).Select(D))
+        {
+            string ck = S(c["key"]);
+            List<Dictionary<string, object>> mine = A(G(s, "builds")).Select(D).Where(b => S(G(b, "class")) == ck).ToList();
+            if (mine.Count < 2) continue;
+            L.Append("      " + ck + " = {\n");
+            foreach (Dictionary<string, object> b in mine)
+            {
+                L.Append("        ");
+                BuildLua(L, c, b);
             }
             L.Append("      },\n");
         }

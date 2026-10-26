@@ -16,6 +16,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Check Lua
+        run: node tools/check-lua.js
       - name: Build ASCompanion.exe
         run: node tools/build-companion.js
       - name: Package

@@ -40,6 +40,7 @@ Lancez toujours le jeu avec **Lancer le jeu** : c'est ainsi que le compagnon voi
 - Un bandeau par-dessus le jeu indique la meilleure carte.
 - Activez la **Sélection auto** dans Options, et le compagnon choisit et relance pour vous.
 - Ses choix suivent la partie : sorts déjà pris et leur rang, dégâts réels de chaque sort, amulette portée, votre chance et les emplacements de bijoux encore libres. Les anneaux et bijoux ne se changent plus une fois pris : il les choisit avec soin.
+- Il reconnaît votre spé au sort ou au familier que donne votre dernier talent en début de partie, et passe sur votre build de cette spé.
 - Passer et Bannir n'ont pas encore de touche dans le jeu : ils restent manuels.
 
 ### Suivre vos parties
@@ -60,7 +61,7 @@ La page **Addons** présente chaque addon avec son rôle, sa version, et des bou
 
 <img src="docs/build-panel.png" alt="Panneau Build en partie" align="right" width="260">
 
-Affiche votre build à l'écran pendant la partie : les 6 sorts visés avec leur rang, les bijoux portés dans la couleur de leur qualité, et ce qui manque encore. Pendant le choix d'une carte, il rappelle quoi bannir et combien de relances il reste. Il transmet aussi au compagnon votre chance et vos dégâts par sort.
+Affiche votre build à l'écran pendant la partie : les 6 sorts visés avec leur rang, les bijoux portés dans la couleur de leur qualité, et ce qui manque encore. Pendant le choix d'une carte, il rappelle quoi bannir et combien de relances il reste. Il suit votre spé comme le compagnon, et les flèches à côté de son titre passent à un autre de vos builds. En fin de partie, il enregistre le compteur de dégâts du jeu (familiers et effets compris) pour les statistiques du compagnon.
 
 <br clear="right">
 
@@ -85,6 +86,7 @@ Les trois partagent une fenêtre : le bouton doré **S** sur la minicarte, ou `/
 - Builds, statistiques et réglages sont gardés dans `%APPDATA%\AS-Companion` : les mises à jour n'y touchent jamais.
 - Fermer la fenêtre du compagnon l'arrête, sauf si une partie qu'il a lancée tourne encore.
 - Le compagnon a besoin de Microsoft WebView2, intégré à Windows 10 et 11. S'il manque, le compagnon propose de l'installer.
+- Un problème ? **Options → Rapport de bug** rassemble dans un zip le journal du compagnon, vos dernières parties et vos réglages : envoyez ce fichier avec une description.
 - Vous préférez installer à la main ? Chaque version contient aussi `AzerothSurvivors-Addons.zip`, à extraire dans le dossier du jeu.
 
 ## Pour les développeurs

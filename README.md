@@ -40,6 +40,7 @@ Always start the game with **Launch game**: that's how the companion sees the le
 - A banner over the game shows the best card.
 - Turn on **Auto-pick** in Options and the companion chooses and rerolls for you.
 - Its choices follow the run: spells you already have and their rank, how much damage each spell really does, the amulet you wear, your luck, and the jewelry slots still free. Rings and trinkets can't be swapped once taken, so it is careful with them.
+- It recognizes your spec from the spell or pet your last talent gives at the start of a run, and switches to your build for that spec.
 - Skip and Banish have no key in the game yet, so they stay manual.
 
 ### Track your runs
@@ -60,7 +61,7 @@ The **Addons** page shows each addon with what it does, its version, and buttons
 
 <img src="docs/build-panel.png" alt="Build panel in a run" align="right" width="260">
 
-Shows your build on screen during the run: the 6 target spells with their rank, the jewelry you wear in its quality color, and what's still missing. While you pick a card, it reminds you what to banish and how many rerolls are left. It also feeds the companion with your luck and your damage per spell.
+Shows your build on screen during the run: the 6 target spells with their rank, the jewelry you wear in its quality color, and what's still missing. While you pick a card, it reminds you what to banish and how many rerolls are left. It follows your spec like the companion, and the arrows next to its title switch to another of your builds. At the end of a run it saves the game damage meter (pets and procs included) for the companion statistics.
 
 <br clear="right">
 
@@ -85,6 +86,7 @@ All three share one window: the gold **S** button on the minimap, or `/survivors
 - Builds, statistics and settings are kept in `%APPDATA%\AS-Companion`, so updates never touch them.
 - Closing the companion window quits it, unless a game it launched is still running.
 - The companion needs Microsoft WebView2, built into Windows 10 and 11. If it's missing, the companion offers to install it.
+- Something wrong? **Options → Bug report** zips the companion log, your latest runs and your settings: send that file with a description.
 - Prefer a manual install? Each release also has `AzerothSurvivors-Addons.zip`: extract it into the game folder.
 
 ## For developers

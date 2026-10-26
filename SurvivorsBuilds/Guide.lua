@@ -8,12 +8,14 @@ local T = {
     ban = "À bannir (%d) : %s", rerolls = "Relances : %d (garder %d)", rule = "Rien du build : %s", reroll = "relancer puis skip", skip = "skip",
     jewels = "Bijoux visés : %s", newSpell = "Nouveau sort : %s%s", upSpell = "%s rang %d%s", prio = " (priorité %d)", out = " (hors build)",
     auto = "Sélection auto active (compagnon)", worn = "porté", target = "visé", fallback = "repli",
+    cards = "Cartes choisies selon « %s »", switch = "Changer de build",
   },
   en = {
     title = "Build: %s", none = "No build received from the companion for this class", learn = "to take", rank = "rank %d",
     ban = "Banish (%d): %s", rerolls = "Rerolls: %d (keep %d)", rule = "Nothing from the build: %s", reroll = "reroll then skip", skip = "skip",
     jewels = "Target jewelry: %s", newSpell = "New spell: %s%s", upSpell = "%s rank %d%s", prio = " (priority %d)", out = " (off build)",
     auto = "Auto-pick on (companion)", worn = "worn", target = "target", fallback = "fallback",
+    cards = "Cards picked for \"%s\"", switch = "Switch build",
   },
 }
 local function tl(k) return (T[SB.Lang()] or T.en)[k] end
@@ -117,7 +119,34 @@ local function build()
   bg:SetAllPoints(f)
   f.title = H.Text(f, 13, "LEFT")
   f.title:SetPoint("TOPLEFT", f, "TOPLEFT", 8, -7)
-  f.title:SetWidth(WIDTH - 16)
+  f.title:SetWidth(WIDTH - 52)
+  local function arrow(label, dir, x)
+    local b = CreateFrame("Button", nil, f)
+    b:SetWidth(16)
+    b:SetHeight(16)
+    b:SetPoint("TOPRIGHT", f, "TOPRIGHT", x, -5)
+    b.text = H.Text(b, 13, "CENTER")
+    b.text:SetAllPoints(b)
+    b.text:SetText(label)
+    b.text:SetTextColor(0.6, 0.6, 0.65)
+    b:SetScript("OnEnter", function()
+      this.text:SetTextColor(1, 0.82, 0.2)
+      GameTooltip:SetOwner(this, "ANCHOR_TOP")
+      GameTooltip:SetText(tl("switch"))
+      GameTooltip:Show()
+    end)
+    b:SetScript("OnLeave", function()
+      this.text:SetTextColor(0.6, 0.6, 0.65)
+      GameTooltip:Hide()
+    end)
+    b:SetScript("OnClick", function()
+      SB.Cycle(dir)
+      G.Refresh()
+    end)
+    return b
+  end
+  f.prev = arrow("<", -1, -24)
+  f.next = arrow(">", 1, -6)
   f.title:SetTextColor(1, 0.82, 0.2)
   f.rows = {}
   f.body = H.Text(f, 12, "LEFT")
@@ -181,6 +210,8 @@ function G.Refresh()
   local b = SB.Build()
   if not b then
     f.title:SetText(tl("none"))
+    f.prev:Hide()
+    f.next:Hide()
     for i = 1, table.getn(f.rows) do f.rows[i]:Hide() end
     f.body:SetText("")
     f:SetHeight(30)
@@ -188,6 +219,8 @@ function G.Refresh()
     return
   end
   f.title:SetText(string.format(tl("title"), b.name))
+  local many = table.getn(SB.Builds()) > 1
+  if many then f.prev:Show() f.next:Show() else f.prev:Hide() f.next:Hide() end
   local have = ranks()
   local items = worn()
   local n, y = 0, -26
@@ -244,11 +277,20 @@ function G.Refresh()
     end
   end
   for i = n + 1, table.getn(f.rows) do f.rows[i]:Hide() end
+  local note = ""
+  local auto = SB.CompanionBuild()
+  if SB.manual and auto and SB.Fresh() and SB.Link().autoPick then note = "|cff8899aa" .. string.format(tl("cards"), auto.name) .. "|r" end
   local h = -y + 6
   if phase == "choosing" then
     f.body:ClearAllPoints()
     f.body:SetPoint("TOPLEFT", f, "TOPLEFT", 8, y - 4)
-    f.body:SetText(choiceLines(b))
+    f.body:SetText(choiceLines(b) .. (note ~= "" and ("\n" .. note) or ""))
+    f.body:Show()
+    h = h + f.body:GetHeight() + 8
+  elseif note ~= "" then
+    f.body:ClearAllPoints()
+    f.body:SetPoint("TOPLEFT", f, "TOPLEFT", 8, y - 4)
+    f.body:SetText(note)
     f.body:Show()
     h = h + f.body:GetHeight() + 8
   else
