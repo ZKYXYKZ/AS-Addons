@@ -275,7 +275,9 @@ sampler:SetScript("OnUpdate", function()
   local r = AZS_RUN or {}
   local hl = {}
   if AZS_GetHealing then local lines = AZS_GetHealing() for i = 1, math.min(table.getn(lines or {}), 10) do local l = lines[i] table.insert(hl, l.name .. "=" .. math.floor(tonumber(l.dmg) or 0)) end end
+  local un = {}
+  for i = 1, table.getn(AZS_UNITS or {}) do local u = AZS_UNITS[i] if u.kind ~= "elite" or table.getn(un) < 6 then table.insert(un, (u.kind or "?") .. ":" .. (u.name or "?") .. ":" .. math.floor(tonumber(u.hpm) or 0)) end end
   local tk = {}
   for i = 1, table.getn(AZS_TAKEN or {}) do local x = AZS_TAKEN[i] table.insert(tk, (x.source or "?") .. "=" .. math.floor(tonumber(x.dmg) or 0)) end
-  table.insert(AZBotDB.runs[runKey].samples, string.format("%d|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s", math.floor(AZS_GetRunTime() or 0), tostring(r.lvl), tostring(r.en), table.concat(sp, ","), table.concat(st, ","), table.concat(m, ";"), tostring(r.kills), tostring(r.hp), tostring(r.hpm), tostring(r.taken), tostring(r.dealt), table.concat(hl, ";"), table.concat(tk, ";"), tostring(r.xp), tostring(r.xpn), tostring(r.el), tostring(r.gold)))
+  table.insert(AZBotDB.runs[runKey].samples, string.format("%d|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s", math.floor(AZS_GetRunTime() or 0), tostring(r.lvl), tostring(r.en), table.concat(sp, ","), table.concat(st, ","), table.concat(m, ";"), tostring(r.kills), tostring(r.hp), tostring(r.hpm), tostring(r.taken), tostring(r.dealt), table.concat(hl, ";"), table.concat(tk, ";"), tostring(r.xp), tostring(r.xpn), tostring(r.el), tostring(r.gold), table.concat(un, ";"), tostring(r.gk), tostring(r.bk), tostring(r.ek)))
 end)
