@@ -121,3 +121,12 @@ Fichiers : `Movers.lua` (registre des blocs déplaçables, grille, aimantation, 
 - Les arbres de talents du jeu : 4 colonnes, 7 rangées, une rangée s'ouvre tous les 5 points dans l'arbre, paliers (milestone) aux rangées 2 et 4, apogée (capstone) rangée 6, 51 points au total. Le champ « clé » à l'octet 112 d'un talent n'est pas un prérequis (le jeu ne trace que la colonne des paliers) : ignoré.
 - Un run garde 6 sorts (« Takes a spell slot · 3/6 » sur les cartes).
 - Un autre addon a laissé ses variables chez l'utilisateur : `saved\ASBuilder.lua` (builds par classe, variantes, priorités de sorts et de bijoux, bannissements).
+
+## Relevés à Gurubashi (27/10/2026)
+
+- Une partie à Gurubashi dure environ 18 minutes (fin à 1083 s).
+- Mage Feu (personnage en stuff Naxxramas), 3 parties pilotées :
+  - sans amulette du build : 116 k et 151 k de DPS, niveaux 55 et 59, 9 675 et 11 875 victimes, Pyroblast 83 à 93 % des dégâts (Chaleur continue) ;
+  - avec l'Amulette de l'Enfer (Choc de flammes) prise tôt et améliorée 11 fois : 466 k de DPS, niveau 80, 24 261 victimes, Choc de flammes 52 %, Embrasement 21 %, Pyroblast 20 %.
+- Conséquences : l'amulette légendaire du sort de zone est la priorité du Mage Feu ; une amulette hors build est prise quand l'emplacement est vide, puisque les amulettes sont les seuls bijoux remplaçables en cours de partie.
+- Simulateur : les sorts sans texte de carte (sorts de départ, Pyroblast) viennent de `gamedb.json`, base × 2,66 (médiane du rapport texte / base). École de magie = octet bas des drapeaux (0 physique, 1 sacré, 2 feu, 3 nature, 4 givre, 5 ombre, 6 arcanes). Chaleur continue : un Pyroblast gratuit tous les 4 critiques de feu, 2 par seconde au plus.
