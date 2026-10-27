@@ -7,7 +7,7 @@ const SIM_STR = {
     noData: "pas encore de données pour ce sort", estCd: "recharge estimée", notSim: "Non simulé", compare: "Comparer avec un second build", copyA: "Copier le build A",
     optimize: "Suggestions", optimizeHelp: "Gain de DPS si l'on remplace un élément, à rangs égaux.", replace: "Remplacer {a} par {b}", stats: "Statistiques du build",
     dmg: "Dégâts", cdr: "Recharges", crit: "Critique", critDmg: "Dégâts critiques", echo: "Échos", luck: "Chance", targets: "Cibles en plus", area: "Zone",
-    rarities: ["Commun", "Inhabituel", "Rare", "Épique", "Légendaire"], toBuild: "Créer le build", mcTitle: "Parties simulées", runs: "parties", simulate: "Simuler", running: "Simulation…", mcHelp: "Rejoue des parties complètes : montées de niveau, cartes tirées selon la chance, choix du compagnon, coffres.", mcMean: "DPS moyen sur la partie", mcRange: "Pire 10 % / meilleur 10 %", mcLevel: "Niveau final moyen", mcDist: "répartition des parties", mcHave: "Obtenu", mcRank: "Rang moyen", mcWin: "Le build B fait mieux que le A dans {v} % des parties.", mcDone: "{n} parties simulées en {ms} ms.", gear: "Équipement et collection", group: "Groupe (coop)", noAlly: "Pas d'allié", allyShout: "Cri de guerre d'un guerrier : +{v} % de dégâts en moyenne", allyMark: "Marque du chasseur : la cible subit +{v} % de dégâts", pets: "Familiers et démons", kills: "Explosions à la mort", procs: "Effets déclenchés", procNote: "dont {v} lancers gratuits par seconde",
+    rarities: ["Commun", "Inhabituel", "Rare", "Épique", "Légendaire"], toBuild: "Créer le build", mcTitle: "Parties simulées", runs: "parties", simulate: "Simuler", running: "Simulation…", mcHelp: "Rejoue des parties complètes : montées de niveau, cartes tirées selon la chance, choix du compagnon, coffres.", mcMean: "DPS moyen sur la partie", mcRange: "Pire 10 % / meilleur 10 %", mcLevel: "Niveau final moyen", mcDist: "répartition des parties", mcHave: "Obtenu", mcRank: "Rang moyen", mcWin: "Le build B fait mieux que le A dans {v} % des parties.", mcDone: "{n} parties simulées en {ms} ms.", gear: "Équipement et collection", group: "Groupe (coop)", noAlly: "Pas d'allié", allyShout: "Cri de guerre d'un guerrier : +{v} % de dégâts en moyenne", allyMark: "Marque du chasseur : la cible subit +{v} % de dégâts", pets: "Familiers et démons", kills: "Explosions à la mort", procs: "Effets déclenchés", procNote: "dont {v} lancers gratuits par seconde", amuletUps: "amulette améliorée {v} fois", amuletNoUp: "amulette sans amélioration",
   },
   en: {
     title: "Simulator", intro: "Theoretical damage of a build: spells and ranks, talents, jewelry, race and enemy density. Numbers come from the game's cards; effects marked \"not simulated\" are left out.",
@@ -17,7 +17,7 @@ const SIM_STR = {
     noData: "no data yet for this spell", estCd: "estimated cooldown", notSim: "Not simulated", compare: "Compare with a second build", copyA: "Copy build A",
     optimize: "Suggestions", optimizeHelp: "DPS gain from swapping one element, at equal ranks.", replace: "Replace {a} with {b}", stats: "Build stats",
     dmg: "Damage", cdr: "Cooldowns", crit: "Crit", critDmg: "Crit damage", echo: "Echoes", luck: "Luck", targets: "Extra targets", area: "Area",
-    rarities: ["Common", "Uncommon", "Rare", "Epic", "Legendary"], toBuild: "Create the build", mcTitle: "Simulated runs", runs: "runs", simulate: "Simulate", running: "Simulating…", mcHelp: "Replays full runs: level-ups, cards drawn by luck, the companion picks, caches.", mcMean: "Average DPS over the run", mcRange: "Worst 10% / best 10%", mcLevel: "Average final level", mcDist: "run spread", mcHave: "Obtained", mcRank: "Avg rank", mcWin: "Build B beats build A in {v}% of runs.", mcDone: "{n} runs simulated in {ms} ms.", gear: "Gear and collection", group: "Group (co-op)", noAlly: "No ally", allyShout: "A warrior's Battle Shout: +{v}% damage on average", allyMark: "Hunter's Mark: the target takes +{v}% damage", pets: "Pets and demons", kills: "Death explosions", procs: "Triggered effects", procNote: "including {v} free casts per second",
+    rarities: ["Common", "Uncommon", "Rare", "Epic", "Legendary"], toBuild: "Create the build", mcTitle: "Simulated runs", runs: "runs", simulate: "Simulate", running: "Simulating…", mcHelp: "Replays full runs: level-ups, cards drawn by luck, the companion picks, caches.", mcMean: "Average DPS over the run", mcRange: "Worst 10% / best 10%", mcLevel: "Average final level", mcDist: "run spread", mcHave: "Obtained", mcRank: "Avg rank", mcWin: "Build B beats build A in {v}% of runs.", mcDone: "{n} runs simulated in {ms} ms.", gear: "Gear and collection", group: "Group (co-op)", noAlly: "No ally", allyShout: "A warrior's Battle Shout: +{v}% damage on average", allyMark: "Hunter's Mark: the target takes +{v}% damage", pets: "Pets and demons", kills: "Death explosions", procs: "Triggered effects", procNote: "including {v} free casts per second", amuletUps: "amulet upgraded {v} times", amuletNoUp: "amulet not upgraded",
   },
 };
 const SM = (k, vars) => {
@@ -57,6 +57,8 @@ const MILESTONES = {
   twin_totems: { mult: { searing_totem: 2, magma_totem: 2 } }, frostbite: {}, rake: { critBleed: 0.3 }, tranquility: { proc: true }, legion_gate: { pet: true }, soul_devourer: { pet: true }, soul_link: { pet: true },
   shockwave: { splash: { shield_slam: 1.6 } }, fortified: { dmg: 20 }, preparation: { proc: true }, cheat_death: {}, adrenaline: { proc: true }, entrapment: {}, swiftmend: {}, reincarnation: {},
 };
+
+const AMULET_UP = [1, 1.2, 1.38, 1.54, 1.69, 1.82, 1.94, 2.04, 2.14, 2.23, 2.31];
 
 function simLoad() {
   if (SIMDATA) return Promise.resolve(SIMDATA);
@@ -98,7 +100,7 @@ function simFromBuild(b) {
     spells: list.map((s) => ({ key: s.key, w: s.w || 3, rank: Math.max(1, Math.min(10, 2 + (s.w || 3))) })),
     rings: (b.rings || []).filter((k) => DATA.rings.some((j) => j.key === k)).slice(0, 2),
     trinkets: (b.trinkets || []).filter((k) => DATA.trinkets.some((j) => j.key === k)).slice(0, 2),
-    amulet: (b.amulets || [])[0] || "",
+    amulet: (b.amulets || [])[0] || "", amuletUps: 0,
     race: b.race || "human", rarity: 1.5, density: 6, boss: 25, allies: [], gear: { dmg: 0, crit: 0, critDmg: 0, cdr: 0, echo: 0, area: 0, targets: 0 },
   };
 }
@@ -196,6 +198,9 @@ function jewelFx(sc, fx) {
         if ((m = t.match(/burn and bleed for ([\d.]+)% more/))) g.mult *= 1 + m[1] / 100;
         if (/explode/.test(t)) fx.notes.kills = true;
       }
+      const up = AMULET_UP[Math.min(AMULET_UP.length - 1, sc.amuletUps || 0)];
+      for (const f of ["dmg", "area", "dur", "cd"]) g[f] *= up;
+      g.mult = 1 + (g.mult - 1) * up;
       fx.leg = g;
     }
   } else if (sc.amulet) {
@@ -316,11 +321,12 @@ function simulate(sc) {
     row.school = school;
     row.rate = rate * echo;
     row.hitsBoss = hitsBoss;
+    row.ticks = base.kind === "ground" ? Math.max(1, (base.dur * durMul) / (base.every || 1)) : base.kind === "totem" ? Math.max(1, (base.dur * durMul) / base.every) : base.kind === "dot" ? Math.max(1, (base.dur * durMul) / 1) : 1;
   }
   const cp = fx.critProc;
   const procRow = cp && rows.find((r) => r.key === cp.spell && r.rate);
   if (procRow) {
-    const fed = (k) => rows.filter((r) => r.school === cp.school && r.rate).reduce((a, r) => a + r.rate * (k === "pack" ? r.hits : r.hitsBoss), 0) * crit;
+    const fed = (k) => rows.filter((r) => r.school === cp.school && r.rate).reduce((a, r) => a + r.rate * r.ticks * (k === "pack" ? r.hits : r.hitsBoss), 0) * crit;
     for (const k of ["pack", "single"]) {
       const per = procRow[k] / procRow.rate;
       const procs = Math.min(cp.max, fed(k) / cp.every);
@@ -448,6 +454,7 @@ function simPanel(sc, which) {
   for (let i = 0; i < 2; i++) jw.appendChild(jsel("trinkets", i, DATA.trinkets));
   const legs = c.spells.filter((s) => DATA.legendaries[s.key]).map((s) => ({ key: "leg:" + s.key, name: { fr: DATA.legendaries[s.key].family.fr + " (" + s.name.fr + ")", en: DATA.legendaries[s.key].family.en + " (" + s.name.en + ")" } }));
   jw.appendChild(simSelect([["", SM("none")]].concat(DATA.amulets.concat(legs).map((j) => [j.key, L(j.name)])), sc.amulet, (v) => { sc.amulet = v; renderSimResults(); }));
+  jw.appendChild(simSelect(AMULET_UP.map((_, i) => [String(i), i ? SM("amuletUps", { v: i }) : SM("amuletNoUp")]), String(sc.amuletUps || 0), (v) => { sc.amuletUps = +v; renderSimResults(); }));
   box.appendChild(jw);
   const exp = el("button", "primary", esc(SM("toBuild")));
   exp.onclick = () => simToBuild(sc);
@@ -625,7 +632,7 @@ function monteCarlo(sc, iters, minutes) {
   for (let it = 0; it < iters; it++) {
     const owned = {};
     for (const k of mcStartSpells(sc)) owned[k] = { key: k, rank: 1, ups: { damage: 0, cooldown: 0, area: 0, targets: 0, duration: 0 }, n: 0 };
-    const jew = { rings: [], trinkets: [], amulet: "" };
+    const jew = { rings: [], trinkets: [], amulet: "", ups: 0 };
     let level = 1, total = 0, nextJewel = (-Math.log(Math.random()) / MC_JEWEL_RATE) * 60;
     const levelUps = [];
     for (let t = 0; t < end; t += 1) { const l = Math.floor(mcLevelAt(t)); while (level < l) { level++; levelUps.push(t); } }
@@ -667,6 +674,7 @@ function monteCarlo(sc, iters, minutes) {
         nextJewel += (-Math.log(Math.random()) / MC_JEWEL_RATE) * 60;
         for (let k = 0; k < 3; k++) {
           const cat = ["rings", "trinkets", "amulets"][Math.floor(Math.random() * 3)];
+          if (cat === "amulets" && jew.amulet && Math.random() < 0.45) { jew.ups++; break; }
           if (cat === "amulets") {
             if (!jew.amulet && sc.amulet && Math.random() < 1 / (DATA.amulets.length + 6)) { jew.amulet = sc.amulet; break; }
           } else if (jew[cat].length < 2) {
@@ -675,7 +683,7 @@ function monteCarlo(sc, iters, minutes) {
           }
         }
       }
-      const state = Object.assign({}, sc, { spells: Object.values(owned).map((o) => ({ key: o.key, rank: o.rank, ups: o.ups })), rings: jew.rings, trinkets: jew.trinkets, amulet: jew.amulet });
+      const state = Object.assign({}, sc, { spells: Object.values(owned).map((o) => ({ key: o.key, rank: o.rank, ups: o.ups })), rings: jew.rings, trinkets: jew.trinkets, amulet: jew.amulet, amuletUps: jew.ups });
       const r = simulate(state);
       total += r.total * 60;
       if (minute === minutes - 1) for (const row of r.rows) res.share[row.key] = (res.share[row.key] || 0) + row.mix / (r.total || 1);
