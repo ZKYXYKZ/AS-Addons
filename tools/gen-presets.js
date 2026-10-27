@@ -131,7 +131,7 @@ const builds = [
     class: "priest", name: "Prêtre Sacré", race: "troll", alt: "gnome",
     talents: T(`holy_spec:5 divine_fury:5 holy_nova_talent:1 holy_reach:3 inspiration:1 searing_light:3 spiritual_guidance:5 holy_fire_talent:1 spiritual_healing:1 holy_concentration:3 blessed_recovery:2 chastise:1
       wand_spec:5 martyrdom:5 divine_aegis:1 mental_agility:4 mental_strength:5`),
-    spells: SP("smite:5 holy_nova:5 holy_fire:4 mind_blast:3 pw_shield:3 sw_pain:2"), ban: L("renew psychic_scream mind_flay"),
+    spells: SP("smite:5 holy_nova:5 holy_fire:4 pw_shield:3 mind_blast:3 renew:2"), ban: L("devouring_plague psychic_scream mind_flay"),
     rings: L("accuria dragonslayer quick_strike spell_power"), trinkets: L("chosen blackhand earthstrike hoj"), amulets: L("leg:smite leg:holy_nova onyxia_tooth malice_stone"),
     fr: "Châtiment touche 2 ennemis et chaque critique déclenche un Nova sacré gratuit : tout mise sur le critique (Spécialisation sacrée, Troll).",
     en: "Smite hits 2 enemies and every crit sets off a free Holy Nova: everything goes into crit (Holy Specialization, Troll).",

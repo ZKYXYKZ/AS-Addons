@@ -1826,7 +1826,10 @@ class Companion : Form
         if (path == null) { error = GameLang().StartsWith("fr") ? "Jeu introuvable : indiquez où se trouve AzerothSurvivors.exe" : "Game not found: show where AzerothSurvivors.exe is"; return; }
         string l = S(G(settings, "lang"));
         lang = !string.IsNullOrEmpty(l) && l != "auto" ? l : GameLang().StartsWith("fr") ? "fr" : "en";
-        WriteGateway(s, Path.GetDirectoryName(path));
+        string uiLang = lang;
+        lang = GameLang().StartsWith("fr") ? "fr" : "en";
+        try { WriteGateway(s, Path.GetDirectoryName(path)); }
+        finally { lang = uiLang; }
         savedFile = Path.Combine(string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BENILLA_HOME")) ? Path.Combine(Path.GetDirectoryName(path), "benilla-config") : Environment.GetEnvironmentVariable("BENILLA_HOME"), "saved", "SurvivorsBuilds.lua");
         string home = Environment.GetEnvironmentVariable("BENILLA_HOME");
         combatLog = Path.Combine(string.IsNullOrEmpty(home) ? Path.Combine(Path.GetDirectoryName(path), "benilla-config") : home, "Logs", "WoWCombatLog.txt");
