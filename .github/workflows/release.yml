@@ -13,6 +13,9 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -33,12 +36,15 @@ jobs:
           foreach ($a in $addons) {
             Copy-Item -Recurse $a "$pkg/benilla-config/AddOns/"
             $toc = "$pkg/benilla-config/AddOns/$a/$a.toc"
-            (Get-Content $toc) -replace "^## Version: .*", "## Version: $version" | Set-Content $toc
+            $last = git log -1 --format=%H -- $a
+            $tag = git tag --contains $last --sort=v:refname | Where-Object { $_ -match '^v\d+\.\d+\.\d+$' } | Select-Object -First 1
+            $av = if ($tag) { $tag -replace "^v", "" } else { $version }
+            (Get-Content $toc) -replace "^## Version: .*", "## Version: $av" | Set-Content $toc
             $title = ((Get-Content $toc | Select-String "^## Title: (.*)").Matches[0].Groups[1].Value)
             $notes = ((Get-Content $toc | Select-String "^## Notes: (.*)").Matches[0].Groups[1].Value)
             Compress-Archive -Path "$pkg/benilla-config/AddOns/$a" -DestinationPath "dist/$a.zip"
             $notesFr = ((Get-Content $toc | Select-String "^## Notes-frFR: (.*)").Matches[0].Groups[1].Value)
-            $manifest += [ordered]@{ name = $a; title = $title; notes = $notes; notesFr = $notesFr; version = $version; file = "$a.zip" }
+            $manifest += [ordered]@{ name = $a; title = $title; notes = $notes; notesFr = $notesFr; version = $av; file = "$a.zip" }
           }
           ConvertTo-Json @($manifest) | Set-Content dist/addons.json
           Compress-Archive -Path "$pkg/*" -DestinationPath dist/AzerothSurvivors-Addons.zip
