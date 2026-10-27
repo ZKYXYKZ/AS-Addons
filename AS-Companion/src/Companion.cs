@@ -1120,6 +1120,7 @@ class Companion : Form
     [DllImport("user32.dll")] static extern bool ClientToScreen(IntPtr h, ref POINT p);
     [DllImport("user32.dll")] static extern bool SetCursorPos(int x, int y);
     [DllImport("user32.dll")] static extern bool SetForegroundWindow(IntPtr h);
+    [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
     [DllImport("user32.dll")] static extern void mouse_event(uint f, int x, int y, uint d, IntPtr e);
 
     void ClickGame(PointF f)
@@ -1132,6 +1133,8 @@ class Companion : Form
         POINT pt = new POINT { X = (int)(f.X * (r.Right - r.Left)), Y = (int)(f.Y * (r.Bottom - r.Top)) };
         ClientToScreen(h, ref pt);
         SetForegroundWindow(h);
+        Thread.Sleep(80);
+        if (GetForegroundWindow() != h) { Log("click skipped, game not in foreground"); return; }
         SetCursorPos(pt.X, pt.Y);
         Thread.Sleep(60);
         mouse_event(0x02, 0, 0, 0, IntPtr.Zero);
