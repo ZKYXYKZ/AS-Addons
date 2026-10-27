@@ -1092,7 +1092,7 @@ class Companion : Form
         return Math.Max(0.3, Math.Min(2, 0.3 + 3 * DmgShare(key)));
     }
 
-    Dictionary<string, List<string>> gatewayAll = new Dictionary<string, List<string>>();
+    Dictionary<string, List<Dictionary<string, object>>> gatewayAll = new Dictionary<string, List<Dictionary<string, object>>>();
     int gamePick = -1;
     DateTime pickRead;
     Bitmap pickPixel = new Bitmap(1, 1);
@@ -1126,10 +1126,13 @@ class Companion : Form
         if (heroClass == null || gamePick < 0) return;
         string ck = S(heroClass["key"]);
         Dictionary<string, object> pick = null;
-        List<string> ids;
-        if (gamePick > 0 && gatewayAll.TryGetValue(ck, out ids) && gamePick <= ids.Count)
-            pick = A(G(state, "builds")).Select(D).FirstOrDefault(b => S(G(b, "class")) == ck && S(G(b, "id")) == ids[gamePick - 1]);
-        if (pick == null) pick = ActiveBuild(state, ck);
+        List<Dictionary<string, object>> sent;
+        if (gamePick > 0 && gatewayAll.TryGetValue(ck, out sent) && gamePick <= sent.Count)
+        {
+            Dictionary<string, object> g = sent[gamePick - 1];
+            pick = A(G(state, "builds")).Select(D).FirstOrDefault(b => G(g, "id") != null && S(G(b, "id")) == S(G(g, "id"))) ?? g;
+        }
+        if (pick == null) pick = ActiveBuild(state, ck) ?? ClassPresets(heroClass).FirstOrDefault();
         if (pick == null || pick == build) return;
         build = pick;
         Log("build chosen in game: " + S(G(build, "name")));
@@ -1685,7 +1688,7 @@ class Companion : Form
         foreach (Dictionary<string, object> c in A(G(data, "classes")).Select(D))
         {
             string ck = S(c["key"]);
-            Dictionary<string, object> b = ActiveBuild(s, ck);
+            Dictionary<string, object> b = ActiveBuild(s, ck) ?? ClassPresets(c).FirstOrDefault();
             if (b == null) continue;
             L.Append("      " + ck + " = ");
             BuildLua(L, c, b);
@@ -1702,13 +1705,13 @@ class Companion : Form
                 if (ti >= 0 && (!byTree.ContainsKey(ti) || b == active)) byTree[ti] = b;
             }
             Dictionary<string, int> caps = CapSpells(c);
-            if (byTree.Count == 0) continue;
             for (int t = 0; t < A(G(c, "trees")).Count(); t++)
                 if (!byTree.ContainsKey(t))
                 {
                     Dictionary<string, object> pb = PresetFor(c, t);
                     if (pb != null) byTree[t] = pb;
                 }
+            if (byTree.Count == 0) continue;
             L.Append("      " + ck + " = {\n        caps = { " + string.Join(", ", caps.Select(kv => kv.Key + " = " + (kv.Value + 1))) + " },\n");
             foreach (KeyValuePair<int, Dictionary<string, object>> kv in byTree)
             {
@@ -1722,7 +1725,8 @@ class Companion : Form
         {
             string ck = S(c["key"]);
             List<Dictionary<string, object>> mine = A(G(s, "builds")).Select(D).Where(b => S(G(b, "class")) == ck).ToList();
-            gatewayAll[ck] = mine.Select(b => S(G(b, "id"))).ToList();
+            if (mine.Count == 0) mine = ClassPresets(c);
+            gatewayAll[ck] = mine;
             if (mine.Count < 2) continue;
             L.Append("      " + ck + " = {\n");
             foreach (Dictionary<string, object> b in mine)
@@ -1737,6 +1741,17 @@ class Companion : Form
     }
 
     List<object> presets;
+
+    List<Dictionary<string, object>> ClassPresets(Dictionary<string, object> c)
+    {
+        List<Dictionary<string, object>> list = new List<Dictionary<string, object>>();
+        for (int t = 0; t < A(G(c, "trees")).Count(); t++)
+        {
+            Dictionary<string, object> pb = PresetFor(c, t);
+            if (pb != null) list.Add(pb);
+        }
+        return list;
+    }
 
     Dictionary<string, object> PresetFor(Dictionary<string, object> c, int tree)
     {
@@ -2037,7 +2052,7 @@ class Companion : Form
     Dictionary<string, object> SelectBuild(string cls)
     {
         heroClass = A(G(data, "classes")).Select(D).FirstOrDefault(c => S(c["key"]) == cls || S(G(c["name"], "en")) == cls || S(G(c["name"], "fr")) == cls);
-        return heroClass == null ? null : ActiveBuild(state, S(heroClass["key"]));
+        return heroClass == null ? null : ActiveBuild(state, S(heroClass["key"])) ?? ClassPresets(heroClass).FirstOrDefault();
     }
 
     class CardInfo { public string Type, Cat, Key, Spell; }
