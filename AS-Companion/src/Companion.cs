@@ -2233,7 +2233,6 @@ class Companion : Form
                 {
                     double wornW = amulet != null ? JewelWeight("amulets", amulet) * (1 + 0.25 * amuletUps) : 0;
                     if (w > wornW) { baseW = w; target = idx >= 0 && idx < want; }
-                    else if (amulet == null && idx < 0) baseW = 8;
                 }
                 else if (jewels.Values.Count(v => v == info.Cat) < 2)
                 {
@@ -2263,18 +2262,10 @@ class Companion : Form
             object c = cards[best - 1];
             return new Advice { Text = (fr ? "Prendre " + best + " : " : "Take " + best + ": ") + S(G(c, "title")) + " (" + S(G(c, "rarityName")) + ")", Key = best.ToString(), Pick = c };
         }
-        bool canBanish = banIdx > 0 && N(G(j, "banishes"), 0) > 0;
-        bool auto = B(G(settings, "autoPick"));
-        if (canBanish && !(auto && reroll && rerolls > reserve))
-            return new Advice { Text = fr ? "Bannir la carte " + banIdx + " : " + S(G(cards[banIdx - 1], "title")) + " (rafraîchit les cartes)" : "Banish card " + banIdx + ": " + S(G(cards[banIdx - 1], "title")) + " (refreshes the cards)" };
-        if (reroll && rerolls > reserve)
-            return new Advice { Text = (fr ? "Rien du build : relancer (R), " + rerolls + " restantes" : "Nothing from the build: reroll (R), " + rerolls + " left") + luckTxt, Key = "r" };
-        if (canBanish)
-            return new Advice { Text = fr ? "Bannir la carte " + banIdx + " : " + S(G(cards[banIdx - 1], "title")) + " (rafraîchit les cartes)" : "Banish card " + banIdx + ": " + S(G(cards[banIdx - 1], "title")) + " (refreshes the cards)" };
+        if (reroll && rerolls > 0)
+            return new Advice { Text = (fr ? "Aucune carte du build : relancer (R), " + rerolls + " restantes" : "No card from the build: reroll (R), " + rerolls + " left") + luckTxt, Key = "r" };
         if (B(G(j, "skip")))
-            return new Advice { Text = fr ? "Rien du build : skip (+" + S(G(j, "skipGold")) + " or)" : "Nothing from the build: skip (+" + S(G(j, "skipGold")) + " gold)" };
-        if (rerolls > 0)
-            return new Advice { Text = fr ? "Rien du build, pas de skip : relancer (R), " + rerolls + " restantes" : "Nothing from the build, no skip: reroll (R), " + rerolls + " left", Key = "r" };
-        return new Advice { Text = fr ? "Aucune carte du build, pas de skip : choisissez vous-même" : "No card from the build, no skip: choose yourself" };
+            return new Advice { Text = fr ? "Aucune carte du build, plus de relance : skip (+" + S(G(j, "skipGold")) + " or) ou choisissez vous-même" : "No card from the build, no rerolls left: skip (+" + S(G(j, "skipGold")) + " gold) or choose yourself" };
+        return new Advice { Text = fr ? "Aucune carte du build, plus de relance, pas de skip : choisissez vous-même" : "No card from the build, no rerolls left, no skip: choose yourself" };
     }
 }
