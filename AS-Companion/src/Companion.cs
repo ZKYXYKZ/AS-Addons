@@ -1123,23 +1123,32 @@ class Companion : Form
     [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
     [DllImport("user32.dll")] static extern void mouse_event(uint f, int x, int y, uint d, IntPtr e);
 
-    void ClickGame(PointF f)
+    int fallbackKey = 0x31;
+
+    bool ClickGame(PointF f)
     {
-        if (game == null) return;
+        if (game == null) return false;
         game.Refresh();
         IntPtr h = game.MainWindowHandle;
         RECT r;
-        if (h == IntPtr.Zero || !GetClientRect(h, out r)) return;
+        if (h == IntPtr.Zero || !GetClientRect(h, out r)) return false;
         POINT pt = new POINT { X = (int)(f.X * (r.Right - r.Left)), Y = (int)(f.Y * (r.Bottom - r.Top)) };
         ClientToScreen(h, ref pt);
         SetForegroundWindow(h);
         Thread.Sleep(80);
-        if (GetForegroundWindow() != h) { Log("click skipped, game not in foreground"); return; }
+        if (GetForegroundWindow() != h)
+        {
+            Log("click skipped, game not in foreground, key " + (fallbackKey == 0x52 ? "r" : "1"));
+            pendingKey = 0;
+            Native.Press(h, (uint)fallbackKey);
+            return false;
+        }
         SetCursorPos(pt.X, pt.Y);
         Thread.Sleep(60);
         mouse_event(0x02, 0, 0, 0, IntPtr.Zero);
         Thread.Sleep(60);
         mouse_event(0x04, 0, 0, 0, IntPtr.Zero);
+        return true;
     }
 
     void SendKey(uint vk)
@@ -1818,6 +1827,7 @@ class Companion : Form
                 if (B(G(settings, "autoPick")) && a.Key != null && (a.Key.StartsWith("skip") || a.Key.StartsWith("ban")))
                 {
                     if (!B(G(settings, "experimentalAutoplay"))) break;
+                    fallbackKey = N(G(j, "rerolls"), 0) > 0 ? 0x52 : 0x31;
                     PointF pt = new PointF(0.548f, 0.861f);
                     if (a.Key.StartsWith("ban"))
                     {
