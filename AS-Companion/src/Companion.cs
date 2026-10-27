@@ -1922,6 +1922,8 @@ class Companion : Form
         if (N(G(settings, "overlay"), 1) != 0 && !overlay.Visible) overlay.Show();
     }
 
+    Dictionary<string, object> lastReady;
+
     void OnGameLine(string line)
     {
         if (!line.StartsWith("rogue: {")) return;
@@ -1929,7 +1931,14 @@ class Companion : Form
         try { j = D(json.DeserializeObject(line.Substring(7))); } catch { return; }
         if (j == null) return;
         string type = S(G(j, "type"));
-        if (type == "ready") StartResearch(S(G(j, "class")));
+        if (type == "ready")
+        {
+            if (G(j, "class") == null && lastReady != null)
+                foreach (KeyValuePair<string, object> kv in lastReady)
+                    if (!j.ContainsKey(kv.Key)) j[kv.Key] = kv.Value;
+            if (G(j, "class") != null) lastReady = j;
+            StartResearch(S(G(j, "class")));
+        }
         if (type != "hz" && type != "hzend" && type != "hzt" && type != "roster") Research("game", j);
         if (type == "picked" || type == "resume" || type == "choices" || type == "defeat" || type == "victory" || type == "start") pendingKey = 0;
         if (type == "picked" || type == "resume") screenRerolls = 0;
