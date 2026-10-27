@@ -1007,6 +1007,9 @@ class Companion : Form
             dpsLog = DateTime.Now.AddSeconds(60);
             ResearchCombat();
             ResearchIo();
+            runMinutes.Add(new Dictionary<string, object> { { "dps", Math.Round((totalDmg - minuteDmg) / 60) }, { "taken", Math.Round(dmgTaken - minuteTaken) }, { "level", runLevel } });
+            minuteDmg = totalDmg;
+            minuteTaken = dmgTaken;
             Log("dps " + string.Join(", ", spellDmg.OrderByDescending(kv => kv.Value).Take(6).Select(kv => kv.Key + " " + Math.Round(100 * kv.Value / totalDmg) + "%")));
         }
     }
@@ -1403,6 +1406,16 @@ class Companion : Form
             {
                 ShowUi();
                 Respond(ctx, 200, "application/json", Utf8.GetBytes("{}"));
+                return;
+            }
+            if (path == "/api/share/forget" && method == "POST")
+            {
+                string url = S(G(settings, "shareUrl")), install = File.Exists(Path.Combine(dataDir, "install-id.txt")) ? InstallId() : null, res = "ok";
+                try { File.Delete(Path.Combine(dataDir, "share-queue.json")); } catch { }
+                if (!string.IsNullOrEmpty(url) && !string.IsNullOrEmpty(install))
+                    try { using (WebClient w = Web()) w.UploadData(url.TrimEnd('/') + "/api/install/" + Uri.EscapeDataString(install), "DELETE", new byte[0]); }
+                    catch (Exception ex) { res = ex.Message; }
+                Respond(ctx, 200, "application/json", Utf8.GetBytes(json.Serialize(new Dictionary<string, object> { { "result", res } })));
                 return;
             }
             if (path == "/api/report" && method == "POST")
@@ -1972,6 +1985,12 @@ class Companion : Form
                 break;
             case "ready":
                 recordedIndex = -1;
+                runStarted = DateTime.Now;
+                runMinutes = new List<object>();
+                runPicks = new List<object>();
+                runLevel = 1;
+                minuteDmg = 0;
+                minuteTaken = 0;
                 build = SelectBuild(S(G(j, "class")));
                 ApplyGamePick();
                 CapSignals();
@@ -1991,6 +2010,7 @@ class Companion : Form
                 Research("build", new Dictionary<string, object> { { "build", build }, { "measuredLuck", measuredLuck } });
                 break;
             case "choices":
+                runLevel = (int)N(G(j, "level"), runLevel);
                 if (build == null) return;
                 Advice a = Advise(j);
                 if (a.Key == "r") screenRerolls++;
@@ -2031,6 +2051,7 @@ class Companion : Form
     void Took(object card)
     {
         CardInfo info = Info(card);
+        runPicks.Add(new Dictionary<string, object> { { "t", Math.Round((DateTime.Now - runStarted).TotalSeconds) }, { "took", info.Key }, { "kind", S(G(card, "kind")) }, { "rarity", N(G(card, "rarity"), 0) } });
         if (info.Type == "spell" && info.Key != null) owned[info.Key] = (int)N(G(card, "rank"), 1);
         if (info.Cat == "amulets" && info.Key != null) { amuletUps = info.Key == amulet ? amuletUps + 1 : 0; amulet = info.Key; }
         if (info.Type == "jewel" && info.Key != null && info.Cat != "amulets") jewels[info.Key] = info.Cat;
@@ -2228,6 +2249,99 @@ class Companion : Form
     int coopSize;
     double victoryTime;
 
+    DateTime runStarted = DateTime.Now;
+    List<object> runMinutes = new List<object>();
+    List<object> runPicks = new List<object>();
+    int runLevel = 1;
+    double minuteDmg, minuteTaken;
+    readonly object shareLock = new object();
+
+    string BuildCode(Dictionary<string, object> b)
+    {
+        if (b == null || heroClass == null) return null;
+        Dictionary<string, object> tal = D(G(b, "talents")) ?? new Dictionary<string, object>();
+        string trees = string.Join("/", A(G(heroClass, "trees")).Select(t => string.Concat(A(G(t, "talents")).Select(x => ((int)N(G(tal, S(G(x, "key"))), 0)).ToString()))));
+        Dictionary<string, object> rules = D(G(b, "rules")) ?? new Dictionary<string, object>();
+        string[] rk = { "rarity", "reserve", "reroll", "banishes", "fallbackLevel", "boost", "adapt" };
+        double[] rd = { 50, 1, 1, 3, 10, 2, 1 };
+        return string.Join(";", new[] {
+            "SB1", S(heroClass["key"]), (S(G(b, "name")) ?? "").Replace(";", ","), trees,
+            string.Join(",", A(G(b, "spells")).Select(x => S(G(x, "key")) + ":" + (int)N(G(x, "w"), 3))),
+            string.Join(",", (D(G(b, "ban")) ?? new Dictionary<string, object>()).Keys.OrderBy(k => k)),
+            string.Join(",", A(G(b, "rings")).Select(S)), string.Join(",", A(G(b, "trinkets")).Select(S)), string.Join(",", A(G(b, "amulets")).Select(S)),
+            string.Join(",", rk.Select((k, i) => N(G(rules, k), rd[i]).ToString(System.Globalization.CultureInfo.InvariantCulture))) });
+    }
+
+    string InstallId()
+    {
+        string f = Path.Combine(dataDir, "install-id.txt");
+        if (File.Exists(f)) return File.ReadAllText(f).Trim();
+        string id = Guid.NewGuid().ToString();
+        File.WriteAllText(f, id);
+        return id;
+    }
+
+    void QueueShare(Dictionary<string, object> r)
+    {
+        try
+        {
+            if (N(G(settings, "shareRuns"), 0) == 0 || heroClass == null) return;
+            string install = InstallId();
+            double total = spellDmg.Values.Sum();
+            Dictionary<string, object> run = new Dictionary<string, object> {
+                { "v", 1 }, { "client", CurrentVersion }, { "install", install },
+                { "class", S(heroClass["key"]) }, { "race", G(r, "race") }, { "spec", G(r, "spec") },
+                { "zone", G(r, "bg") }, { "difficulty", null }, { "coop", coopSize > 1 ? coopSize : 1 },
+                { "result", G(r, "result") }, { "time", G(r, "time") }, { "level", G(r, "level") }, { "kills", G(r, "kills") },
+                { "dps", G(r, "dps") }, { "damage", G(r, "damage") }, { "taken", G(r, "taken") },
+                { "build", BuildCode(build) },
+                { "minutes", runMinutes },
+                { "spells", spellDmg.ToDictionary(kv => kv.Key, kv => (object)new Dictionary<string, object> { { "rank", owned.ContainsKey(kv.Key) ? owned[kv.Key] : 0 }, { "share", total > 0 ? Math.Round(kv.Value / total, 4) : 0 } }) },
+                { "jewels", G(r, "jewels") }, { "amuletUps", amuletUps },
+                { "picks", runPicks }
+            };
+            lock (shareLock)
+            {
+                string qf = Path.Combine(dataDir, "share-queue.json");
+                List<object> q = File.Exists(qf) ? A(json.DeserializeObject(File.ReadAllText(qf, Utf8))).ToList() : new List<object>();
+                q.Add(run);
+                while (q.Count > 200) q.RemoveAt(0);
+                File.WriteAllText(qf, json.Serialize(q), Utf8);
+            }
+            new Thread(FlushShare) { IsBackground = true }.Start();
+        }
+        catch (Exception ex) { Log("share queue failed: " + ex.Message); }
+    }
+
+    void FlushShare()
+    {
+        string url = S(G(settings, "shareUrl"));
+        if (string.IsNullOrEmpty(url) || N(G(settings, "shareRuns"), 0) == 0) return;
+        lock (shareLock)
+        {
+            string qf = Path.Combine(dataDir, "share-queue.json");
+            if (!File.Exists(qf)) return;
+            List<object> q = A(json.DeserializeObject(File.ReadAllText(qf, Utf8))).ToList();
+            int sent = 0;
+            while (q.Count > 0)
+            {
+                try
+                {
+                    using (WebClient w = Web())
+                    {
+                        w.Headers.Add("Content-Type", "application/json");
+                        w.UploadData(url.TrimEnd('/') + "/api/runs", "POST", Utf8.GetBytes(json.Serialize(q[0])));
+                    }
+                    q.RemoveAt(0);
+                    sent++;
+                }
+                catch (Exception ex) { Log("share failed: " + ex.Message); break; }
+            }
+            File.WriteAllText(qf, json.Serialize(q), Utf8);
+            if (sent > 0) Log("shared runs: " + sent);
+        }
+    }
+
     void RecordRun(Dictionary<string, object> j)
     {
         ReadCombat();
@@ -2274,6 +2388,7 @@ class Companion : Form
         File.WriteAllText(rf, json.Serialize(runs), Utf8);
         ResearchCombat();
         Research("run", r);
+        if (!r.ContainsKey("endless")) QueueShare(r);
         Log("run recorded: " + r["result"] + " lvl " + r["level"] + " " + Math.Round(time) + "s dps " + r["dps"]);
     }
 
