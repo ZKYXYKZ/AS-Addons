@@ -269,9 +269,13 @@ sampler:SetScript("OnUpdate", function()
   local sp = {}
   for i = 1, table.getn(AZS_SPELLS or {}) do local s = AZS_SPELLS[i] table.insert(sp, (s.key or "?") .. ":" .. (s.rank or 0) .. ":" .. (s.cdmax or 0)) end
   local st = {}
-  for _, k in ipairs({ "dmg", "cd", "crit", "cm", "area", "cnt", "echo", "luck", "hp", "arm", "pet", "dots", "dotd", "spd" }) do if AZS_STATS and AZS_STATS[k] then table.insert(st, k .. "=" .. AZS_STATS[k]) end end
+  for _, k in ipairs({ "dmg", "cd", "crit", "cm", "area", "cnt", "echo", "luck", "hp", "arm", "pet", "dots", "dotd", "spd", "reg", "lch", "heal", "thn", "shd", "liv", "gdmg", "gcrit", "ghp", "garm", "gcd", "gcm", "garea", "gecho", "gspd" }) do if AZS_STATS and AZS_STATS[k] then table.insert(st, k .. "=" .. AZS_STATS[k]) end end
   local m = {}
   if AZS_GetMeter then local lines = AZS_GetMeter() for i = 1, math.min(table.getn(lines or {}), 20) do local l = lines[i] table.insert(m, l.name .. "=" .. math.floor(tonumber(l.dmg) or 0)) end end
   local r = AZS_RUN or {}
-  table.insert(AZBotDB.runs[runKey].samples, string.format("%d|%s|%s|%s|%s|%s|%s", math.floor(AZS_GetRunTime() or 0), tostring(r.lvl), tostring(r.en), table.concat(sp, ","), table.concat(st, ","), table.concat(m, ";"), tostring(r.kills)))
+  local hl = {}
+  if AZS_GetHealing then local lines = AZS_GetHealing() for i = 1, math.min(table.getn(lines or {}), 10) do local l = lines[i] table.insert(hl, l.name .. "=" .. math.floor(tonumber(l.dmg) or 0)) end end
+  local tk = {}
+  for i = 1, table.getn(AZS_TAKEN or {}) do local x = AZS_TAKEN[i] table.insert(tk, (x.source or "?") .. "=" .. math.floor(tonumber(x.dmg) or 0)) end
+  table.insert(AZBotDB.runs[runKey].samples, string.format("%d|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s", math.floor(AZS_GetRunTime() or 0), tostring(r.lvl), tostring(r.en), table.concat(sp, ","), table.concat(st, ","), table.concat(m, ";"), tostring(r.kills), tostring(r.hp), tostring(r.hpm), tostring(r.taken), tostring(r.dealt), table.concat(hl, ";"), table.concat(tk, ";")))
 end)
