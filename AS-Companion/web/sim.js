@@ -41,7 +41,7 @@ const CAPSTONES = {
   totemic_call: { extra: { searing_totem: 14 } }, rain_of_chaos: { extra: { rain_of_fire: 13 } }, water_elemental: { extra: { frost_nova: 8 }, pet: true },
   arcane_power: { echo: 20 }, kill_shot: { spellCd: { aimed_shot: 15 } }, divine_storm: { splash: { exorcism: 0.5 } }, chastise: { targets: { smite: 1 }, critProc: { spell: "holy_nova", from: "smite", perCast: true, every: 1, max: 99 } },
   bestial_wrath: { pet: true }, force_of_nature: { pet: true }, stormstrike: { pet: true }, butcher: { pet: true }, pact_of_the_annihilan: { pet: true },
-  penance: { proc: true }, mortal_wounds: { proc: true }, pyroclasm: { kills: true }, seed_of_corruption: { kills: true }, toxic_bloom: { kills: true }, shadowform: { kills: true },
+  penance: { proc: true }, mortal_wounds: { proc: true }, pyroclasm: { kills: { school: "Fire", r: 6, scale: 0.3 } }, seed_of_corruption: { kills: { dots: true, pct: 20, r: 6, scale: 0.6 } }, toxic_bloom: { kills: { dots: true, r: 7 } }, shadowform: { kills: { spells: ["sw_pain"], pct: 20, r: 6, scale: 2 } },
   shadow_dance: { splash: { backstab: 0.5, eviscerate: 0.5 } }, titan: { proc: true }, hammer_righteous: { proc: true }, tree_of_life: {}, leader_of_pack: { extra: { swipe: 3 } }, cat_form: { dmg: 10, crit: 10, spellCd: { shred: 20 } },
 };
 const MILESTONES = {
@@ -50,7 +50,7 @@ const MILESTONES = {
   arcane_concentration: { proc: true }, presence_of_mind: { mult: { arcane_missiles: 1.4 } }, lightning_overload: { mult: { lightning_bolt: 1.4, chain_lightning: 1.4 } },
   elemental_fury: { chainJumps: 3 }, windfury: { mult: { lightning_bolt: 1.7, earth_shock: 1.7, frost_shock: 1.7 } }, maelstrom: { proc: true },
   blade_flurry_talent: { splash: { sinister_strike: 0.5, eviscerate: 0.5 } }, mutilate: { mult: { sinister_strike: 1.5, backstab: 1.5 } }, deadly_poison: { critBleed: 0.4 },
-  piercing_shots: { mult: { auto_shot: 1.8 } }, rapid_fire: { proc: true }, frenzy_hunter: { pet: true }, tame_beast: { pet: true }, explosive_ammo: { kills: true },
+  piercing_shots: { mult: { auto_shot: 1.8 } }, rapid_fire: { proc: true }, frenzy_hunter: { pet: true }, tame_beast: { pet: true }, explosive_ammo: { kills: { spells: ["auto_shot", "multi_shot"], r: 6 } },
   seal_of_command: { splash: { judgement: 2 * 0.5 } }, art_of_war: { proc: true }, divine_favor: { proc: true }, daybreak: { proc: true }, hallowed_ground: { proc: true }, ardent_defender: { dmg: 10 },
   shadowburn: { splash: { shadow_bolt: 0.3 } }, conflagrate: { proc: true }, nightfall: { proc: true }, contagion: { proc: true }, omen_of_clarity: { proc: true }, starfall: { proc: true },
   holy_nova_talent: { proc: true }, holy_fire_talent: { critBleed: 0.3 }, divine_aegis: { proc: true }, rapture: { proc: true }, shadow_weaving: { proc: true }, shadowy_apparitions: { proc: true },
@@ -58,6 +58,7 @@ const MILESTONES = {
   shockwave: { splash: { shield_slam: 1.6 } }, fortified: { dmg: 20 }, preparation: { proc: true }, cheat_death: {}, adrenaline: { proc: true }, entrapment: {}, swiftmend: {}, reincarnation: {},
 };
 
+const KILL_SHARE = 0.5;
 const JEWEL_UP = [1, 1.8, 2.5, 3.4, 4.2, 4.9, 5.7, 6.5, 7.2, 7.8, 8.4];
 const AMULET_UP = [1, 1.2, 1.38, 1.54, 1.69, 1.82, 1.94, 2.04, 2.14, 2.23, 2.31];
 
@@ -116,7 +117,7 @@ function simFromBuild(b) {
 
 function talentFx(sc) {
   const c = cls(sc.class);
-  const fx = { dmg: 0, cdr: 0, cdMul: 1, crit: 0, critDmg: 0, echo: 0, luck: 0, dot: 0, boss: 0, low: 0, pet: 0, area: 0, school: {}, spellDmg: {}, spellCd: {}, spellTargets: {}, extra: {}, mult: {}, splash: {}, critBleed: 0, chainJumps: 0, notes: { pets: false, kills: false, procs: [] } };
+  const fx = { dmg: 0, cdr: 0, cdMul: 1, crit: 0, critDmg: 0, echo: 0, luck: 0, dot: 0, boss: 0, low: 0, pet: 0, area: 0, school: {}, spellDmg: {}, spellCd: {}, spellTargets: {}, extra: {}, mult: {}, splash: {}, critBleed: 0, chainJumps: 0, notes: { pets: false, kills: false, procs: [] }, killFx: [] };
   const names = {};
   for (const s of c.spells) names[s.name.en] = s.key;
   const keysIn = (txt) => txt.split(/, | and /).map((n) => names[n.trim()]).filter(Boolean);
@@ -158,7 +159,7 @@ function talentFx(sc) {
       if (special.critBleed) fx.critBleed = Math.max(fx.critBleed, special.critBleed);
       if (special.chainJumps) fx.chainJumps += special.chainJumps;
       if (special.pet) fx.notes.pets = true;
-      if (special.kills) fx.notes.kills = true;
+      if (special.kills) { fx.notes.kills = true; fx.killFx.push(Object.assign({}, special.kills, { pct: special.kills.pct || v || 15 })); }
       if (special.proc) fx.notes.procs.push(L(t.name));
       if (special.critProc) fx.critProc = special.critProc;
     }
@@ -214,11 +215,12 @@ function jewelFx(sc, fx) {
         if ((m = t.match(/leap to (\d+) more enemies for ([\d.]+)%/))) g.mult *= 1 + (m[1] * m[2]) / 100;
         if ((m = t.match(/([\d.]+)% chance .*strike again for ([\d.]+)%/))) g.mult *= 1 + (m[1] * m[2]) / 10000;
         if ((m = t.match(/burn and bleed for ([\d.]+)% more/))) g.mult *= 1 + m[1] / 100;
-        if (/explode/.test(t)) fx.notes.kills = true;
+        if ((m = t.match(/explode for ([\d.]+)% of their max health/))) { fx.notes.kills = true; fx.killFx.push({ spells: [key], pct: +m[1], r: 6, leg: true }); }
       }
       const up = AMULET_UP[Math.min(AMULET_UP.length - 1, sc.amuletUps || 0)];
       for (const f of ["dmg", "area", "dur", "cd"]) g[f] *= up;
       g.mult = 1 + (g.mult - 1) * up;
+      for (const k of fx.killFx) if (k.leg) k.pct *= up;
       fx.leg = g;
     }
   } else if (sc.amulet) {
@@ -339,6 +341,7 @@ function simulate(sc) {
     row.school = school;
     row.rate = rate * echo;
     row.hitsBoss = hitsBoss;
+    row.kind = base.kind;
     row.ticks = base.kind === "ground" ? Math.max(1, (base.dur * durMul) / (base.every || 1)) : base.kind === "totem" ? Math.max(1, (base.dur * durMul) / base.every) : base.kind === "dot" ? Math.max(1, (base.dur * durMul) / 1) : 1;
   }
   const cp = fx.critProc;
@@ -352,6 +355,12 @@ function simulate(sc) {
     }
     procRow.note = SM("procNote", { v: Math.round(Math.min(cp.max, fed("pack") / cp.every) * 10) / 10 });
   }
+  let expl = 0;
+  for (const k of fx.killFx || []) {
+    const trig = rows.filter((x) => x.pack && (k.spells ? k.spells.includes(x.key) : k.school ? x.school === k.school : k.dots ? x.kind === "dot" || x.kind === "ground" : false)).reduce((a, x) => a + x.pack, 0);
+    expl += (k.pct / 100) * n(k.r, fx.area) * trig * KILL_SHARE * (k.scale || 1);
+  }
+  if (expl > 0) rows.push({ key: "explosions", name: SM("kills"), icon: "Spell_Shadow_CorpseExplode", rank: 0, pack: expl, single: 0, note: "" });
   const bossShare = sc.boss / 100;
   for (const r of rows) r.mix = r.pack * (1 - bossShare) + r.single * bossShare;
   const total = rows.reduce((a, r) => a + r.mix, 0);
@@ -719,7 +728,7 @@ function monteCarlo(sc, iters, minutes) {
     iters, minutes, luck,
     mean: res.dps.reduce((a, b) => a + b, 0) / iters, p10: q(0.1), p50: q(0.5), p90: q(0.9),
     hist: sorted, level: res.level / iters,
-    spells: Object.keys(res.have).map((k) => ({ key: k, have: res.have[k] / iters, rank: res.ranks[k] / res.have[k], share: (res.share[k] || 0) / iters })).sort((a, b) => b.share - a.share),
+    spells: [...new Set(Object.keys(res.have).concat(Object.keys(res.share)))].map((k) => ({ key: k, have: (res.have[k] || 0) / iters, rank: res.have[k] ? res.ranks[k] / res.have[k] : 0, share: (res.share[k] || 0) / iters })).sort((a, b) => b.share - a.share),
   };
 }
 
@@ -773,7 +782,7 @@ function mcRender() {
     const rects = bins.map((b, i) => '<rect x="' + (i * 12 + 1) + '" y="' + (60 - (58 * b) / mx) + '" width="10" height="' + (58 * b) / mx + '" rx="2"></rect>').join("");
     col.appendChild(el("div", "simhistbox", '<svg viewBox="0 0 ' + nb * 12 + ' 60" class="simhist" preserveAspectRatio="none">' + rects + '</svg><div class="hint simhistax"><span>' + fmtN(lo) + "</span><span>" + esc(SM("mcDist")) + "</span><span>" + fmtN(hi) + "</span></div>"));
     const tbl = el("table", "simtbl");
-    tbl.innerHTML = "<tr><th></th><th>" + esc(SM("mcHave")) + "</th><th>" + esc(SM("mcRank")) + "</th><th>" + esc(SM("share")) + "</th></tr>" + r.spells.map((x) => { const d = spellOf(c, x.key); return "<tr><td>" + esc(d ? L(d.name) : x.key) + "</td><td>" + Math.round(x.have * 100) + " %</td><td>" + x.rank.toFixed(1) + "</td><td>" + Math.round(x.share * 100) + " %</td></tr>"; }).join("");
+    tbl.innerHTML = "<tr><th></th><th>" + esc(SM("mcHave")) + "</th><th>" + esc(SM("mcRank")) + "</th><th>" + esc(SM("share")) + "</th></tr>" + r.spells.map((x) => { const d = spellOf(c, x.key); return "<tr><td>" + esc(d ? L(d.name) : x.key === "explosions" ? SM("kills") : x.key) + "</td><td>" + Math.round(x.have * 100) + " %</td><td>" + x.rank.toFixed(1) + "</td><td>" + Math.round(x.share * 100) + " %</td></tr>"; }).join("");
     col.appendChild(tbl);
     cols.appendChild(col);
   }
