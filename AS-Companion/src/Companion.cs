@@ -2040,6 +2040,9 @@ class Companion : Form
             case "start":
                 if (build != null) overlay.Hide();
                 break;
+            case "heroic":
+                MarkHeroic((int)N(G(j, "level"), 0));
+                break;
             case "defeat":
             case "victory":
                 if (build != null) overlay.Hide();
@@ -2308,7 +2311,7 @@ class Companion : Form
                 while (q.Count > 200) q.RemoveAt(0);
                 File.WriteAllText(qf, json.Serialize(q), Utf8);
             }
-            new Thread(FlushShare) { IsBackground = true }.Start();
+            new Thread(() => { Thread.Sleep(5000); FlushShare(); }) { IsBackground = true }.Start();
         }
         catch (Exception ex) { Log("share queue failed: " + ex.Message); }
     }
@@ -2340,6 +2343,30 @@ class Companion : Form
             File.WriteAllText(qf, json.Serialize(q), Utf8);
             if (sent > 0) Log("shared runs: " + sent);
         }
+    }
+
+    void MarkHeroic(int level)
+    {
+        try
+        {
+            string rf = Path.Combine(dataDir, "runs.json");
+            if (recordedIndex < 0 || !File.Exists(rf)) return;
+            List<object> runs = A(json.DeserializeObject(File.ReadAllText(rf, Utf8))).ToList();
+            if (recordedIndex >= runs.Count) return;
+            D(runs[recordedIndex])["heroic"] = level;
+            File.WriteAllText(rf, json.Serialize(runs), Utf8);
+            lock (shareLock)
+            {
+                string qf = Path.Combine(dataDir, "share-queue.json");
+                if (File.Exists(qf))
+                {
+                    List<object> q = A(json.DeserializeObject(File.ReadAllText(qf, Utf8))).ToList();
+                    if (q.Count > 0) { D(q[q.Count - 1])["difficulty"] = level; File.WriteAllText(qf, json.Serialize(q), Utf8); }
+                }
+            }
+            Log("heroic " + level + " beaten");
+        }
+        catch (Exception ex) { Log("heroic mark failed: " + ex.Message); }
     }
 
     void RecordRun(Dictionary<string, object> j)
