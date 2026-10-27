@@ -1112,6 +1112,78 @@ class Companion : Form
         }
     }
 
+    [DllImport("user32.dll")] static extern bool GetClientRect(IntPtr h, out RECT r);
+    struct RECT { public int Left, Top, Right, Bottom; }
+    struct POINT { public int X, Y; }
+    [DllImport("user32.dll")] static extern bool ClientToScreen(IntPtr h, ref POINT p);
+    [DllImport("user32.dll")] static extern bool SetCursorPos(int x, int y);
+    [DllImport("user32.dll")] static extern bool SetForegroundWindow(IntPtr h);
+    [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")] static extern void mouse_event(uint f, int x, int y, uint d, IntPtr e);
+
+    int lastReset;
+
+    string ApplyTalents(object b)
+    {
+        Process p = Process.GetProcessesByName("AzerothSurvivors").FirstOrDefault();
+        if (p == null) return "nogame";
+        IntPtr h = p.MainWindowHandle;
+        object cls = A(G(data, "classes")).FirstOrDefault(c => S(G(c, "key")) == S(G(b, "class")));
+        if (cls == null || h == IntPtr.Zero) return "nogame";
+        object tal = G(b, "talents");
+        List<object> trees = A(G(cls, "trees")).ToList();
+        int[] pts = trees.Select(t => A(G(t, "talents")).Sum(x => (int)N(G(tal, S(G(x, "key"))), 0))).ToArray();
+        if (pts.Sum() == 0) return "empty";
+        int main = Array.IndexOf(pts, pts.Max());
+        List<int[]> order = new List<int[]>();
+        foreach (int ti in new[] { main }.Concat(Enumerable.Range(0, trees.Count).Where(i => i != main)))
+            foreach (object x in A(G(trees[ti], "talents")).OrderBy(x => N(G(x, "row"), 0)).ThenBy(x => N(G(x, "col"), 0)))
+            {
+                int n = (int)N(G(tal, S(G(x, "key"))), 0);
+                if (n > 0) order.Add(new[] { ti, (int)N(G(x, "row"), 0), (int)N(G(x, "col"), 0), n });
+            }
+        RECT r;
+        GetClientRect(h, out r);
+        int cw = r.Right - r.Left, ch = r.Bottom - r.Top;
+        double sc = Math.Min(cw / 1920.0, ch / 1080.0), ox = (cw - 1920 * sc) / 2, oy = (ch - 1080 * sc) / 2;
+        POINT o = new POINT();
+        ClientToScreen(h, ref o);
+        for (int i = 0; i < 5 && GetForegroundWindow() != h; i++) { SetForegroundWindow(h); Thread.Sleep(300); }
+        if (GetForegroundWindow() != h) return "focus";
+        Func<int, int, int, bool> click = (x, y, wait) =>
+        {
+            if (GetForegroundWindow() != h) return false;
+            SetCursorPos(o.X + (int)(ox + x * sc), o.Y + (int)(oy + y * sc));
+            Thread.Sleep(40);
+            mouse_event(0x02, 0, 0, 0, IntPtr.Zero);
+            Thread.Sleep(50);
+            mouse_event(0x04, 0, 0, 0, IntPtr.Zero);
+            Thread.Sleep(wait);
+            return true;
+        };
+        int ci = A(G(data, "classes")).ToList().IndexOf(cls);
+        if (!click(235 + 98 * (ci % 3), 262 + 110 * (ci / 3), 800) || !click(1108, 670, 1500) || !click(new[] { 1560, 1674, 1787 }[Math.Min(2, main)], 172, 500)) return "focus";
+        int best = 0, bestStart = -1, run = 0, start = -1;
+        using (Bitmap bmp = new Bitmap(1, 260))
+        {
+            using (Graphics g = Graphics.FromImage(bmp))
+                for (int i = 0; i < 260; i++) g.CopyFromScreen(o.X + (int)(ox + 1516 * sc), o.Y + (int)(oy + (380 + i) * sc), 0, i, new Size(1, 1));
+            for (int i = 0; i < 260; i++)
+            {
+                Color c = bmp.GetPixel(0, i);
+                if (c.R >= 25 && c.R > 2 * c.G && c.R > 2 * c.B) { if (run == 0) start = i; run++; if (run > best) { best = run; bestStart = start; } }
+                else run = 0;
+            }
+        }
+        if (best >= 8 && !click(1549, 380 + bestStart + best / 2, 700)) return "focus";
+        lastReset = best >= 8 ? 380 + bestStart + best / 2 : -1;
+        foreach (int[] e in order)
+            for (int i = 0; i < e[3]; i++)
+                if (!click(116 + 480 * e[0] + 108 * e[2], 233 + 89 * e[1], 110)) return "focus";
+        Log("talents applied: " + S(G(b, "name")) + " spec " + (main + 1) + ", " + order.Count + " talents");
+        return "ok";
+    }
+
     void SendKey(uint vk)
     {
         pendingAt = DateTime.Now;
@@ -1161,6 +1233,14 @@ class Companion : Form
                         build = same != null && SpecIndex(active) != detectedTree ? same : active;
                     });
                 Respond(ctx, 200, "application/json", Utf8.GetBytes("{\"ok\":true}"));
+                return;
+            }
+            if (path == "/api/apply-talents" && method == "POST")
+            {
+                string body;
+                using (StreamReader sr = new StreamReader(ctx.Request.InputStream, Utf8)) body = sr.ReadToEnd();
+                string res = ApplyTalents(json.DeserializeObject(body));
+                Respond(ctx, 200, "application/json", Utf8.GetBytes("{\"result\":\"" + res + "\",\"reset\":" + lastReset + "}"));
                 return;
             }
             if (path == "/api/launch" && method == "POST")

@@ -140,3 +140,11 @@ Fichiers : `Movers.lua` (registre des blocs déplaçables, grille, aimantation, 
   - Druide Équilibre : mort à 6 min (aucun soin dans le build) : Récupération remplace Sarments.
 - Seul le mage a le stuff de Naxxramas : les autres classes sont comparées à Féralas (difficulté 2,05 contre 2,95).
 - Fiches d'ennemis de l'exe (80 octets) : +24 poids d'apparition, +32 id, +36 modèle, +40 taille, +44 type, +48 vie, +52 dégâts, +56 vitesse, +60 expérience, +72 minute d'apparition. Zones : difficulté +216 (Elwynn 0,82, Gurubashi 2,95, Naxxramas 6,25), croissance par minute +220.
+
+## Bouton « Appliquer au jeu » (1.7.0)
+
+- Onglet Talents d'un build : le compagnon clique à la place du joueur. Il sélectionne la classe sur l'écran principal, ouvre les talents, choisit l'emplacement Spé 1, 2 ou 3 de l'arbre principal, cherche le bouton Reset par sa couleur, pose les points du build dans l'ordre des rangées (arbre principal d'abord), puis clique sur Terminé. Il s'arrête si le jeu quitte le premier plan.
+- Positions relevées en 1920×1080. L'interface du jeu se met à l'échelle avec min(largeur/1920, hauteur/1080) et se centre : vérifié en 1280×720, 1440×900 et 1900×700.
+- Positions (repère 1920×1080) : icônes de classe (235 + 98 × colonne, 262 + 110 × rangée) dans l'ordre de data.json, bouton Talents (1108, 670), Spé 1/2/3 (1560/1674/1787, 172), Reset (1549, y) détecté en x 1516 entre y 380 et 640, talent (116 + 480 × arbre + 108 × colonne, 233 + 89 × rangée), Terminé (1824, 67).
+- Le chiffrement de la sauvegarde (characters.txt) et l'API Lua n'offrent aucun autre moyen. Le jeu a des variables de test (`WOW_ROGUE_ARMORY`, `WOW_ROGUE_TAPS` : tapotements séparés par « ; », un toutes les 2 s) trop lentes pour 51 points.
+- Tests de résolution : `gxWindow`, `gxResolution` (« 1280x720 ») dans le config.toml d'un `BENILLA_HOME` isolé.
