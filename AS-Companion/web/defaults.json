@@ -49,7 +49,7 @@
   "name": "Paladin Protection",
   "author": "AS Companion",
   "race": "dwarf",
-  "code": "SB1;paladin;Paladin Protection;0000000000000/35301133331131/5505005000000;hammer_of_justice:5,consecration:5,holy_shield:4,holy_wrath:3,exorcism:3,judgement:2;holy_light,holy_shock,redemption;dark_iron,accuria,archimtiros,blooddrinker;lifegiving,chosen,star_of_mystaria,earthstrike;leg:consecration,steadfast_might,animated_chain,fallen_dragon;50,1,1,3,10,2,1",
+  "code": "SB1;paladin;Paladin Protection;0000000000000/35301133331131/5504114000000;hammer_of_justice:5,consecration:5,holy_shield:4,holy_wrath:3,exorcism:3,judgement:2;holy_light,holy_shock,redemption;dark_iron,accuria,archimtiros,blooddrinker;lifegiving,chosen,star_of_mystaria,earthstrike;leg:consecration,steadfast_might,animated_chain,fallen_dragon;50,1,1,3,10,2,1",
   "notes": {
    "fr": "Marteau de la justice consacre le sol, chaque Consécration pose un bouclier et +20 % de dégâts tant qu'il tient. Les dégâts suivent la vie max. Le Nain ajoute un bouclier de 30 % de vie toutes les 45 s.",
    "en": "Hammer of Justice hallows the ground, every Consecration raises a shield and +20% damage while it holds. Damage scales with max health. Dwarves add a 30% health shield every 45 sec."
@@ -153,7 +153,7 @@
   "author": "AS Companion",
   "race": "troll",
   "raceAlt": "gnome",
-  "code": "SB1;priest;Prêtre Sacré;0505050500000/5053113511231/0000000000000;smite:5,holy_nova:5,holy_fire:4,mind_blast:3,pw_shield:3,sw_pain:2;mind_flay,psychic_scream,renew;accuria,dragonslayer,quick_strike,spell_power;chosen,blackhand,earthstrike,hoj;leg:smite,leg:holy_nova,onyxia_tooth,malice_stone;50,1,1,3,10,2,1",
+  "code": "SB1;priest;Prêtre Sacré;0505140500000/5053113511231/0000000000000;smite:5,holy_nova:5,holy_fire:4,mind_blast:3,pw_shield:3,sw_pain:2;mind_flay,psychic_scream,renew;accuria,dragonslayer,quick_strike,spell_power;chosen,blackhand,earthstrike,hoj;leg:smite,leg:holy_nova,onyxia_tooth,malice_stone;50,1,1,3,10,2,1",
   "notes": {
    "fr": "Châtiment touche 2 ennemis et chaque critique déclenche un Nova sacré gratuit : tout mise sur le critique (Spécialisation sacrée, Troll).",
    "en": "Smite hits 2 enemies and every crit sets off a free Holy Nova: everything goes into crit (Holy Specialization, Troll)."
@@ -165,7 +165,7 @@
   "author": "AS Companion",
   "race": "troll",
   "raceAlt": "gnome",
-  "code": "SB1;priest;Prêtre Ombre;5005050500000/0000000000000/2325155110321;sw_pain:5,mind_blast:5,devouring_plague:4,mind_flay:4,pw_shield:2,holy_nova:2;holy_fire,renew,smite;accuria,seal_damned,quick_strike,blooddrinker;chosen,earthstrike,hoj,tep;leg:sw_pain,leg:devouring_plague,fire_lord,eye_of_hakkar;50,1,1,3,10,2,1",
+  "code": "SB1;priest;Prêtre Ombre;5005140500000/0000000000000/2325155110321;sw_pain:5,mind_blast:5,devouring_plague:4,mind_flay:4,pw_shield:2,holy_nova:2;holy_fire,renew,smite;accuria,seal_damned,quick_strike,blooddrinker;chosen,earthstrike,hoj,tep;leg:sw_pain,leg:devouring_plague,fire_lord,eye_of_hakkar;50,1,1,3,10,2,1",
   "notes": {
    "fr": "Mot de l'ombre : Douleur dès le départ, ses dégâts réguliers lancent des Attaques mentales gratuites et la douleur saute d'un ennemi mort au suivant.",
    "en": "Shadow Word: Pain from the start, its ticks fire free Mind Blasts and the pain jumps from a dead enemy to the next."
@@ -200,7 +200,7 @@
   "name": "Chaman Totems",
   "author": "AS Companion",
   "race": "tauren",
-  "code": "SB1;shaman;Chaman Totems;5503023200000/0000000000000/0551135014321;magma_totem:5,searing_totem:5,fire_nova:4,flame_shock:3,chain_lightning:3,lightning_bolt:2;earth_shock,frost_shock,lightning_shield;accuria,spell_power,quick_strike,blooddrinker;chosen,earthstrike,tep,lifegiving;leg:magma_totem,leg:searing_totem,fire_lord,malice_stone;50,1,1,3,10,2,1",
+  "code": "SB1;shaman;Chaman Totems;5503113200000/0000000000000/0551135014321;magma_totem:5,searing_totem:5,fire_nova:4,flame_shock:3,chain_lightning:3,lightning_bolt:2;earth_shock,frost_shock,lightning_shield;accuria,spell_power,quick_strike,blooddrinker;chosen,earthstrike,tep,lifegiving;leg:magma_totem,leg:searing_totem,fire_lord,malice_stone;50,1,1,3,10,2,1",
   "notes": {
    "fr": "Arbre Restauration joué en totems : chaque totem en pose un second, Totem de magma dès le départ et un Totem incendiaire gratuit toutes les 14 s. Réincarnation sauve une fois toutes les 2 min.",
    "en": "The Restoration tree played with totems: every totem drops a second one, Magma Totem from the start and a free Searing Totem every 14 sec. Reincarnation saves you every 2 min."
@@ -311,7 +311,7 @@
   "name": "Druide Restauration",
   "author": "AS Companion",
   "race": "tauren",
-  "code": "SB1;druid;Druide Restauration;2305052300000/00000000000000/5054105315101;rejuvenation:5,regrowth:5,moonfire:4,insect_swarm:3,hurricane:3,thorns:2;shred,starfire,wrath;accuria,quick_strike,dragonslayer,devoured;chosen,earthstrike,tep,lifegiving;leg:regrowth,leg:rejuvenation,malice_stone,fire_lord;50,1,1,3,10,2,1",
+  "code": "SB1;druid;Druide Restauration;2305142300000/00000000000000/5054105315101;rejuvenation:5,regrowth:5,moonfire:4,insect_swarm:3,hurricane:3,thorns:2;shred,starfire,wrath;accuria,quick_strike,dragonslayer,devoured;chosen,earthstrike,tep,lifegiving;leg:regrowth,leg:rejuvenation,malice_stone,fire_lord;50,1,1,3,10,2,1",
   "notes": {
    "fr": "Tranquillité : chaque soin frappe les ennemis à 12 m pour 300 % du soin. Récupération et Rétablissement servent d'armes, et le surplus de soin devient un bouclier.",
    "en": "Tranquility: every heal strikes enemies within 12 yd for 300% of the healing. Rejuvenation and Regrowth become weapons, and overhealing turns into a shield."

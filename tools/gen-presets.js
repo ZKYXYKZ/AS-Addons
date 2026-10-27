@@ -49,7 +49,7 @@ const builds = [
   {
     class: "paladin", name: "Paladin Protection", race: "dwarf", alt: "",
     talents: T(`redoubt:5 imp_devotion:3 imp_consecration:3 hallowed_ground:1 judgement_crusader:3 weighted_hammer:1 righteous_fury:3 imp_hoj:3 ardent_defender:1 blessed_life:3 sacred_duty:3 divine_intervention:1 hammer_righteous:1
-      imp_might:5 benediction:5 deflection_pal:5 conviction:5`),
+      imp_might:5 benediction:5 deflection_pal:4 seal_of_command:1 pursuit:1 conviction:4`),
     spells: SP("hammer_of_justice:5 consecration:5 holy_shield:4 holy_wrath:3 exorcism:3 judgement:2"), ban: L("holy_light redemption holy_shock"),
     rings: L("dark_iron accuria archimtiros blooddrinker"), trinkets: L("lifegiving chosen star_of_mystaria earthstrike"), amulets: L("leg:consecration steadfast_might animated_chain fallen_dragon"),
     fr: "Marteau de la justice consacre le sol, chaque Consécration pose un bouclier et +20 % de dégâts tant qu'il tient. Les dégâts suivent la vie max. Le Nain ajoute un bouclier de 30 % de vie toutes les 45 s.",
@@ -130,7 +130,7 @@ const builds = [
   {
     class: "priest", name: "Prêtre Sacré", race: "troll", alt: "gnome",
     talents: T(`holy_spec:5 divine_fury:5 holy_nova_talent:1 holy_reach:3 inspiration:1 searing_light:3 spiritual_guidance:5 holy_fire_talent:1 spiritual_healing:1 holy_concentration:3 blessed_recovery:2 chastise:1
-      wand_spec:5 martyrdom:5 mental_agility:5 mental_strength:5`),
+      wand_spec:5 martyrdom:5 divine_aegis:1 mental_agility:4 mental_strength:5`),
     spells: SP("smite:5 holy_nova:5 holy_fire:4 mind_blast:3 pw_shield:3 sw_pain:2"), ban: L("renew psychic_scream mind_flay"),
     rings: L("accuria dragonslayer quick_strike spell_power"), trinkets: L("chosen blackhand earthstrike hoj"), amulets: L("leg:smite leg:holy_nova onyxia_tooth malice_stone"),
     fr: "Châtiment touche 2 ennemis et chaque critique déclenche un Nova sacré gratuit : tout mise sur le critique (Spécialisation sacrée, Troll).",
@@ -139,7 +139,7 @@ const builds = [
   {
     class: "priest", name: "Prêtre Ombre", race: "troll", alt: "gnome",
     talents: T(`blackout:3 spirit_tap:2 imp_swp:2 shadow_focus:5 shadow_weaving:1 imp_mind_blast:5 darkness:5 imp_psychic_scream:1 shadowy_apparitions:1 shadow_power:3 imp_vampiric:2 shadowform:1
-      unbreakable_will:5 martyrdom:5 mental_agility:5 mental_strength:5`),
+      unbreakable_will:5 martyrdom:5 divine_aegis:1 mental_agility:4 mental_strength:5`),
     spells: SP("sw_pain:5 mind_blast:5 devouring_plague:4 mind_flay:4 pw_shield:2 holy_nova:2"), ban: L("smite renew holy_fire"),
     rings: L("accuria seal_damned quick_strike blooddrinker"), trinkets: L("chosen earthstrike hoj tep"), amulets: L("leg:sw_pain leg:devouring_plague fire_lord eye_of_hakkar"),
     fr: "Mot de l'ombre : Douleur dès le départ, ses dégâts réguliers lancent des Attaques mentales gratuites et la douleur saute d'un ennemi mort au suivant.",
@@ -166,7 +166,7 @@ const builds = [
   {
     class: "shaman", name: "Chaman Totems", race: "tauren", alt: "",
     talents: T(`tidal_focus:5 totemic_focus:5 twin_totems:1 restorative_totems:3 natures_guidance:1 tidal_mastery:5 reincarnation:1 purification:4 totemic_mastery:3 ancestral_healing:2 totemic_call:1
-      concussion:5 convection:5 call_of_flame:3 reverberation:2 imp_fire_totems:2 call_of_thunder:3`),
+      concussion:5 convection:5 call_of_flame:3 lightning_overload:1 reverberation:1 imp_fire_totems:2 call_of_thunder:3`),
     spells: SP("magma_totem:5 searing_totem:5 fire_nova:4 flame_shock:3 chain_lightning:3 lightning_bolt:2"), ban: L("lightning_shield frost_shock earth_shock"),
     rings: L("accuria spell_power quick_strike blooddrinker"), trinkets: L("chosen earthstrike tep lifegiving"), amulets: L("leg:magma_totem leg:searing_totem fire_lord malice_stone"),
     fr: "Arbre Restauration joué en totems : chaque totem en pose un second, Totem de magma dès le départ et un Totem incendiaire gratuit toutes les 14 s. Réincarnation sauve une fois toutes les 2 min.",
@@ -256,7 +256,7 @@ const builds = [
   {
     class: "druid", name: "Druide Restauration", race: "tauren", alt: "",
     talents: T(`imp_motw:5 imp_healing_touch:5 natures_focus:4 swiftmend:1 tranquil_spirit:5 imp_rejuvenation:3 tranquility:1 gift_of_nature:5 imp_tranquility:1 tree_of_life:1
-      natures_grasp:3 imp_wrath:2 natural_weapons:5 vengeance_druid:5 moonglow:3 imp_starfire:2`),
+      natures_grasp:3 imp_wrath:2 natural_weapons:5 omen_of_clarity:1 vengeance_druid:4 moonglow:3 imp_starfire:2`),
     spells: SP("rejuvenation:5 regrowth:5 moonfire:4 insect_swarm:3 hurricane:3 thorns:2"), ban: L("wrath starfire shred"),
     rings: L("accuria quick_strike dragonslayer devoured"), trinkets: L("chosen earthstrike tep lifegiving"), amulets: L("leg:regrowth leg:rejuvenation malice_stone fire_lord"),
     fr: "Tranquillité : chaque soin frappe les ennemis à 12 m pour 300 % du soin. Récupération et Rétablissement servent d'armes, et le surplus de soin devient un bouclier.",
