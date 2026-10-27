@@ -7,14 +7,14 @@ local T = {
     title = "Build : %s", none = "Aucun build reçu du compagnon pour cette classe", learn = "à prendre", rank = "rang %d",
     ban = "À bannir (%d) : %s", rerolls = "Relances : %d (garder %d)", rule = "Rien du build : %s", reroll = "relancer puis skip", skip = "skip",
     jewels = "Bijoux visés : %s", newSpell = "Nouveau sort : %s%s", upSpell = "%s rang %d%s", prio = " (priorité %d)", out = " (hors build)",
-    auto = "Sélection auto active (compagnon)", worn = "porté", target = "visé", fallback = "repli",
+    auto = "Sélection auto active (compagnon)", worn = "porté", target = "visé", fallback = "repli", fallbackAt = "repli niv %d",
     cards = "Cartes choisies selon « %s »", switch = "Changer de build",
   },
   en = {
     title = "Build: %s", none = "No build received from the companion for this class", learn = "to take", rank = "rank %d",
     ban = "Banish (%d): %s", rerolls = "Rerolls: %d (keep %d)", rule = "Nothing from the build: %s", reroll = "reroll then skip", skip = "skip",
     jewels = "Target jewelry: %s", newSpell = "New spell: %s%s", upSpell = "%s rank %d%s", prio = " (priority %d)", out = " (off build)",
-    auto = "Auto-pick on (companion)", worn = "worn", target = "target", fallback = "fallback",
+    auto = "Auto-pick on (companion)", worn = "worn", target = "target", fallback = "fallback", fallbackAt = "fallback lvl %d",
     cards = "Cards picked for \"%s\"", switch = "Switch build",
   },
 }
@@ -252,6 +252,8 @@ function G.Refresh()
   local targets = b.targets or {}
   local found = {}
   if table.getn(items) > 0 or table.getn(targets) > 0 then y = y - 6 end
+  local fallbacks = b.fallbacks or {}
+  local fbFound = {}
   for i = 1, table.getn(items) do
     local it = items[i]
     local r = nextRow()
@@ -260,6 +262,11 @@ function G.Refresh()
       if not found[k] and matches(it.name, targets[k]) then target = k break end
     end
     if target then found[target] = true end
+    if not target then
+      for k = 1, table.getn(fallbacks) do
+        if not fbFound[k] and matches(it.name, fallbacks[k]) then fbFound[k] = true break end
+      end
+    end
     r.icon:SetTexture(it.icon)
     r.icon:SetAlpha(1)
     r.name:SetText("|c" .. it.color .. it.name .. "|r")
@@ -274,6 +281,17 @@ function G.Refresh()
       r.name:SetText(t.name)
       r.name:SetTextColor(0.55, 0.55, 0.55)
       r.info:SetText("")
+    end
+  end
+  for k = 1, table.getn(fallbacks) do
+    if not fbFound[k] then
+      local t = fallbacks[k]
+      local r = nextRow()
+      r.icon:SetTexture(t.icon and t.icon ~= "" and ("Interface/Icons/" .. t.icon) or nil)
+      r.icon:SetAlpha(0.2)
+      r.name:SetText(t.name)
+      r.name:SetTextColor(0.4, 0.4, 0.4)
+      r.info:SetText("|cff667788" .. string.format(tl("fallbackAt"), b.fallbackLevel or 10) .. "|r")
     end
   end
   for i = n + 1, table.getn(f.rows) do f.rows[i]:Hide() end

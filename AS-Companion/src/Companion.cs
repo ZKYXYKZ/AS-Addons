@@ -1807,7 +1807,14 @@ class Companion : Form
                 string[] t = JewelTarget(c, cat, S(k));
                 L.Append("          { cat = " + LuaStr(cat) + ", name = " + LuaStr(t[0]) + ", item = " + LuaStr(t[1]) + ", icon = " + LuaStr(t[2]) + " },\n");
             }
-        L.Append("        },\n");
+        L.Append("        },\n        fallbacks = {\n");
+        foreach (string cat in new[] { "rings", "trinkets", "amulets" })
+            foreach (object k in A(G(b, cat)).Skip(cat == "amulets" ? 1 : 2))
+            {
+                string[] t = JewelTarget(c, cat, S(k));
+                L.Append("          { cat = " + LuaStr(cat) + ", name = " + LuaStr(t[0]) + ", item = " + LuaStr(t[1]) + ", icon = " + LuaStr(t[2]) + " },\n");
+            }
+        L.Append("        },\n        fallbackLevel = " + (int)N(G(rules, "fallbackLevel"), 10) + ",\n");
         Dictionary<string, object> tal = D(G(b, "talents")) ?? new Dictionary<string, object>();
         List<string> treeNames = new List<string>();
         L.Append("        talents = {\n");
