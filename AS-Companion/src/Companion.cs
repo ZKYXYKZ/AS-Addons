@@ -1161,8 +1161,6 @@ class Companion : Form
             Thread.Sleep(wait);
             return true;
         };
-        int ci = A(G(data, "classes")).ToList().IndexOf(cls);
-        if (!click(235 + 98 * (ci % 3), 262 + 110 * (ci / 3), 800) || !click(1108, 670, 1500) || !click(new[] { 1560, 1674, 1787 }[Math.Min(2, main)], 172, 500)) return "focus";
         int best = 0, bestStart = -1, run = 0, start = -1;
         using (Bitmap bmp = new Bitmap(1, 260))
         {
@@ -1175,12 +1173,13 @@ class Companion : Form
                 else run = 0;
             }
         }
-        if (best >= 8 && !click(1549, 380 + bestStart + best / 2, 700)) return "focus";
+        if (best < 8) return "noreset";
+        if (!click(1549, 380 + bestStart + best / 2, 700)) return "focus";
         lastReset = best >= 8 ? 380 + bestStart + best / 2 : -1;
         foreach (int[] e in order)
             for (int i = 0; i < e[3]; i++)
                 if (!click(116 + 480 * e[0] + 108 * e[2], 233 + 89 * e[1], 110)) return "focus";
-        Log("talents applied: " + S(G(b, "name")) + " spec " + (main + 1) + ", " + order.Count + " talents");
+        Log("talents applied: " + S(G(b, "name")) + ", " + order.Count + " talents");
         return "ok";
     }
 
