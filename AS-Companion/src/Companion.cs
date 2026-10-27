@@ -338,6 +338,7 @@ class Companion : Form
             if (e == null) continue;
             string t = S(G(e, "t"));
             object d = G(e, "data");
+            if (t == "build" && D(G(d, "build")) != null && build == null) { build = D(G(d, "build")); heroClass = A(G(data, "classes")).Select(D).FirstOrDefault(c => S(c["key"]) == S(G(build, "class"))); }
             if (t == "build") { snapshot = D(G(d, "build")); Dictionary<string, object> ml = D(G(d, "measuredLuck")); if (ml != null) foreach (KeyValuePair<string, object> kv in ml) measuredLuck[kv.Key] = N(kv.Value, 0); continue; }
             if (t == "spec")
             {
@@ -2283,6 +2284,21 @@ class Companion : Form
         return w;
     }
 
+    static int JewelRank(string title)
+    {
+        Match m = Regex.Match(title ?? "", @"\s([IVX]+)(\+?)$");
+        if (!m.Success) return 1;
+        int n = 0, prev = 0;
+        string v = m.Groups[1].Value;
+        for (int i = v.Length - 1; i >= 0; i--)
+        {
+            int d = v[i] == 'X' ? 10 : v[i] == 'V' ? 5 : 1;
+            n += d < prev ? -d : d;
+            prev = Math.Max(prev, d);
+        }
+        return n + (m.Groups[2].Value == "+" ? 1 : 0);
+    }
+
     double SpellWeight(string key)
     {
         double w = 0;
@@ -2354,19 +2370,22 @@ class Companion : Form
                 bool upgrade = info.Cat == "amulets" ? info.Key == amulet : jewels.ContainsKey(info.Key);
                 if (upgrade)
                 {
-                    baseW = Math.Max(w, 4);
+                    int jr = JewelRank(S(G(card, "title")));
+                    baseW = Math.Max(w, 4) * (jr <= 3 ? 1 : jr <= 6 ? 0.67 : jr <= 10 ? 0.5 : 0.35);
                     target = true;
                 }
                 else if (info.Cat == "amulets")
                 {
                     double wornW = amulet != null ? JewelWeight("amulets", amulet) * (1 + 0.25 * amuletUps) : 0;
-                    if (w > wornW) { baseW = w; target = idx >= 0 && idx < want; }
+                    if (w > wornW) { baseW = amulet == null ? w * 1.5 : w; target = idx >= 0 && idx < want; }
                 }
                 else if (jewels.Values.Count(v => v == info.Cat) < 2)
                 {
                     if (idx >= 0 && idx < want) { baseW = w; target = true; }
                     else if (idx >= want && lvl >= N(G(rules, "fallbackLevel"), 10)) baseW = w;
                 }
+                bool empty = info.Cat == "amulets" ? amulet == null : jewels.Values.Count(v => v == info.Cat) < 2;
+                if (!upgrade && baseW > 0 && empty && lvl >= N(G(rules, "fallbackLevel"), 10)) { baseW *= 3; target = true; }
             }
             double score = baseW * (1 + infl * N(G(card, "rarity"), 0));
             scores.Add(i + ". " + S(G(card, "title")) + " (" + S(G(card, "rarityName")) + ") " + (info.Key ?? "?") + " base " + Math.Round(baseW, 2) + " score " + Math.Round(score, 2) + (target ? " cible" : ""));
