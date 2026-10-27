@@ -650,7 +650,7 @@ function monteCarlo(sc, iters, minutes) {
   const c = cls(sc.class);
   const weights = {};
   sc.spells.forEach((s, i) => (weights[s.key] = s.w || Math.max(1, 6 - i)));
-  const res = { dps: [], dmg: [], level: 0, ranks: {}, share: {}, have: {} };
+  const res = { dps: [], dmg: [], level: 0, ranks: {}, share: {}, have: {}, curve: new Array(minutes).fill(0) };
   const fxBase = jewelFx(sc, talentFx(sc));
   const luck = fxBase.luck + ((RACE_FX[sc.race] || {}).luck || 0) + ((sc.gear && sc.gear.luck) || 0);
   const table = mcRarityTable(luck);
@@ -715,6 +715,7 @@ function monteCarlo(sc, iters, minutes) {
       const state = Object.assign({}, sc, { spells: Object.values(owned).map((o) => ({ key: o.key, rank: o.rank, ups: o.ups })), rings: jew.rings, trinkets: jew.trinkets, amulet: jew.amulet, amuletUps: jew.ups, jewelUps: jew.jewelUps });
       const r = simulate(state);
       total += r.total * 60;
+      res.curve[minute] += r.total / iters;
       if (minute === minutes - 1) for (const row of r.rows) res.share[row.key] = (res.share[row.key] || 0) + row.mix / (r.total || 1);
     }
     res.dmg.push(total);
@@ -726,7 +727,7 @@ function monteCarlo(sc, iters, minutes) {
   const q = (p) => sorted[Math.min(sorted.length - 1, Math.floor(p * sorted.length))];
   return {
     iters, minutes, luck,
-    mean: res.dps.reduce((a, b) => a + b, 0) / iters, p10: q(0.1), p50: q(0.5), p90: q(0.9),
+    mean: res.dps.reduce((a, b) => a + b, 0) / iters, p10: q(0.1), p50: q(0.5), p90: q(0.9), curve: res.curve,
     hist: sorted, level: res.level / iters,
     spells: [...new Set(Object.keys(res.have).concat(Object.keys(res.share)))].map((k) => ({ key: k, have: (res.have[k] || 0) / iters, rank: res.have[k] ? res.ranks[k] / res.have[k] : 0, share: (res.share[k] || 0) / iters })).sort((a, b) => b.share - a.share),
   };
