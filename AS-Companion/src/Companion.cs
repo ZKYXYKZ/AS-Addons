@@ -205,7 +205,7 @@ class Overlay : Form
         get
         {
             CreateParams cp = base.CreateParams;
-            cp.ExStyle |= 0x08000000 | 0x00000080 | 0x00000008;
+            cp.ExStyle |= 0x08000000 | 0x00000080 | 0x00000008 | 0x00000020;
             return cp;
         }
     }
@@ -1122,6 +1122,21 @@ class Companion : Form
     [DllImport("user32.dll")] static extern void mouse_event(uint f, int x, int y, uint d, IntPtr e);
 
     int lastReset;
+    Overlay applyBox;
+
+    void ApplyNotice(bool show)
+    {
+        BeginInvoke((MethodInvoker)delegate
+        {
+            if (show)
+            {
+                if (applyBox == null) applyBox = new Overlay();
+                applyBox.Text2.Text = lang == "fr" ? "Pose des talents en cours : ne touchez plus à la souris" : "Setting talents: don’t touch the mouse";
+                applyBox.Show();
+            }
+            else if (applyBox != null) applyBox.Hide();
+        });
+    }
 
     string ApplyTalents(object b)
     {
@@ -1238,7 +1253,10 @@ class Companion : Form
             {
                 string body;
                 using (StreamReader sr = new StreamReader(ctx.Request.InputStream, Utf8)) body = sr.ReadToEnd();
-                string res = ApplyTalents(json.DeserializeObject(body));
+                ApplyNotice(true);
+                string res;
+                try { res = ApplyTalents(json.DeserializeObject(body)); }
+                finally { ApplyNotice(false); }
                 Respond(ctx, 200, "application/json", Utf8.GetBytes("{\"result\":\"" + res + "\",\"reset\":" + lastReset + "}"));
                 return;
             }

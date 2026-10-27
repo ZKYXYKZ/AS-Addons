@@ -277,6 +277,7 @@ const ALLOWED = {
 
 let errors = 0;
 const err = (b, m) => { errors++; console.error(`${b.name}: ${m}`); };
+const EN_NAMES = { "Guerrier Armes": "Arms Warrior", "Guerrier Fureur": "Fury Warrior", "Guerrier Protection": "Protection Warrior", "Paladin Sacré": "Holy Paladin", "Paladin Protection": "Protection Paladin", "Paladin Vindicte": "Retribution Paladin", "Chasseur Maîtrise des bêtes": "Beast Mastery Hunter", "Chasseur Précision": "Marksmanship Hunter", "Chasseur Survie": "Survival Hunter", "Voleur Assassinat": "Assassination Rogue", "Voleur Combat": "Combat Rogue", "Voleur Finesse": "Subtlety Rogue", "Prêtre Discipline": "Discipline Priest", "Prêtre Sacré": "Holy Priest", "Prêtre Ombre": "Shadow Priest", "Chaman Élémentaire": "Elemental Shaman", "Chaman Amélioration": "Enhancement Shaman", "Chaman Totems": "Totem Shaman", "Mage Arcanes": "Arcane Mage", "Mage Feu": "Fire Mage", "Mage Givre": "Frost Mage", "Démoniste Affliction": "Affliction Warlock", "Démoniste Démonologie": "Demonology Warlock", "Démoniste Destruction": "Destruction Warlock", "Druide Équilibre": "Balance Druid", "Druide Félin": "Feral Cat Druid", "Druide Ours": "Feral Bear Druid", "Druide Restauration": "Restoration Druid" };
 const presets = [];
 for (const b of builds) {
   const c = data.classes.find((x) => x.key === b.class);
@@ -313,8 +314,9 @@ for (const b of builds) {
   if (b.alt && ALLOWED[b.class].includes(b.alt)) err(b, `${b.alt} est déjà une race d'origine, pas besoin d'alternative`);
   const trees = c.trees.map((t) => t.talents.map((x) => b.talents[x.key] || 0).join("")).join("/");
   const code = ["SB1", b.class, b.name, trees, b.spells.map((s) => s.key + ":" + s.w).join(","), b.ban.slice().sort().join(","), b.rings.join(","), b.trinkets.join(","), b.amulets.join(","), RULES].join(";");
-  presets.push({ class: b.class, name: b.name, author: "AS Companion", race: b.race, raceAlt: b.alt || undefined, code, notes: { fr: b.fr, en: b.en } });
+  presets.push({ class: b.class, name: b.name, names: { fr: b.name, en: EN_NAMES[b.name] }, author: "AS Companion", race: b.race, raceAlt: b.alt || undefined, code, notes: { fr: b.fr, en: b.en } });
 }
+if (Object.keys(EN_NAMES).length !== presets.length) err({ name: "noms anglais" }, "il manque des noms anglais");
 if (errors) { console.error(errors + " erreur(s), rien n'est écrit"); process.exit(1); }
 fs.writeFileSync(out, JSON.stringify(presets, null, 1) + "\n");
 console.log(presets.length + " builds écrits dans " + path.relative(process.cwd(), out));

@@ -463,7 +463,7 @@ function showPresets() {
   PRESETS.filter((p) => p.class === CLASS).forEach((p) => {
     const item = el("div", "preset");
     const head = el("div", "row");
-    head.appendChild(el("b", "", esc(p.name)));
+    head.appendChild(el("b", "", esc(p.names ? L(p.names) : p.name)));
     if (p.author) head.appendChild(el("span", "hint", esc(T("by", { v: p.author }))));
     const have = builds(CLASS).some((b) => encode(Object.assign({}, b, { name: p.name })) === p.code);
     const add = el("button", "small" + (have ? "" : " primary"), esc(have ? T("presetHave") : T("presetAdd")));
@@ -471,7 +471,7 @@ function showPresets() {
     add.onclick = () => {
       const b = decode(p.code);
       if (!b) return alert(T("bad"));
-      b.name = p.name;
+      b.name = p.names ? L(p.names) : p.name;
       if (p.race) b.race = p.race;
       if (p.raceAlt) b.raceAlt = p.raceAlt;
       STATE.lastClass = CLASS;
