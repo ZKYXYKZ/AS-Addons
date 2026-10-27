@@ -1120,8 +1120,19 @@ class Companion : Form
     [DllImport("user32.dll")] static extern bool SetForegroundWindow(IntPtr h);
     [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
     [DllImport("user32.dll")] static extern void mouse_event(uint f, int x, int y, uint d, IntPtr e);
+    [DllImport("user32.dll")] static extern void keybd_event(byte k, byte s, uint f, IntPtr e);
+    [DllImport("user32.dll")] static extern bool ShowWindow(IntPtr h, int c);
+    [DllImport("user32.dll")] static extern bool IsIconic(IntPtr h);
+    [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h, IntPtr p);
+    [DllImport("kernel32.dll")] static extern uint GetCurrentThreadId();
+    [DllImport("user32.dll")] static extern bool AttachThreadInput(uint a, uint b, bool attach);
+    [DllImport("user32.dll")] static extern bool BringWindowToTop(IntPtr h);
 
     int lastReset;
+    static readonly Dictionary<string, Color> ClassColors = new Dictionary<string, Color> {
+        { "warrior", ColorTranslator.FromHtml("#C79C6E") }, { "paladin", ColorTranslator.FromHtml("#F58CBA") }, { "hunter", ColorTranslator.FromHtml("#ABD473") },
+        { "rogue", ColorTranslator.FromHtml("#FFF569") }, { "priest", ColorTranslator.FromHtml("#FFFFFF") }, { "shaman", ColorTranslator.FromHtml("#0070DE") },
+        { "mage", ColorTranslator.FromHtml("#69CCF0") }, { "warlock", ColorTranslator.FromHtml("#9482C9") }, { "druid", ColorTranslator.FromHtml("#FF7D0A") } };
     Overlay applyBox;
 
     void ApplyNotice(bool show)
@@ -1163,7 +1174,18 @@ class Companion : Form
         double sc = Math.Min(cw / 1920.0, ch / 1080.0), ox = (cw - 1920 * sc) / 2, oy = (ch - 1080 * sc) / 2;
         POINT o = new POINT();
         ClientToScreen(h, ref o);
-        for (int i = 0; i < 5 && GetForegroundWindow() != h; i++) { SetForegroundWindow(h); Thread.Sleep(300); }
+        for (int i = 0; i < 5 && GetForegroundWindow() != h; i++)
+        {
+            keybd_event(0x12, 0, 0, IntPtr.Zero);
+            keybd_event(0x12, 0, 2, IntPtr.Zero);
+            if (IsIconic(h)) ShowWindow(h, 9);
+            uint fg = GetWindowThreadProcessId(GetForegroundWindow(), IntPtr.Zero), me = GetCurrentThreadId();
+            AttachThreadInput(me, fg, true);
+            BringWindowToTop(h);
+            SetForegroundWindow(h);
+            AttachThreadInput(me, fg, false);
+            Thread.Sleep(300);
+        }
         if (GetForegroundWindow() != h) return "focus";
         Func<int, int, int, bool> click = (x, y, wait) =>
         {
@@ -1176,6 +1198,23 @@ class Companion : Form
             Thread.Sleep(wait);
             return true;
         };
+        Color seen = Color.Black;
+        int seenV = -1;
+        using (Bitmap cb = new Bitmap(82, 20))
+        {
+            using (Graphics g = Graphics.FromImage(cb))
+                for (int x = 0; x < 82; x++)
+                    for (int y = 0; y < 20; y++) g.CopyFromScreen(o.X + (int)(ox + (48 + x) * sc), o.Y + (int)(oy + (92 + y) * sc), x, y, new Size(1, 1));
+            for (int x = 0; x < 82; x++)
+                for (int y = 0; y < 20; y++)
+                {
+                    Color c = cb.GetPixel(x, y);
+                    int v = Math.Max(c.R, Math.Max(c.G, c.B)) - Math.Min(c.R, Math.Min(c.G, c.B)) + (c.R + c.G + c.B) / 3;
+                    if (v > seenV) { seenV = v; seen = c; }
+                }
+        }
+        string seenClass = ClassColors.OrderBy(kv => Math.Pow(kv.Value.R - seen.R, 2) + Math.Pow(kv.Value.G - seen.G, 2) + Math.Pow(kv.Value.B - seen.B, 2)).First().Key;
+        if (seenClass != S(G(b, "class"))) { Log("apply talents: armory shows " + seenClass + " (" + seen.R + "," + seen.G + "," + seen.B + "), build is " + S(G(b, "class"))); return "wrongclass"; }
         int best = 0, bestStart = -1, run = 0, start = -1;
         using (Bitmap bmp = new Bitmap(1, 260))
         {
