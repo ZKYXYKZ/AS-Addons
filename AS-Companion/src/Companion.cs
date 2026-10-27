@@ -1127,6 +1127,7 @@ class Companion : Form
     [DllImport("kernel32.dll")] static extern uint GetCurrentThreadId();
     [DllImport("user32.dll")] static extern bool AttachThreadInput(uint a, uint b, bool attach);
     [DllImport("user32.dll")] static extern bool BringWindowToTop(IntPtr h);
+    [DllImport("user32.dll")] static extern IntPtr SetThreadDpiAwarenessContext(IntPtr c);
 
     int lastReset;
     static readonly Dictionary<string, Color> ClassColors = new Dictionary<string, Color> {
@@ -1157,6 +1158,7 @@ class Companion : Form
         GetClientRect(h, out r);
         int cw = r.Right - r.Left, ch = r.Bottom - r.Top;
         double sc = Math.Min(cw / 1920.0, ch / 1080.0), ox = (cw - 1920 * sc) / 2, oy = (ch - 1080 * sc) / 2;
+        Log("apply talents: game client " + cw + "x" + ch);
         POINT o = new POINT();
         ClientToScreen(h, ref o);
         for (int i = 0; i < 5 && GetForegroundWindow() != h; i++) { SetForegroundWindow(h); Thread.Sleep(300); }
@@ -1283,8 +1285,11 @@ class Companion : Form
                 string body;
                 using (StreamReader sr = new StreamReader(ctx.Request.InputStream, Utf8)) body = sr.ReadToEnd();
                 string res;
+                IntPtr dpi = IntPtr.Zero;
+                try { dpi = SetThreadDpiAwarenessContext((IntPtr)(-4)); } catch { }
                 try { res = ApplyTalents(json.DeserializeObject(body)); }
                 catch (Exception ex) { res = "error"; Log("apply talents error: " + ex); }
+                finally { try { if (dpi != IntPtr.Zero) SetThreadDpiAwarenessContext(dpi); } catch { } }
                 if (res != "ok") Log("apply talents: " + res);
                 Respond(ctx, 200, "application/json", Utf8.GetBytes("{\"result\":\"" + res + "\",\"reset\":" + lastReset + "}"));
                 return;
