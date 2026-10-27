@@ -4,7 +4,7 @@ const path = require("path");
 const data = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "AS-Companion", "web", "data.json"), "utf8"));
 const out = path.join(__dirname, "..", "AS-Companion", "web", "defaults.json");
 
-const RULES = "50,1,1,3,10,2,1";
+const RULES = "50,0,1,3,20,2,1";
 const T = (s) => Object.fromEntries(s.trim().split(/\s+/).map((p) => { const [k, r] = p.split(":"); return [k, +r]; }));
 const SP = (s) => s.trim().split(/\s+/).map((p) => { const [k, w] = p.split(":"); return { key: k, w: +w }; });
 const L = (s) => s.trim().split(/\s+/);
