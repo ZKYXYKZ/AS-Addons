@@ -1159,19 +1159,17 @@ class Companion : Form
         double sc = Math.Min(cw / 1920.0, ch / 1080.0), ox = (cw - 1920 * sc) / 2, oy = (ch - 1080 * sc) / 2;
         POINT o = new POINT();
         ClientToScreen(h, ref o);
-        for (int i = 0; i < 5 && GetForegroundWindow() != h; i++)
+        for (int i = 0; i < 5 && GetForegroundWindow() != h; i++) { SetForegroundWindow(h); Thread.Sleep(300); }
+        for (int i = 0; i < 3 && GetForegroundWindow() != h; i++)
         {
             keybd_event(0x12, 0, 0, IntPtr.Zero);
             keybd_event(0x12, 0, 2, IntPtr.Zero);
             if (IsIconic(h)) ShowWindow(h, 9);
-            uint fg = GetWindowThreadProcessId(GetForegroundWindow(), IntPtr.Zero), me = GetCurrentThreadId();
-            AttachThreadInput(me, fg, true);
-            BringWindowToTop(h);
             SetForegroundWindow(h);
-            AttachThreadInput(me, fg, false);
             Thread.Sleep(300);
         }
         if (GetForegroundWindow() != h) return "focus";
+        Thread.Sleep(1500);
         Func<int, int, int, bool> click = (x, y, wait) =>
         {
             if (GetForegroundWindow() != h) return false;
@@ -1200,21 +1198,29 @@ class Companion : Form
         }
         string seenClass = ClassColors.OrderBy(kv => Math.Pow(kv.Value.R - seen.R, 2) + Math.Pow(kv.Value.G - seen.G, 2) + Math.Pow(kv.Value.B - seen.B, 2)).First().Key;
         if (seenClass != S(G(b, "class"))) { Log("apply talents: armory shows " + seenClass + " (" + seen.R + "," + seen.G + "," + seen.B + "), build is " + S(G(b, "class"))); return "wrongclass"; }
-        int best = 0, bestStart = -1, run = 0, start = -1;
-        using (Bitmap bmp = new Bitmap(1, 260))
+        Func<int> findReset = () =>
         {
-            using (Graphics g = Graphics.FromImage(bmp))
-                for (int i = 0; i < 260; i++) g.CopyFromScreen(o.X + (int)(ox + 1516 * sc), o.Y + (int)(oy + (380 + i) * sc), 0, i, new Size(1, 1));
-            for (int i = 0; i < 260; i++)
+            int best = 0, bestStart = -1, run = 0, start = -1;
+            using (Bitmap bmp = new Bitmap(1, 260))
             {
-                Color c = bmp.GetPixel(0, i);
-                if (c.R >= 25 && c.R > 2 * c.G && c.R > 2 * c.B) { if (run == 0) start = i; run++; if (run > best) { best = run; bestStart = start; } }
-                else run = 0;
+                using (Graphics g = Graphics.FromImage(bmp))
+                    for (int i = 0; i < 260; i++) g.CopyFromScreen(o.X + (int)(ox + 1516 * sc), o.Y + (int)(oy + (380 + i) * sc), 0, i, new Size(1, 1));
+                for (int i = 0; i < 260; i++)
+                {
+                    Color c = bmp.GetPixel(0, i);
+                    if (c.R >= 25 && c.R > 2 * c.G && c.R > 2 * c.B) { if (run == 0) start = i; run++; if (run > best) { best = run; bestStart = start; } }
+                    else run = 0;
+                }
             }
+            return best >= 8 ? 380 + bestStart + best / 2 : -1;
+        };
+        lastReset = findReset();
+        if (lastReset < 0 && order.Count > 0)
+        {
+            if (!click(116 + 480 * order[0][0] + 108 * order[0][2], 233 + 89 * order[0][1], 1500)) return "focus";
+            lastReset = findReset();
         }
-        if (best < 8) return "noreset";
-        if (!click(1549, 380 + bestStart + best / 2, 700)) return "focus";
-        lastReset = best >= 8 ? 380 + bestStart + best / 2 : -1;
+        if (lastReset >= 0 && !click(1549, lastReset, 700)) return "focus";
         foreach (int[] e in order)
             for (int i = 0; i < e[3]; i++)
                 if (!click(116 + 480 * e[0] + 108 * e[2], 233 + 89 * e[1], 110)) return "focus";
@@ -1277,7 +1283,10 @@ class Companion : Form
             {
                 string body;
                 using (StreamReader sr = new StreamReader(ctx.Request.InputStream, Utf8)) body = sr.ReadToEnd();
-                string res = ApplyTalents(json.DeserializeObject(body));
+                string res;
+                try { res = ApplyTalents(json.DeserializeObject(body)); }
+                catch (Exception ex) { res = "error"; Log("apply talents error: " + ex); }
+                if (res != "ok") Log("apply talents: " + res);
                 Respond(ctx, 200, "application/json", Utf8.GetBytes("{\"result\":\"" + res + "\",\"reset\":" + lastReset + "}"));
                 return;
             }
