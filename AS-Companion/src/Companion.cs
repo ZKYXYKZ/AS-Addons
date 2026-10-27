@@ -1183,13 +1183,12 @@ class Companion : Form
         };
         Color seen = Color.Black;
         int seenV = -1;
-        using (Bitmap cb = new Bitmap(82, 20))
+        int cx = o.X + (int)(ox + 48 * sc), cy = o.Y + (int)(oy + 92 * sc), cwid = Math.Max(1, (int)(82 * sc)), chei = Math.Max(1, (int)(20 * sc));
+        using (Bitmap cb = new Bitmap(cwid, chei))
         {
-            using (Graphics g = Graphics.FromImage(cb))
-                for (int x = 0; x < 82; x++)
-                    for (int y = 0; y < 20; y++) g.CopyFromScreen(o.X + (int)(ox + (48 + x) * sc), o.Y + (int)(oy + (92 + y) * sc), x, y, new Size(1, 1));
-            for (int x = 0; x < 82; x++)
-                for (int y = 0; y < 20; y++)
+            using (Graphics g = Graphics.FromImage(cb)) g.CopyFromScreen(cx, cy, 0, 0, cb.Size);
+            for (int x = 0; x < cwid; x++)
+                for (int y = 0; y < chei; y++)
                 {
                     Color c = cb.GetPixel(x, y);
                     int v = Math.Max(c.R, Math.Max(c.G, c.B)) - Math.Min(c.R, Math.Min(c.G, c.B)) + (c.R + c.G + c.B) / 3;
@@ -1201,13 +1200,13 @@ class Companion : Form
         Func<int> findReset = () =>
         {
             int best = 0, bestStart = -1, run = 0, start = -1;
-            using (Bitmap bmp = new Bitmap(1, 260))
+            int rh = Math.Max(1, (int)(260 * sc));
+            using (Bitmap bmp = new Bitmap(1, rh))
             {
-                using (Graphics g = Graphics.FromImage(bmp))
-                    for (int i = 0; i < 260; i++) g.CopyFromScreen(o.X + (int)(ox + 1516 * sc), o.Y + (int)(oy + (380 + i) * sc), 0, i, new Size(1, 1));
+                using (Graphics g = Graphics.FromImage(bmp)) g.CopyFromScreen(o.X + (int)(ox + 1516 * sc), o.Y + (int)(oy + 380 * sc), 0, 0, bmp.Size);
                 for (int i = 0; i < 260; i++)
                 {
-                    Color c = bmp.GetPixel(0, i);
+                    Color c = bmp.GetPixel(0, Math.Min(rh - 1, (int)(i * sc)));
                     if (c.R >= 25 && c.R > 2 * c.G && c.R > 2 * c.B) { if (run == 0) start = i; run++; if (run > best) { best = run; bestStart = start; } }
                     else run = 0;
                 }
