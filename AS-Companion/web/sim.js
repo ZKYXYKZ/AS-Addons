@@ -7,7 +7,7 @@ const SIM_STR = {
     noData: "pas encore de données pour ce sort", estCd: "recharge estimée", notSim: "Non simulé", compare: "Comparer avec un second build", copyA: "Copier le build A",
     optimize: "Suggestions", optimizeHelp: "Gain de DPS si l'on remplace un élément, à rangs égaux.", replace: "Remplacer {a} par {b}", stats: "Statistiques du build",
     dmg: "Dégâts", cdr: "Recharges", crit: "Critique", critDmg: "Dégâts critiques", echo: "Échos", luck: "Chance", targets: "Cibles en plus", area: "Zone",
-    rarities: ["Commun", "Inhabituel", "Rare", "Épique", "Légendaire"], toBuild: "Créer le build", mcTitle: "Parties simulées", runs: "parties", simulate: "Simuler", running: "Simulation…", mcHelp: "Rejoue des parties complètes : montées de niveau, cartes tirées selon la chance, choix du compagnon, coffres.", mcMean: "DPS moyen sur la partie", mcRange: "Pire 10 % / meilleur 10 %", mcLevel: "Niveau final moyen", mcDist: "répartition des parties", mcHave: "Obtenu", mcRank: "Rang moyen", mcWin: "Le build B fait mieux que le A dans {v} % des parties.", mcDone: "{n} parties simulées en {ms} ms.", gear: "Équipement et collection", group: "Groupe (coop)", noAlly: "Pas d'allié", allyShout: "Cri de guerre d'un guerrier : +{v} % de dégâts en moyenne", allyMark: "Marque du chasseur : la cible subit +{v} % de dégâts", pets: "Familiers et démons", kills: "Explosions à la mort", procs: "Effets déclenchés",
+    rarities: ["Commun", "Inhabituel", "Rare", "Épique", "Légendaire"], toBuild: "Créer le build", mcTitle: "Parties simulées", runs: "parties", simulate: "Simuler", running: "Simulation…", mcHelp: "Rejoue des parties complètes : montées de niveau, cartes tirées selon la chance, choix du compagnon, coffres.", mcMean: "DPS moyen sur la partie", mcRange: "Pire 10 % / meilleur 10 %", mcLevel: "Niveau final moyen", mcDist: "répartition des parties", mcHave: "Obtenu", mcRank: "Rang moyen", mcWin: "Le build B fait mieux que le A dans {v} % des parties.", mcDone: "{n} parties simulées en {ms} ms.", gear: "Équipement et collection", group: "Groupe (coop)", noAlly: "Pas d'allié", allyShout: "Cri de guerre d'un guerrier : +{v} % de dégâts en moyenne", allyMark: "Marque du chasseur : la cible subit +{v} % de dégâts", pets: "Familiers et démons", kills: "Explosions à la mort", procs: "Effets déclenchés", procNote: "dont {v} lancers gratuits par seconde",
   },
   en: {
     title: "Simulator", intro: "Theoretical damage of a build: spells and ranks, talents, jewelry, race and enemy density. Numbers come from the game's cards; effects marked \"not simulated\" are left out.",
@@ -17,7 +17,7 @@ const SIM_STR = {
     noData: "no data yet for this spell", estCd: "estimated cooldown", notSim: "Not simulated", compare: "Compare with a second build", copyA: "Copy build A",
     optimize: "Suggestions", optimizeHelp: "DPS gain from swapping one element, at equal ranks.", replace: "Replace {a} with {b}", stats: "Build stats",
     dmg: "Damage", cdr: "Cooldowns", crit: "Crit", critDmg: "Crit damage", echo: "Echoes", luck: "Luck", targets: "Extra targets", area: "Area",
-    rarities: ["Common", "Uncommon", "Rare", "Epic", "Legendary"], toBuild: "Create the build", mcTitle: "Simulated runs", runs: "runs", simulate: "Simulate", running: "Simulating…", mcHelp: "Replays full runs: level-ups, cards drawn by luck, the companion picks, caches.", mcMean: "Average DPS over the run", mcRange: "Worst 10% / best 10%", mcLevel: "Average final level", mcDist: "run spread", mcHave: "Obtained", mcRank: "Avg rank", mcWin: "Build B beats build A in {v}% of runs.", mcDone: "{n} runs simulated in {ms} ms.", gear: "Gear and collection", group: "Group (co-op)", noAlly: "No ally", allyShout: "A warrior's Battle Shout: +{v}% damage on average", allyMark: "Hunter's Mark: the target takes +{v}% damage", pets: "Pets and demons", kills: "Death explosions", procs: "Triggered effects",
+    rarities: ["Common", "Uncommon", "Rare", "Epic", "Legendary"], toBuild: "Create the build", mcTitle: "Simulated runs", runs: "runs", simulate: "Simulate", running: "Simulating…", mcHelp: "Replays full runs: level-ups, cards drawn by luck, the companion picks, caches.", mcMean: "Average DPS over the run", mcRange: "Worst 10% / best 10%", mcLevel: "Average final level", mcDist: "run spread", mcHave: "Obtained", mcRank: "Avg rank", mcWin: "Build B beats build A in {v}% of runs.", mcDone: "{n} runs simulated in {ms} ms.", gear: "Gear and collection", group: "Group (co-op)", noAlly: "No ally", allyShout: "A warrior's Battle Shout: +{v}% damage on average", allyMark: "Hunter's Mark: the target takes +{v}% damage", pets: "Pets and demons", kills: "Death explosions", procs: "Triggered effects", procNote: "including {v} free casts per second",
   },
 };
 const SM = (k, vars) => {
@@ -46,7 +46,7 @@ const CAPSTONES = {
 };
 const MILESTONES = {
   sweeping_strikes: { splash: { cleave: 1.4, mortal_strike: 1.4, execute: 1.4 } }, flurry: { mult: { whirlwind: 1.4, bloodthirst: 1.4 } }, rampage: { proc: true },
-  deep_wounds: { critBleed: 0.8 }, ignite: { critBleed: 0.8 }, blood_frenzy: { critBleed: 1 }, hot_streak: { proc: true }, splitting_ice: { splash: { frostbolt: 2 } },
+  deep_wounds: { critBleed: 0.8 }, ignite: { critBleed: 0.8 }, blood_frenzy: { critBleed: 1 }, hot_streak: { critProc: { spell: "pyroblast", school: "Fire", every: 4, max: 2 } }, splitting_ice: { splash: { frostbolt: 2 } },
   arcane_concentration: { proc: true }, presence_of_mind: { mult: { arcane_missiles: 1.4 } }, lightning_overload: { mult: { lightning_bolt: 1.4, chain_lightning: 1.4 } },
   elemental_fury: { chainJumps: 3 }, windfury: { mult: { lightning_bolt: 1.7, earth_shock: 1.7, frost_shock: 1.7 } }, maelstrom: { proc: true },
   blade_flurry_talent: { splash: { sinister_strike: 0.5, eviscerate: 0.5 } }, mutilate: { mult: { sinister_strike: 1.5, backstab: 1.5 } }, deadly_poison: { critBleed: 0.4 },
@@ -60,7 +60,34 @@ const MILESTONES = {
 
 function simLoad() {
   if (SIMDATA) return Promise.resolve(SIMDATA);
-  return fetch("simdata.json").then((r) => r.json()).then((d) => (SIMDATA = d));
+  return Promise.all([fetch("simdata.json").then((r) => r.json()), fetch("gamedb.json").then((r) => r.json()).catch(() => null)]).then(([d, g]) => (SIMDATA = g ? withGameDb(d, g) : d));
+}
+
+function withGameDb(d, g) {
+  const ratios = [];
+  for (const [k, v] of Object.entries(d.spells)) {
+    const a = g.abilities[k];
+    if (a && a.dmg && v.dmg && /single|multi|missiles|nova|cone|chain/.test(v.kind)) ratios.push(v.dmg / a.dmg);
+  }
+  ratios.sort((x, y) => x - y);
+  const scale = ratios.length ? ratios[Math.floor(ratios.length / 2)] : 2.5;
+  for (const [k, a] of Object.entries(g.abilities)) {
+    const v = d.spells[k];
+    if (v) { if (!v.cd && a.cd) v.cd = a.cd; continue; }
+    if (!a.dmg) continue;
+    const dmg = Math.round(a.dmg * scale);
+    let e;
+    if (a.radius && a.dur && a.ticks) e = { kind: "ground", radius: a.radius, dur: a.dur, every: a.dur / a.ticks, tick: dmg / a.ticks, dmg };
+    else if (a.dur && a.ticks) e = { kind: "dot", targets: Math.max(1, a.targets), dur: a.dur, dmg };
+    else if (a.radius && !a.range) e = { kind: "nova", radius: a.radius, dmg };
+    else e = { kind: a.targets > 1 ? "multi" : "single", targets: Math.max(1, a.targets), range: a.range, dmg };
+    d.spells[k] = Object.assign(e, { cd: a.cd, fromGame: true, text: "" });
+  }
+  for (const [k, a] of Object.entries(g.abilities)) {
+    if (d.spells[k]) d.spells[k].school = ["Physical", "Holy", "Fire", "Nature", "Frost", "Shadow", "Arcane"][a.flags & 255];
+  }
+  d.scale = scale;
+  return d;
 }
 
 function simFromBuild(b) {
@@ -122,6 +149,7 @@ function talentFx(sc) {
       if (special.pet) fx.notes.pets = true;
       if (special.kills) fx.notes.kills = true;
       if (special.proc) fx.notes.procs.push(L(t.name));
+      if (special.critProc) fx.critProc = special.critProc;
     }
   return fx;
 }
@@ -247,7 +275,7 @@ function simulate(sc) {
     const up = (t) => (U ? U[t] || 0 : upgradeSum(t, ranksFor(t), sc.rarity));
     const ranksFor = (t) => (ups.includes(t) ? Math.floor((s.rank - 1) / per) + (ups.indexOf(t) < (s.rank - 1) % per ? 1 : 0) + 1 : 1);
     const leg = fx.leg && fx.leg.key === s.key ? fx.leg : { dmg: 0, targets: 0, area: 0, dur: 0, cd: 0, mult: 1 };
-    const school = ((base.text || "").match(/(Fire|Frost|Arcane|Nature|Shadow|Holy|Physical) damage/) || [])[1];
+    const school = base.school || ((base.text || "").match(/(Fire|Frost|Arcane|Nature|Shadow|Holy|Physical) damage/) || [])[1];
     let mult = (1 + fx.dmg / 100 + buffDmg) * (1 + (fx.school[school] || 0) / 100) * (1 + (fx.spellDmg[s.key] || 0) / 100) * (1 + up("damage") / 100) * (1 + leg.dmg / 100) * leg.mult * (fx.mult[s.key] || 1);
     if (base.kind === "dot" || base.kind === "ground") mult *= 1 + fx.dot / 100;
     const cdBase = base.cd || KIND_CD[base.kind] || 6;
@@ -285,6 +313,20 @@ function simulate(sc) {
     row.single = dmg * mult * critFactor * echo * hitsBoss * (1 + fx.boss / 100) * (1 + bossTaken) * rate;
     row.cd = cd;
     row.hits = hitsPack;
+    row.school = school;
+    row.rate = rate * echo;
+    row.hitsBoss = hitsBoss;
+  }
+  const cp = fx.critProc;
+  const procRow = cp && rows.find((r) => r.key === cp.spell && r.rate);
+  if (procRow) {
+    const fed = (k) => rows.filter((r) => r.school === cp.school && r.rate).reduce((a, r) => a + r.rate * (k === "pack" ? r.hits : r.hitsBoss), 0) * crit;
+    for (const k of ["pack", "single"]) {
+      const per = procRow[k] / procRow.rate;
+      const procs = Math.min(cp.max, fed(k) / cp.every);
+      procRow[k] += per * procs;
+    }
+    procRow.note = SM("procNote", { v: Math.round(Math.min(cp.max, fed("pack") / cp.every) * 10) / 10 });
   }
   const bossShare = sc.boss / 100;
   for (const r of rows) r.mix = r.pack * (1 - bossShare) + r.single * bossShare;
