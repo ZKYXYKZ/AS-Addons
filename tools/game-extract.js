@@ -46,7 +46,7 @@ for (let z = zoneStart; ; z += 240) {
   const enemies = [];
   for (let i = 0; i < en.n; i++) {
     const o = en.off + i * 80;
-    enemies.push({ id: u32(o + 16), name: str(o, 80), hp: f32(o + 32), dmg: f32(o + 36), atk: f32(o + 40), speed: f32(o + 44), size: f32(o + 24), rank: u32(o + 48), xp: f32(o + 52), at: f32(o + 56) });
+    enemies.push({ id: u32(o + 32), model: u32(o + 36), weight: u32(o + 24), size: f32(o + 40), kind: u32(o + 44), hp: f32(o + 48), dmg: f32(o + 52), speed: f32(o + 56), xp: f32(o + 60), at: f32(o + 72) });
   }
   const bosses = [];
   for (let i = 0; i < bo.n; i++) {
