@@ -130,3 +130,13 @@ Fichiers : `Movers.lua` (registre des blocs déplaçables, grille, aimantation, 
   - avec l'Amulette de l'Enfer (Choc de flammes) prise tôt et améliorée 11 fois : 466 k de DPS, niveau 80, 24 261 victimes, Choc de flammes 52 %, Embrasement 21 %, Pyroblast 20 %.
 - Conséquences : l'amulette légendaire du sort de zone est la priorité du Mage Feu ; une amulette hors build est prise quand l'emplacement est vide, puisque les amulettes sont les seuls bijoux remplaçables en cours de partie.
 - Simulateur : les sorts sans texte de carte (sorts de départ, Pyroblast) viennent de `gamedb.json`, base × 2,66 (médiane du rapport texte / base). École de magie = octet bas des drapeaux (0 physique, 1 sacré, 2 feu, 3 nature, 4 givre, 5 ombre, 6 arcanes). Chaleur continue : un Pyroblast gratuit tous les 4 critiques de feu, 2 par seconde au plus.
+- Autres classes à Gurubashi (une partie chacune, 19 min max) :
+  - Mage Arcanes : 18 min, niveau 56, 125 k de DPS (Projectiles des arcanes 55 %, Explosion des arcanes 42 %) ;
+  - Mage Givre : 18 min, niveau 55, 114 k (Éclair de givre 74 %, Blizzard 25 %) ;
+  - Prêtre Ombre : mort à 16 min 50, niveau 45, 51 k (Attaque mentale 40 %, Explosion de cadavre 33 %) ;
+  - Démoniste Affliction : mort à 14 min, niveau 43, 36 k (Corruption 45 %, Trait de l'ombre 27 %) ;
+  - Chasseur Maîtrise des bêtes : mort à 11 min, niveau 38, 32 k (familiers 33 %, Marque du chasseur 29 %, Flèches multiples 28 %) ;
+  - Guerrier Fureur : mort à 13 min 30, niveau 39, 26 k (Tourbillon 65 %, Sanguinaire 17 %) ;
+  - Druide Équilibre : mort à 6 min (aucun soin dans le build) : Récupération remplace Sarments.
+- Seul le mage a le stuff de Naxxramas : les autres classes sont comparées à Féralas (difficulté 2,05 contre 2,95).
+- Fiches d'ennemis de l'exe (80 octets) : +24 poids d'apparition, +32 id, +36 modèle, +40 taille, +44 type, +48 vie, +52 dégâts, +56 vitesse, +60 expérience, +72 minute d'apparition. Zones : difficulté +216 (Elwynn 0,82, Gurubashi 2,95, Naxxramas 6,25), croissance par minute +220.
