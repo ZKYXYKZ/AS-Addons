@@ -22,7 +22,7 @@ const STR = {
     gamePath: "Chemin du jeu", browse: "Parcourir", lang: "Langue", auto: "Auto", autoPick: "Sélection auto des cartes", autoPickHelp: "Le compagnon choisit et relance à votre place (touches 1, 2, 3, R). Skip et bannir restent manuels.",
     overlay: "Bandeau de conseil par-dessus le jeu", importTitle: "Collez un build (texte d'export) puis validez", exportTitle: "Copiez ce texte pour partager le build", ok: "Importer", close: "Fermer", bad: "Texte de build invalide",
     raceRec: "Race conseillée :", raceAlt: "toutes races débloquées (succès) :",
-    applyTal: "Appliquer au jeu", applyTalHelp: "Dans le jeu, ouvrez l’Armurerie, onglet Talents, sur la classe et la spé (1, 2 ou 3) à remplacer, puis cliquez ici. Les talents de cette spé sont remis à zéro puis remplacés par ceux du build. Ne touchez pas la souris pendant une vingtaine de secondes.", applyTalRun: "Pose des talents en cours, ne touchez pas la souris…", applyTalWarn: "Ne touchez plus à la souris", applyTalWarnText: "Le compagnon va passer sur le jeu et poser les talents. Attendez la fin, environ vingt secondes.", applyTal_ok: "Talents posés. Vérifiez l’arbre puis cliquez sur Terminé.", applyTal_nogame: "Le jeu n'est pas lancé.", applyTal_empty: "Ce build n'a aucun talent.", applyTal_noreset: "Bouton Reset introuvable : ouvrez l’Armurerie, onglet Talents, sur la spé à remplacer. Sur une spé vide, posez d’abord un point à la main.", applyTal_wrongclass: "L’Armurerie ouverte n’est pas celle de la classe de ce build : sélectionnez la bonne classe dans le jeu.", applyTal_focus: "Arrêté : le jeu n'était plus au premier plan.",
+    applyTal: "Appliquer au jeu", applyTalHelp: "Dans le jeu, ouvrez l’Armurerie, onglet Talents, sur la classe et la spé (1, 2 ou 3) à remplacer, puis cliquez ici. Les talents de cette spé sont remis à zéro puis remplacés par ceux du build. Ne touchez pas la souris pendant une vingtaine de secondes.", applyTalRun: "Pose des talents en cours, ne touchez pas la souris…", applyTalWarn: "Ne touchez plus à la souris", applyTalWarnText: "Après « Lancer », le compagnon passe sur le jeu et pose les talents. Ne touchez plus à la souris jusqu’à la fin, environ vingt secondes.", applyTalGo: "Lancer", cancel: "Annuler", applyTal_ok: "Talents posés. Vérifiez l’arbre puis cliquez sur Terminé.", applyTal_nogame: "Le jeu n'est pas lancé.", applyTal_empty: "Ce build n'a aucun talent.", applyTal_noreset: "Bouton Reset introuvable : ouvrez l’Armurerie, onglet Talents, sur la spé à remplacer. Sur une spé vide, posez d’abord un point à la main.", applyTal_wrongclass: "L’Armurerie ouverte n’est pas celle de la classe de ce build : sélectionnez la bonne classe dans le jeu.", applyTal_focus: "Arrêté : le jeu n'était plus au premier plan.",
     presets: "Builds proposés", presetsTitle: "Builds proposés : {c}", presetAdd: "Ajouter", presetHave: "Déjà ajouté", by: "par {v}",
     report: "Créer un rapport", reportLabel: "Rapport de bug", reportHelp: "Rassemble dans un zip le journal du compagnon, tes dernières parties et tes réglages, puis ouvre le dossier. Envoie ce fichier avec la description du problème.", reportDone: "Rapport créé : {v}",
     noGame: "Jeu introuvable : indiquez où se trouve AzerothSurvivors.exe.", addonsUpdated: "Addons mis à jour : {v}. Ils prennent effet au prochain lancement du jeu.", autoAddons: "Mise à jour auto des addons", autoAddonsHelp: "Au démarrage puis toutes les 30 minutes, hors partie, les addons installés sont mis à jour depuis la dernière version publiée sur GitHub.", stage_download: "Téléchargement de la version {v}…", stage_verify: "Vérification du fichier…", stage_install: "Installation des addons et du compagnon…", stage_restart: "Redémarrage du compagnon…", updated: "Mis à jour en version {v}", updateAvail: "Mise à jour {v} disponible", updateBtn: "Mettre à jour", updating: "Mise à jour en cours…", version: "Version", checkUpdate: "Rechercher une mise à jour", upToDate: "À jour", down: "Le compagnon ne répond plus : relancez ASCompanion.exe. Si ça recommence, envoyez %APPDATA%\\AS-Companion\\companion.log.", renamePrompt: "Nouveau nom du build", saved: "Enregistré", gameOff: "Jeu fermé", advice: "Conseil",
@@ -44,7 +44,7 @@ const STR = {
     gamePath: "Game path", browse: "Browse", lang: "Language", auto: "Auto", autoPick: "Auto-pick cards", autoPickHelp: "The companion picks and rerolls for you (keys 1, 2, 3, R). Skip and banish stay manual.",
     overlay: "Advice banner over the game", importTitle: "Paste a build (export text) then confirm", exportTitle: "Copy this text to share the build", ok: "Import", close: "Close", bad: "Invalid build text",
     raceRec: "Recommended race:", raceAlt: "with every race unlocked (achievement):",
-    applyTal: "Apply in game", applyTalHelp: "In the game, open the Armory, Talents tab, on the class and spec (1, 2 or 3) to replace, then click here. That spec is reset and filled with the build’s talents. Don’t touch the mouse for about twenty seconds.", applyTalRun: "Setting talents, don't touch the mouse…", applyTalWarn: "Don’t touch the mouse", applyTalWarnText: "The companion will switch to the game and set the talents. Wait until it’s done, about twenty seconds.", applyTal_ok: "Talents set. Check the tree, then click Done.", applyTal_nogame: "The game isn't running.", applyTal_empty: "This build has no talents.", applyTal_noreset: "Reset button not found: open the Armory, Talents tab, on the spec to replace. On an empty spec, spend one point by hand first.", applyTal_wrongclass: "The open Armory isn’t this build’s class: select the right class in the game.", applyTal_focus: "Stopped: the game was no longer in the foreground.",
+    applyTal: "Apply in game", applyTalHelp: "In the game, open the Armory, Talents tab, on the class and spec (1, 2 or 3) to replace, then click here. That spec is reset and filled with the build’s talents. Don’t touch the mouse for about twenty seconds.", applyTalRun: "Setting talents, don't touch the mouse…", applyTalWarn: "Don’t touch the mouse", applyTalWarnText: "After “Start”, the companion switches to the game and sets the talents. Don’t touch the mouse until it’s done, about twenty seconds.", applyTalGo: "Start", cancel: "Cancel", applyTal_ok: "Talents set. Check the tree, then click Done.", applyTal_nogame: "The game isn't running.", applyTal_empty: "This build has no talents.", applyTal_noreset: "Reset button not found: open the Armory, Talents tab, on the spec to replace. On an empty spec, spend one point by hand first.", applyTal_wrongclass: "The open Armory isn’t this build’s class: select the right class in the game.", applyTal_focus: "Stopped: the game was no longer in the foreground.",
     presets: "Suggested builds", presetsTitle: "Suggested builds: {c}", presetAdd: "Add", presetHave: "Already added", by: "by {v}",
     report: "Create a report", reportLabel: "Bug report", reportHelp: "Zips the companion log, your latest runs and your settings, then opens the folder. Send this file with a description of the problem.", reportDone: "Report created: {v}",
     noGame: "Game not found: show where AzerothSurvivors.exe is.", addonsUpdated: "Addons updated: {v}. They apply at the next game launch.", autoAddons: "Auto-update addons", autoAddonsHelp: "At startup and every 30 minutes, outside a run, the installed addons are updated from the latest version published on GitHub.", stage_download: "Downloading version {v}…", stage_verify: "Checking the file…", stage_install: "Installing the addons and the companion…", stage_restart: "Restarting the companion…", updated: "Updated to version {v}", updateAvail: "Update {v} available", updateBtn: "Update", updating: "Updating…", version: "Version", checkUpdate: "Check for updates", upToDate: "Up to date", down: "The companion is not responding: restart ASCompanion.exe. If it happens again, send %APPDATA%\\AS-Companion\\companion.log.", renamePrompt: "New build name", saved: "Saved", gameOff: "Game closed", advice: "Advice",
@@ -233,18 +233,22 @@ function renderTalents(sec, b) {
   ap.style.margin = "12px 0 0 8px";
   const msg = el("span", "hint", esc(T("applyTalHelp")));
   msg.style.marginLeft = "10px";
-  ap.onclick = async () => {
-    ap.disabled = true;
-    msg.textContent = T("applyTalRun");
+  ap.onclick = () => {
     const box = $("applyModal");
     $("applyTitle").textContent = T("applyTalWarn");
     $("applyText").textContent = T("applyTalWarnText");
+    $("applyCancel").textContent = T("cancel");
+    $("applyGo").textContent = T("applyTalGo");
+    $("applyCancel").onclick = () => box.classList.add("hidden");
+    $("applyGo").onclick = async () => {
+      box.classList.add("hidden");
+      ap.disabled = true;
+      msg.textContent = T("applyTalRun");
+      try { const r = await fetch("/api/apply-talents", { method: "POST", body: JSON.stringify(b) }).then((x) => x.json()); msg.textContent = T("applyTal_" + r.result); } catch (e) { msg.textContent = T("down"); }
+      ap.disabled = false;
+    };
     box.classList.remove("hidden");
-    for (let n = 3; n > 0; n--) { $("applyCount").textContent = n; await new Promise((ok) => setTimeout(ok, 1000)); }
-    $("applyCount").textContent = "…";
-    try { const r = await fetch("/api/apply-talents", { method: "POST", body: JSON.stringify(b) }).then((x) => x.json()); msg.textContent = T("applyTal_" + r.result); } catch (e) { msg.textContent = T("down"); }
-    box.classList.add("hidden");
-    ap.disabled = false;
+    $("applyGo").focus();
   };
   sec.appendChild(ap);
   sec.appendChild(msg);
