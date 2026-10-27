@@ -242,3 +242,6 @@ header { flex: none; }
 .simtbl { width: 100%; border-collapse: collapse; font-size: 13px; }
 .simtbl th { text-align: left; color: var(--mute); font-weight: 500; padding: 4px 6px; border-bottom: 1px solid var(--line); }
 .simtbl td { padding: 4px 6px; border-bottom: 1px solid var(--line); }
+.applybox { text-align: center; width: min(520px, 92vw); }
+.applybox h3 { color: var(--gold); margin: 4px 0 10px; }
+.applycount { font-size: 48px; font-weight: 700; color: var(--gold); margin: 8px 0; }
