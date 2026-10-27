@@ -154,3 +154,10 @@ Fichiers : `Movers.lua` (registre des blocs déplaçables, grille, aimantation, 
 - Le Prêtre (et d'autres spés : Paladin Sacré et Protection, Voleur Assassinat et Combat, Démoniste Démonologie et Destruction, Druide Farouche et Restauration) n'a aucun signal de spé au début d'une partie : l'apogée ne donne pas de sort de départ et le jeu ne transmet pas la spé choisie dans l'Armurerie.
 - Les flèches du panneau de SurvivorsBuilds (SB.manual) sont transmises au compagnon par un carré de 4 × 4 en haut à gauche de l'écran : rouge = (v mod 16) × 16 + 8, vert = 255, bleu = floor(v / 16) × 16 + 8, v = position du build dans `link.all` de la classe (0 = build du compagnon). Le compagnon lit le pixel (1, 1) de la fenêtre du jeu toutes les secondes, seulement quand le jeu est au premier plan, et ignore les lectures hors code (écran assombri, autre fenêtre). Les positions viennent de l'ordre des builds écrit au lancement (`gatewayAll`).
 - Un build choisi en jeu passe avant la détection de spé.
+
+## Simulateur recalé sur le Prêtre Sacré (27/10/2026)
+
+- Les améliorations de bijoux progressent bien plus que celles des amulettes : au rang X, un anneau ou un bijou vaut 6 à 11 fois sa valeur de départ (Maître tueur de dragons : +4 % de critique au rang I, +63 % au rang X), une amulette environ 2 fois. `tools/jewel-ups.js <dossiers research>` relève ces progressions dans les cartes proposées et écrit `AS-Companion/web/jewelups.json` (valeur au rang n / valeur au rang I, lissée croissante).
+- Simulateur : dégâts de base de tous les sorts tirés de l'exe (même facteur pour tous, les textes de cartes ne servent plus qu'à la forme du sort), apogée Châtier (Nova sacrée gratuite à chaque Châtiment critique), améliorations des anneaux et bijoux dans les parties simulées.
+- Contrôle sur la partie de Prêtre Sacré au Monastère (niveau 39) : avec les bijoux de fin de partie, critique 52 % (réel environ 60 %), Nova sacrée 65 % des dégâts (réel 67 %), Châtiment 24 % (réel 17 %).
+- Pas encore simulé : explosions à la mort (Explosion de cadavre de l'Ombre, Pyroclasme), dégâts subis et survie.

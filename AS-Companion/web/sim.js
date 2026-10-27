@@ -39,7 +39,7 @@ const CAPSTONES = {
   bladestorm: { extra: { whirlwind: 3 } }, killing_spree: { extra: { sinister_strike: 3 }, targets: { sinister_strike: 1 } },
   elemental_mastery: { extra: { chain_lightning: 3 } }, lights_grace: { extra: { holy_wrath: 14 } }, wyvern_sting: { extra: { explosive_trap: 5 } },
   totemic_call: { extra: { searing_totem: 14 } }, rain_of_chaos: { extra: { rain_of_fire: 13 } }, water_elemental: { extra: { frost_nova: 8 }, pet: true },
-  arcane_power: { echo: 20 }, kill_shot: { spellCd: { aimed_shot: 15 } }, divine_storm: { splash: { exorcism: 0.5 } }, chastise: { targets: { smite: 1 } },
+  arcane_power: { echo: 20 }, kill_shot: { spellCd: { aimed_shot: 15 } }, divine_storm: { splash: { exorcism: 0.5 } }, chastise: { targets: { smite: 1 }, critProc: { spell: "holy_nova", from: "smite", perCast: true, every: 1, max: 99 } },
   bestial_wrath: { pet: true }, force_of_nature: { pet: true }, stormstrike: { pet: true }, butcher: { pet: true }, pact_of_the_annihilan: { pet: true },
   penance: { proc: true }, mortal_wounds: { proc: true }, pyroclasm: { kills: true }, seed_of_corruption: { kills: true }, toxic_bloom: { kills: true }, shadowform: { kills: true },
   shadow_dance: { splash: { backstab: 0.5, eviscerate: 0.5 } }, titan: { proc: true }, hammer_righteous: { proc: true }, tree_of_life: {}, leader_of_pack: { extra: { swipe: 3 } }, cat_form: { dmg: 10, crit: 10, spellCd: { shred: 20 } },
@@ -58,11 +58,12 @@ const MILESTONES = {
   shockwave: { splash: { shield_slam: 1.6 } }, fortified: { dmg: 20 }, preparation: { proc: true }, cheat_death: {}, adrenaline: { proc: true }, entrapment: {}, swiftmend: {}, reincarnation: {},
 };
 
+const JEWEL_UP = [1, 1.8, 2.5, 3.4, 4.2, 4.9, 5.7, 6.5, 7.2, 7.8, 8.4];
 const AMULET_UP = [1, 1.2, 1.38, 1.54, 1.69, 1.82, 1.94, 2.04, 2.14, 2.23, 2.31];
 
 function simLoad() {
   if (SIMDATA) return Promise.resolve(SIMDATA);
-  return Promise.all([fetch("simdata.json").then((r) => r.json()), fetch("gamedb.json").then((r) => r.json()).catch(() => null)]).then(([d, g]) => (SIMDATA = g ? withGameDb(d, g) : d));
+  return Promise.all([fetch("simdata.json").then((r) => r.json()), fetch("gamedb.json").then((r) => r.json()).catch(() => null), fetch("jewelups.json").then((r) => r.json()).catch(() => null)]).then(([d, g, j]) => { SIMDATA = g ? withGameDb(d, g) : d; SIMDATA.jewelUps = j || {}; return SIMDATA; });
 }
 
 function withGameDb(d, g) {
@@ -75,7 +76,15 @@ function withGameDb(d, g) {
   const scale = ratios.length ? ratios[Math.floor(ratios.length / 2)] : 2.5;
   for (const [k, a] of Object.entries(g.abilities)) {
     const v = d.spells[k];
-    if (v) { if (!v.cd && a.cd) v.cd = a.cd; continue; }
+    if (v) {
+      if (!v.cd && a.cd) v.cd = a.cd;
+      if (a.dmg && v.dmg && /single|multi|missiles|nova|cone|chain|ground|dot/.test(v.kind)) {
+        const f = (a.dmg * scale) / v.dmg;
+        v.dmg *= f;
+        if (v.tick) v.tick *= f;
+      }
+      continue;
+    }
     if (!a.dmg) continue;
     const dmg = Math.round(a.dmg * scale);
     let e;
@@ -158,8 +167,9 @@ function talentFx(sc) {
 
 function jewelFx(sc, fx) {
   const c = cls(sc.class);
-  const add = (lines) => {
-    for (const ln of lines) {
+  const add = (lines, mul) => {
+    for (const raw of lines) {
+      const ln = mul && mul !== 1 ? raw.replace(/[\d.]+(?=%)/g, (v) => String(+(v * mul).toFixed(2))) : raw;
       let m;
       if ((m = ln.match(/^\+([\d.]+)% damage$/))) fx.dmg += +m[1];
       if ((m = ln.match(/^-([\d.]+)% cooldowns$/))) fx.cdMul *= 1 - m[1] / 100;
@@ -176,8 +186,16 @@ function jewelFx(sc, fx) {
       if (/explode for/.test(ln)) fx.notes.kills = true;
     }
   };
-  for (const k of sc.rings) { const j = DATA.rings.find((x) => x.key === k); if (j) add(j.desc.en); }
-  for (const k of sc.trinkets) { const j = DATA.trinkets.find((x) => x.key === k); if (j) add(j.desc.en); }
+  const ups = (k) => {
+    const n = (sc.jewelUps || {})[k] || 0;
+    if (!n) return 1;
+    const t = (SIMDATA.jewelUps || {})[k];
+    const rank = n + 1;
+    if (t) { const known = Object.keys(t).map(Number).filter((x) => x <= rank); const top = Math.max(...known); return t[top] * Math.pow(1.06, rank - top); }
+    return JEWEL_UP[Math.min(JEWEL_UP.length - 1, n)];
+  };
+  for (const k of sc.rings) { const j = DATA.rings.find((x) => x.key === k); if (j) add(j.desc.en, ups(k)); }
+  for (const k of sc.trinkets) { const j = DATA.trinkets.find((x) => x.key === k); if (j) add(j.desc.en, ups(k)); }
   fx.leg = null;
   if (sc.amulet.startsWith("leg:")) {
     const key = sc.amulet.slice(4);
@@ -326,7 +344,7 @@ function simulate(sc) {
   const cp = fx.critProc;
   const procRow = cp && rows.find((r) => r.key === cp.spell && r.rate);
   if (procRow) {
-    const fed = (k) => rows.filter((r) => r.school === cp.school && r.rate).reduce((a, r) => a + r.rate * r.ticks * (k === "pack" ? r.hits : r.hitsBoss), 0) * crit;
+    const fed = (k) => rows.filter((r) => (cp.from ? r.key === cp.from : r.school === cp.school) && r.rate).reduce((a, r) => a + r.rate * (cp.perCast ? 1 : r.ticks * (k === "pack" ? r.hits : r.hitsBoss)), 0) * crit;
     for (const k of ["pack", "single"]) {
       const per = procRow[k] / procRow.rate;
       const procs = Math.min(cp.max, fed(k) / cp.every);
@@ -632,7 +650,7 @@ function monteCarlo(sc, iters, minutes) {
   for (let it = 0; it < iters; it++) {
     const owned = {};
     for (const k of mcStartSpells(sc)) owned[k] = { key: k, rank: 1, ups: { damage: 0, cooldown: 0, area: 0, targets: 0, duration: 0 }, n: 0 };
-    const jew = { rings: [], trinkets: [], amulet: "", ups: 0 };
+    const jew = { rings: [], trinkets: [], amulet: "", ups: 0, jewelUps: {} };
     let level = 1, total = 0, nextJewel = (-Math.log(Math.random()) / MC_JEWEL_RATE) * 60;
     const levelUps = [];
     for (let t = 0; t < end; t += 1) { const l = Math.floor(mcLevelAt(t)); while (level < l) { level++; levelUps.push(t); } }
@@ -674,6 +692,8 @@ function monteCarlo(sc, iters, minutes) {
         nextJewel += (-Math.log(Math.random()) / MC_JEWEL_RATE) * 60;
         for (let k = 0; k < 3; k++) {
           const cat = ["rings", "trinkets", "amulets"][Math.floor(Math.random() * 3)];
+          const worn = jew.rings.concat(jew.trinkets);
+          if (worn.length && Math.random() < 0.55) { const w = worn[Math.floor(Math.random() * worn.length)]; jew.jewelUps[w] = (jew.jewelUps[w] || 0) + 1; break; }
           if (cat === "amulets" && jew.amulet && Math.random() < 0.45) { jew.ups++; break; }
           if (cat === "amulets") {
             if (!jew.amulet && sc.amulet && Math.random() < 1 / (DATA.amulets.length + 6)) { jew.amulet = sc.amulet; break; }
@@ -683,7 +703,7 @@ function monteCarlo(sc, iters, minutes) {
           }
         }
       }
-      const state = Object.assign({}, sc, { spells: Object.values(owned).map((o) => ({ key: o.key, rank: o.rank, ups: o.ups })), rings: jew.rings, trinkets: jew.trinkets, amulet: jew.amulet, amuletUps: jew.ups });
+      const state = Object.assign({}, sc, { spells: Object.values(owned).map((o) => ({ key: o.key, rank: o.rank, ups: o.ups })), rings: jew.rings, trinkets: jew.trinkets, amulet: jew.amulet, amuletUps: jew.ups, jewelUps: jew.jewelUps });
       const r = simulate(state);
       total += r.total * 60;
       if (minute === minutes - 1) for (const row of r.rows) res.share[row.key] = (res.share[row.key] || 0) + row.mix / (r.total || 1);
