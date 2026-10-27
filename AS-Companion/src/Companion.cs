@@ -2023,7 +2023,7 @@ class Companion : Form
         {
             string sk = key.Substring(4);
             double bw = BuildWeight(sk);
-            if (idx >= 0 || bw >= 4) w = Math.Max(w, bw * Boost()) * DmgFactor(sk);
+            if (idx >= 0 || bw >= 4) w = Math.Max(w, bw * Boost()) * (bw >= 4 ? Math.Max(1, DmgFactor(sk)) : DmgFactor(sk));
         }
         return w;
     }
