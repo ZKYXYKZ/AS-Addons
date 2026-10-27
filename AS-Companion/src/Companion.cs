@@ -205,7 +205,7 @@ class Overlay : Form
         get
         {
             CreateParams cp = base.CreateParams;
-            cp.ExStyle |= 0x08000000 | 0x00000080 | 0x00000008 | 0x00000020;
+            cp.ExStyle |= 0x08000000 | 0x00000080 | 0x00000008;
             return cp;
         }
     }
@@ -1133,21 +1133,6 @@ class Companion : Form
         { "warrior", ColorTranslator.FromHtml("#C79C6E") }, { "paladin", ColorTranslator.FromHtml("#F58CBA") }, { "hunter", ColorTranslator.FromHtml("#ABD473") },
         { "rogue", ColorTranslator.FromHtml("#FFF569") }, { "priest", ColorTranslator.FromHtml("#FFFFFF") }, { "shaman", ColorTranslator.FromHtml("#0070DE") },
         { "mage", ColorTranslator.FromHtml("#69CCF0") }, { "warlock", ColorTranslator.FromHtml("#9482C9") }, { "druid", ColorTranslator.FromHtml("#FF7D0A") } };
-    Overlay applyBox;
-
-    void ApplyNotice(bool show)
-    {
-        BeginInvoke((MethodInvoker)delegate
-        {
-            if (show)
-            {
-                if (applyBox == null) applyBox = new Overlay();
-                applyBox.Text2.Text = lang == "fr" ? "Pose des talents en cours : ne touchez plus à la souris" : "Setting talents: don’t touch the mouse";
-                applyBox.Show();
-            }
-            else if (applyBox != null) applyBox.Hide();
-        });
-    }
 
     string ApplyTalents(object b)
     {
@@ -1292,10 +1277,7 @@ class Companion : Form
             {
                 string body;
                 using (StreamReader sr = new StreamReader(ctx.Request.InputStream, Utf8)) body = sr.ReadToEnd();
-                ApplyNotice(true);
-                string res;
-                try { res = ApplyTalents(json.DeserializeObject(body)); }
-                finally { ApplyNotice(false); }
+                string res = ApplyTalents(json.DeserializeObject(body));
                 Respond(ctx, 200, "application/json", Utf8.GetBytes("{\"result\":\"" + res + "\",\"reset\":" + lastReset + "}"));
                 return;
             }
