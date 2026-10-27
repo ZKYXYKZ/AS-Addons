@@ -1262,13 +1262,13 @@ class Companion : Form
         lastReset = findReset();
         if (lastReset < 0 && order.Count > 0)
         {
-            if (!click(116 + 480 * order[0][0] + 108 * order[0][2], 233 + 89 * order[0][1], 1500)) return "focus";
+            if (!click(116 + 480 * order[0][0] + 108 * order[0][2], 241 + 89 * order[0][1], 1500)) return "focus";
             lastReset = findReset();
         }
         if (lastReset >= 0 && !click(1549, lastReset, 700)) return "focus";
         foreach (int[] e in order)
             for (int i = 0; i < e[3]; i++)
-                if (!click(116 + 480 * e[0] + 108 * e[2], 233 + 89 * e[1], 110)) return "focus";
+                if (!click(116 + 480 * e[0] + 108 * e[2], 241 + 89 * e[1], 110)) return "focus";
         Log("talents applied: " + S(G(b, "name")) + ", " + order.Count + " talents");
         return "ok";
     }
