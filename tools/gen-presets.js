@@ -230,7 +230,7 @@ const builds = [
     class: "druid", name: "Druide Équilibre", race: "nightelf", alt: "gnome",
     talents: T(`imp_wrath:5 natural_weapons:5 omen_of_clarity:1 vengeance_druid:5 imp_starfire:3 moonglow:3 starfall:1 imp_moonfire:2 moonfury:5 force_of_nature:1
       imp_motw:5 natures_focus:5 swiftmend:1 reflection:3 furor:1 tranquil_spirit:5`),
-    spells: SP("starfire:5 moonfire:5 hurricane:4 wrath:4 insect_swarm:3 entangling_roots:2"), ban: L("rejuvenation regrowth swipe"),
+    spells: SP("starfire:5 moonfire:5 hurricane:4 wrath:4 insect_swarm:3 rejuvenation:2"), ban: L("entangling_roots regrowth swipe"),
     rings: L("accuria dragonslayer quick_strike spell_power"), trinkets: L("chosen blackhand earthstrike hoj"), amulets: L("leg:starfire leg:moonfire onyxia_tooth fire_lord"),
     fr: "Éclat lunaire dès le départ, deux tréants, une Colère stellaire gratuite toutes les 4 s et d'autres sur 18 % des sorts. Esprit serein de Restauration ajoute 17,5 % de dégâts.",
     en: "Moonfire from the start, two treants, a free Starfire every 4 sec and more on 18% of spells. Restoration's Tranquil Spirit adds 17.5% damage.",

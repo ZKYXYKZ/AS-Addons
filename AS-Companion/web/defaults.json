@@ -278,7 +278,7 @@
   "author": "AS Companion",
   "race": "nightelf",
   "raceAlt": "gnome",
-  "code": "SB1;druid;Druide Équilibre;5025153310501/00000000000000/5105135000000;starfire:5,moonfire:5,hurricane:4,wrath:4,insect_swarm:3,entangling_roots:2;regrowth,rejuvenation,swipe;accuria,dragonslayer,quick_strike,spell_power;chosen,blackhand,earthstrike,hoj;leg:starfire,leg:moonfire,onyxia_tooth,fire_lord;50,1,1,3,10,2,1",
+  "code": "SB1;druid;Druide Équilibre;5025153310501/00000000000000/5105135000000;starfire:5,moonfire:5,hurricane:4,wrath:4,insect_swarm:3,rejuvenation:2;entangling_roots,regrowth,swipe;accuria,dragonslayer,quick_strike,spell_power;chosen,blackhand,earthstrike,hoj;leg:starfire,leg:moonfire,onyxia_tooth,fire_lord;50,1,1,3,10,2,1",
   "notes": {
    "fr": "Éclat lunaire dès le départ, deux tréants, une Colère stellaire gratuite toutes les 4 s et d'autres sur 18 % des sorts. Esprit serein de Restauration ajoute 17,5 % de dégâts.",
    "en": "Moonfire from the start, two treants, a free Starfire every 4 sec and more on 18% of spells. Restoration's Tranquil Spirit adds 17.5% damage."
