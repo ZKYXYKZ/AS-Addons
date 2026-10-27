@@ -242,3 +242,11 @@ header { flex: none; }
 .simtbl { width: 100%; border-collapse: collapse; font-size: 13px; }
 .simtbl th { text-align: left; color: var(--mute); font-weight: 500; padding: 4px 6px; border-bottom: 1px solid var(--line); }
 .simtbl td { padding: 4px 6px; border-bottom: 1px solid var(--line); }
+.autobar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 10px 0 14px; padding: 10px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+.switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+.switch input { display: none; }
+.switch .knob { width: 34px; height: 18px; border-radius: 9px; background: #3a3a44; position: relative; transition: background .15s; flex: none; }
+.switch .knob::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #ddd; transition: left .15s; }
+.switch input:checked + .knob { background: var(--gold); }
+.switch input:checked + .knob::after { left: 18px; background: #1a1a1f; }
+.switch.off { opacity: .5; cursor: default; }

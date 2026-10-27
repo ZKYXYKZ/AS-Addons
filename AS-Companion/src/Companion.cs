@@ -535,6 +535,7 @@ class Companion : Form
             string home = Environment.GetEnvironmentVariable("BENILLA_HOME");
             string addons = Path.Combine(string.IsNullOrEmpty(home) ? Path.Combine(gameDir, "benilla-config") : home, "AddOns");
             string newExe = Path.Combine(exeDir, "ASCompanion.new.exe");
+            Dictionary<string, object> upd = LoadState();
             updateStage = "install";
             using (MemoryStream ms = new MemoryStream(zip))
             using (System.IO.Compression.ZipArchive za = new System.IO.Compression.ZipArchive(ms))
@@ -549,7 +550,7 @@ class Companion : Form
                     {
                         string rel = n.Substring("benilla-config/AddOns/".Length);
                         string folder = rel.Split('/')[0];
-                        if (!Directory.Exists(Path.Combine(addons, folder))) continue;
+                        if (!Directory.Exists(Path.Combine(addons, folder)) || !AutoAddon(upd, folder)) continue;
                         target = Path.Combine(addons, rel.Replace('/', '\\'));
                     }
                     if (target == null) continue;
@@ -716,16 +717,23 @@ class Companion : Form
         return Version.TryParse((v ?? "").Trim().TrimStart('v', 'V'), out r) ? r : new Version(0, 0, 0);
     }
 
+    static bool AutoAddon(Dictionary<string, object> st, string name)
+    {
+        object set = G(st, "settings");
+        return N(G(set, "autoAddons"), 1) != 0 && N(G(G(set, "addonAuto"), name), 1) != 0;
+    }
+
     void AutoUpdateAddons()
     {
-        if (running || updating || N(G(D(LoadState()["settings"]), "autoAddons"), 1) == 0) return;
+        if (running || updating) return;
+        Dictionary<string, object> st = LoadState();
         string dir = AddonsDir();
         List<string> done = new List<string>();
         foreach (Dictionary<string, object> r in remoteAddons)
         {
             string name = S(G(r, "name"));
             Dictionary<string, string> toc = name == null ? null : Toc(dir, name);
-            if (toc == null) continue;
+            if (toc == null || !AutoAddon(st, name)) continue;
             string installed;
             toc.TryGetValue("Version", out installed);
             if (ParseVersion(S(G(r, "version"))) <= ParseVersion(installed)) continue;

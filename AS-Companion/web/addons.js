@@ -6,6 +6,7 @@ const ADDON_STR = {
     upToDate: "à jour", third: "Addon tiers", running: "Fermez le jeu pour installer, mettre à jour, activer ou désinstaller un addon.",
     confirmUninstall: "Désinstaller {name} ? Le dossier part à la corbeille.", noRelease: "Aucune version publiée trouvée sur GitHub pour l'instant.",
     reload: "Les changements prennent effet au prochain lancement du jeu.",
+    autoAll: "Mise à jour auto de tous les addons", autoAllHelp: "Au démarrage du compagnon, toutes les 30 minutes hors partie et quand le compagnon se met à jour.", autoOne: "Mise à jour auto",
   },
   en: {
     intro: "The game addons, installed in {dir}. Ours install and update from the latest version published on GitHub.",
@@ -14,6 +15,7 @@ const ADDON_STR = {
     upToDate: "up to date", third: "Third-party addon", running: "Close the game to install, update, enable or uninstall an addon.",
     confirmUninstall: "Uninstall {name}? The folder goes to the Recycle Bin.", noRelease: "No published version found on GitHub yet.",
     reload: "Changes apply at the next game launch.",
+    autoAll: "Auto-update all addons", autoAllHelp: "When the companion starts, every 30 minutes outside a run and when the companion updates itself.", autoOne: "Auto-update",
   },
 };
 const AT = (k, vars) => {
@@ -29,6 +31,19 @@ const newer = (a, b) => {
 };
 
 const addonChecked = {};
+
+function toggle(label, on, set, disabled) {
+  const w = el("label", "switch" + (disabled ? " off" : ""));
+  const c = el("input");
+  c.type = "checkbox";
+  c.checked = on;
+  c.disabled = !!disabled;
+  c.onchange = () => set(c.checked);
+  w.appendChild(c);
+  w.appendChild(el("span", "knob"));
+  w.appendChild(el("span", "", esc(label)));
+  return w;
+}
 async function renderAddons(sec) {
   let data;
   try { data = await (await fetch("/api/addons")).json(); } catch (e) { return; }
@@ -37,6 +52,12 @@ async function renderAddons(sec) {
   sec.appendChild(el("div", "hint", esc(AT("intro", { dir: data.dir }))));
   if (data.running) sec.appendChild(el("div", "warnline", esc(AT("running"))));
   if (!data.addons.some((a) => a.ours)) sec.appendChild(el("div", "hint", esc(AT("noRelease"))));
+  const set = STATE.settings;
+  const allOn = (set.autoAddons ?? 1) !== 0;
+  const top = el("div", "autobar");
+  top.appendChild(toggle(AT("autoAll"), allOn, (v) => { set.autoAddons = v ? 1 : 0; save(); renderAddons(sec); }));
+  top.appendChild(el("span", "hint", esc(AT("autoAllHelp"))));
+  sec.appendChild(top);
   const msg = el("div", "hint");
   const act = async (name, action) => {
     if (action === "uninstall" && !confirm(AT("confirmUninstall", { name }))) return;
@@ -78,6 +99,7 @@ async function renderAddons(sec) {
       row.appendChild(c);
     }
     if (a.installed) btn(a.enabled ? AT("disable") : AT("enable"), a.enabled ? "disable" : "enable");
+    if (a.ours && a.installed) row.appendChild(toggle(AT("autoOne"), allOn && ((set.addonAuto || {})[a.name] ?? 1) !== 0, (v) => { set.addonAuto = set.addonAuto || {}; set.addonAuto[a.name] = v ? 1 : 0; save(); }, !allOn));
     if (a.installed) btn(AT("uninstall"), "uninstall");
     card.appendChild(row);
     list.appendChild(card);
