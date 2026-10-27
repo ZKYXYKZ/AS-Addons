@@ -92,7 +92,7 @@ All three share one window: the gold **S** button on the minimap, or `/survivors
 ## Is it safe?
 
 - The whole source is in this repository. Every release is built by GitHub Actions from that source, not on someone's PC, and `SHA256SUMS.txt` lists the fingerprint of each file.
-- The companion only talks to GitHub (to check for updates) and, if it is missing, to Microsoft for WebView2. No account. Your builds and stats stay on your PC, unless you turn on **Share my runs** in the options (off by default): it then sends an anonymous summary of each run to the community site, and **Delete my shared runs** erases them.
+- The companion only talks to GitHub (to check for updates) and, if it is missing, to Microsoft for WebView2. No account. Your builds and stats stay on your PC, except an anonymous summary of each run sent to the community site to improve the suggested builds and the simulator (**Share my runs**, on by default, can be turned off in the options; **Delete my shared runs** erases them).
 - The exe is not signed yet, so Windows SmartScreen may warn on first launch: **More info → Run anyway**.
 - Auto-pick is off by default. The addons only read the game through its official addon API.
 

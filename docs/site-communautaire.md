@@ -77,7 +77,7 @@ Tout existe déjà côté compagnon (fichiers `research`, `runs.json`) sauf la d
 
 ## Compagnon
 
-- Option « Partager mes parties » désactivée par défaut, avec la liste de ce qui part et un lien vers la page À propos.
+- Option « Partager mes parties » activée par défaut, désactivable dans les options (« Vos parties améliorent ce compagnon »), message affiché une fois au premier lancement.
 - Envoi en tâche de fond à la fin de la partie, nouvel essai plus tard si le serveur ne répond pas, jamais pendant une partie.
 - Bouton « Supprimer mes parties partagées ».
 - Le README devra remplacer « pas de télémétrie » par la description de cette option.

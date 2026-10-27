@@ -2285,7 +2285,7 @@ class Companion : Form
     {
         try
         {
-            if (N(G(settings, "shareRuns"), 0) == 0 || heroClass == null) return;
+            if (N(G(settings, "shareRuns"), 1) == 0 || heroClass == null) return;
             string install = InstallId();
             double total = spellDmg.Values.Sum();
             Dictionary<string, object> run = new Dictionary<string, object> {
@@ -2316,7 +2316,7 @@ class Companion : Form
     void FlushShare()
     {
         string url = S(G(settings, "shareUrl"));
-        if (string.IsNullOrEmpty(url) || N(G(settings, "shareRuns"), 0) == 0) return;
+        if (string.IsNullOrEmpty(url) || N(G(settings, "shareRuns"), 1) == 0) return;
         lock (shareLock)
         {
             string qf = Path.Combine(dataDir, "share-queue.json");
