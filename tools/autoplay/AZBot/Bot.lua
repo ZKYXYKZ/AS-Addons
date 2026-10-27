@@ -250,3 +250,28 @@ R:SetScript("OnUpdate", function()
   dot(px, py, 1, 1, 1, 7)
   for i = used + 1, table.getn(R.dots) do R.dots[i]:Hide() end
 end)
+
+local sampAcc, runKey = 0, nil
+local sampler = CreateFrame("Frame")
+sampler:SetScript("OnUpdate", function()
+  sampAcc = sampAcc + arg1
+  if sampAcc < 5 then return end
+  sampAcc = 0
+  if not AZS_GetPhase or AZS_GetPhase() ~= "playing" then if AZS_GetPhase and AZS_GetPhase() == "ready" then runKey = nil end return end
+  AZBotDB.runs = AZBotDB.runs or {}
+  if not runKey then
+    runKey = tostring(time())
+    AZBotDB.runs[runKey] = { class = AZS_ZONE and AZS_ZONE.class, race = AZS_ZONE and AZS_ZONE.race, zone = AZS_ZONE and AZS_ZONE.zone, samples = {} }
+    local n, oldest = 0, nil
+    for k in pairs(AZBotDB.runs) do n = n + 1 if not oldest or k < oldest then oldest = k end end
+    if n > 40 then AZBotDB.runs[oldest] = nil end
+  end
+  local sp = {}
+  for i = 1, table.getn(AZS_SPELLS or {}) do local s = AZS_SPELLS[i] table.insert(sp, (s.key or "?") .. ":" .. (s.rank or 0) .. ":" .. (s.cdmax or 0)) end
+  local st = {}
+  for _, k in ipairs({ "dmg", "cd", "crit", "cm", "area", "cnt", "echo", "luck", "hp", "arm", "pet", "dots", "dotd", "spd" }) do if AZS_STATS and AZS_STATS[k] then table.insert(st, k .. "=" .. AZS_STATS[k]) end end
+  local m = {}
+  if AZS_GetMeter then local lines = AZS_GetMeter() for i = 1, math.min(table.getn(lines or {}), 20) do local l = lines[i] table.insert(m, l.name .. "=" .. math.floor(tonumber(l.dmg) or 0)) end end
+  local r = AZS_RUN or {}
+  table.insert(AZBotDB.runs[runKey].samples, string.format("%d|%s|%s|%s|%s|%s|%s", math.floor(AZS_GetRunTime() or 0), tostring(r.lvl), tostring(r.en), table.concat(sp, ","), table.concat(st, ","), table.concat(m, ";"), tostring(r.kills)))
+end)
