@@ -2284,6 +2284,8 @@ class Companion : Form
             return new Advice { Text = fr ? "Rien du build : skip (+" + S(G(j, "skipGold")) + " or)" : "Nothing from the build: skip (+" + S(G(j, "skipGold")) + " gold)" };
         if (rerolls > 0)
             return new Advice { Text = fr ? "Rien du build, pas de skip : relancer (R), " + rerolls + " restantes" : "Nothing from the build, no skip: reroll (R), " + rerolls + " left", Key = "r" };
+        if (jewelScreen)
+            return new Advice { Text = fr ? "Rien du build et skip non trouvé : prenez ce que vous voulez" : "Nothing from the build and no skip found: take whatever you like" };
         int pick = 1, pr = -1;
         for (int i = 1; i <= cards.Count; i++)
         {
