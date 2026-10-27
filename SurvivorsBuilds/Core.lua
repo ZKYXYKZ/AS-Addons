@@ -159,6 +159,29 @@ local function saveRun()
   if n > 30 then db.runs[oldest] = nil end
 end
 
+local pick = CreateFrame("Frame", nil, UIParent)
+pick:SetFrameStrata("TOOLTIP")
+pick:SetWidth(4)
+pick:SetHeight(4)
+pick:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 0, 0)
+pick.t = pick:CreateTexture(nil, "OVERLAY")
+pick.t:SetAllPoints(pick)
+pick:Hide()
+
+local function showPick()
+  local link = SB.Link()
+  if not link or not link.builds then pick:Hide() return end
+  local v = 0
+  if SB.manual then
+    local list = SB.Builds()
+    for i = 1, table.getn(list) do
+      if list[i].name == SB.manual.name then v = i end
+    end
+  end
+  pick.t:SetTexture((math.mod(v, 16) * 16 + 8) / 255, 1, (math.floor(v / 16) * 16 + 8) / 255, 1)
+  pick:Show()
+end
+
 local runFrame = CreateFrame("Frame")
 local acc = 0
 runFrame:RegisterEvent("CHAT_MSG_ADDON")
@@ -169,6 +192,7 @@ runFrame:SetScript("OnUpdate", function()
   acc = acc + arg1
   if acc < 0.5 then return end
   acc = 0
+  showPick()
   if not AZS_GetPhase then return end
   local phase = AZS_GetPhase()
   if phase == "ready" or phase == nil then

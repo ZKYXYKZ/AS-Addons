@@ -1083,8 +1083,52 @@ class Companion : Form
         return Math.Max(0.3, Math.Min(2, 0.3 + 3 * DmgShare(key)));
     }
 
+    Dictionary<string, List<string>> gatewayAll = new Dictionary<string, List<string>>();
+    int gamePick = -1;
+    DateTime pickRead;
+    Bitmap pickPixel = new Bitmap(1, 1);
+
+    void ReadGamePick()
+    {
+        Process p = Process.GetProcessesByName("AzerothSurvivors").FirstOrDefault();
+        if (p == null) { gamePick = -1; return; }
+        IntPtr h = p.MainWindowHandle;
+        if (h == IntPtr.Zero || GetForegroundWindow() != h) return;
+        IntPtr dpi = IntPtr.Zero;
+        try { dpi = SetThreadDpiAwarenessContext((IntPtr)(-4)); } catch { }
+        try
+        {
+            POINT o = new POINT();
+            ClientToScreen(h, ref o);
+            using (Graphics g = Graphics.FromImage(pickPixel)) g.CopyFromScreen(o.X + 1, o.Y + 1, 0, 0, new Size(1, 1));
+            Color c = pickPixel.GetPixel(0, 0);
+            if (c.G < 240 || Math.Abs(c.R % 16 - 8) > 2 || Math.Abs(c.B % 16 - 8) > 2) return;
+            int v = c.R / 16 + 16 * (c.B / 16);
+            if (v == gamePick) return;
+            gamePick = v;
+            ApplyGamePick();
+        }
+        catch { }
+        finally { try { if (dpi != IntPtr.Zero) SetThreadDpiAwarenessContext(dpi); } catch { } }
+    }
+
+    void ApplyGamePick()
+    {
+        if (heroClass == null || gamePick < 0) return;
+        string ck = S(heroClass["key"]);
+        Dictionary<string, object> pick = null;
+        List<string> ids;
+        if (gamePick > 0 && gatewayAll.TryGetValue(ck, out ids) && gamePick <= ids.Count)
+            pick = A(G(state, "builds")).Select(D).FirstOrDefault(b => S(G(b, "class")) == ck && S(G(b, "id")) == ids[gamePick - 1]);
+        if (pick == null) pick = ActiveBuild(state, ck);
+        if (pick == null || pick == build) return;
+        build = pick;
+        Log("build chosen in game: " + S(G(build, "name")));
+    }
+
     void OnTick(object sender, EventArgs e)
     {
+        if (DateTime.Now > pickRead) { pickRead = DateTime.Now.AddSeconds(1); ReadGamePick(); }
         if (running && DateTime.Now > combatRead) { combatRead = DateTime.Now.AddSeconds(1); ReadCombat(); }
         if (running && game != null && game.HasExited)
         {
@@ -1669,6 +1713,7 @@ class Companion : Form
         {
             string ck = S(c["key"]);
             List<Dictionary<string, object>> mine = A(G(s, "builds")).Select(D).Where(b => S(G(b, "class")) == ck).ToList();
+            gatewayAll[ck] = mine.Select(b => S(G(b, "id"))).ToList();
             if (mine.Count < 2) continue;
             L.Append("      " + ck + " = {\n");
             foreach (Dictionary<string, object> b in mine)
@@ -1885,6 +1930,7 @@ class Companion : Form
             case "ready":
                 recordedIndex = -1;
                 build = SelectBuild(S(G(j, "class")));
+                ApplyGamePick();
                 CapSignals();
                 offeredNew = new HashSet<string>();
                 owned = new Dictionary<string, int>();
@@ -2120,6 +2166,7 @@ class Companion : Form
     void DetectSpec(int tree, string why)
     {
         if (detectedTree >= 0 || heroClass == null) return;
+        if (gamePick > 0) { detectedTree = tree; Log("spec detected (" + why + ") but the build was chosen in game"); return; }
         detectedTree = tree;
         bool fr = lang == "fr";
         object t = A(G(heroClass, "trees")).ElementAtOrDefault(tree);

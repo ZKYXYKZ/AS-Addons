@@ -148,3 +148,9 @@ Fichiers : `Movers.lua` (registre des blocs déplaçables, grille, aimantation, 
 - Positions (repère 1920×1080) : icônes de classe (235 + 98 × colonne, 262 + 110 × rangée) dans l'ordre de data.json, bouton Talents (1108, 670), Spé 1/2/3 (1560/1674/1787, 172), Reset (1549, y) détecté en x 1516 entre y 380 et 640, talent (116 + 480 × arbre + 108 × colonne, 233 + 89 × rangée), Terminé (1824, 67).
 - Le chiffrement de la sauvegarde (characters.txt) et l'API Lua n'offrent aucun autre moyen. Le jeu a des variables de test (`WOW_ROGUE_ARMORY`, `WOW_ROGUE_TAPS` : tapotements séparés par « ; », un toutes les 2 s) trop lentes pour 51 points.
 - Tests de résolution : `gxWindow`, `gxResolution` (« 1280x720 ») dans le config.toml d'un `BENILLA_HOME` isolé.
+
+## Build choisi en jeu avec les flèches (1.7.17)
+
+- Le Prêtre (et d'autres spés : Paladin Sacré et Protection, Voleur Assassinat et Combat, Démoniste Démonologie et Destruction, Druide Farouche et Restauration) n'a aucun signal de spé au début d'une partie : l'apogée ne donne pas de sort de départ et le jeu ne transmet pas la spé choisie dans l'Armurerie.
+- Les flèches du panneau de SurvivorsBuilds (SB.manual) sont transmises au compagnon par un carré de 4 × 4 en haut à gauche de l'écran : rouge = (v mod 16) × 16 + 8, vert = 255, bleu = floor(v / 16) × 16 + 8, v = position du build dans `link.all` de la classe (0 = build du compagnon). Le compagnon lit le pixel (1, 1) de la fenêtre du jeu toutes les secondes, seulement quand le jeu est au premier plan, et ignore les lectures hors code (écran assombri, autre fenêtre). Les positions viennent de l'ordre des builds écrit au lancement (`gatewayAll`).
+- Un build choisi en jeu passe avant la détection de spé.
