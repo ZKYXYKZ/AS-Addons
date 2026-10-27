@@ -2284,18 +2284,6 @@ class Companion : Form
             return new Advice { Text = fr ? "Rien du build : skip (+" + S(G(j, "skipGold")) + " or)" : "Nothing from the build: skip (+" + S(G(j, "skipGold")) + " gold)" };
         if (rerolls > 0)
             return new Advice { Text = fr ? "Rien du build, pas de skip : relancer (R), " + rerolls + " restantes" : "Nothing from the build, no skip: reroll (R), " + rerolls + " left", Key = "r" };
-        if (jewelScreen)
-            return new Advice { Text = fr ? "Rien du build et skip non trouvé : prenez ce que vous voulez" : "Nothing from the build and no skip found: take whatever you like" };
-        int pick = 1, pr = -1;
-        for (int i = 1; i <= cards.Count; i++)
-        {
-            CardInfo info = Info(cards[i - 1]);
-            if (info.Key != null && ban.ContainsKey(info.Key)) continue;
-            string kind = S(G(cards[i - 1], "kind"));
-            int cat = kind == "upgrade" ? 3 : kind == "new" ? 1 : 2;
-            int r = cat * 10 + (int)N(G(cards[i - 1], "rarity"), 0);
-            if (r > pr) { pr = r; pick = i; }
-        }
-        return new Advice { Text = (fr ? "Rien du build, pas de skip : prendre " + pick + " : " : "Nothing from the build, no skip: take " + pick + ": ") + S(G(cards[pick - 1], "title")), Key = pick.ToString(), Pick = cards[pick - 1] };
+        return new Advice { Text = fr ? "Aucune carte du build, pas de skip : choisissez vous-même" : "No card from the build, no skip: choose yourself" };
     }
 }
