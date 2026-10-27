@@ -1650,6 +1650,12 @@ class Companion : Form
             }
             Dictionary<string, int> caps = CapSpells(c);
             if (byTree.Count == 0) continue;
+            for (int t = 0; t < A(G(c, "trees")).Count(); t++)
+                if (!byTree.ContainsKey(t))
+                {
+                    Dictionary<string, object> pb = PresetFor(c, t);
+                    if (pb != null) byTree[t] = pb;
+                }
             L.Append("      " + ck + " = {\n        caps = { " + string.Join(", ", caps.Select(kv => kv.Key + " = " + (kv.Value + 1))) + " },\n");
             foreach (KeyValuePair<int, Dictionary<string, object>> kv in byTree)
             {
@@ -1674,6 +1680,50 @@ class Companion : Form
         }
         L.Append("    },\n  },\n}\n");
         File.WriteAllText(Path.Combine(dir, "SurvivorsBuilds.lua"), L.ToString(), Utf8);
+    }
+
+    List<object> presets;
+
+    Dictionary<string, object> PresetFor(Dictionary<string, object> c, int tree)
+    {
+        if (presets == null)
+        {
+            byte[] raw = Resource("defaults.json");
+            presets = raw == null ? new List<object>() : A(json.DeserializeObject(Utf8.GetString(raw))).ToList();
+        }
+        string ck = S(c["key"]);
+        foreach (object p in presets.Where(x => S(G(x, "class")) == ck))
+        {
+            string[] f = (S(G(p, "code")) ?? "").Split(';');
+            if (f.Length < 10) continue;
+            Dictionary<string, object> b = new Dictionary<string, object>();
+            b["class"] = ck;
+            b["name"] = Loc(G(p, "names")) != "" ? Loc(G(p, "names")) : S(G(p, "name"));
+            Dictionary<string, object> tal = new Dictionary<string, object>();
+            string[] ranks = f[3].Split('/');
+            int ti = 0;
+            foreach (object t in A(G(c, "trees")))
+            {
+                List<object> list = A(G(t, "talents")).ToList();
+                for (int i = 0; ti < ranks.Length && i < list.Count && i < ranks[ti].Length; i++)
+                    if (ranks[ti][i] > '0') tal[S(G(list[i], "key"))] = ranks[ti][i] - '0';
+                ti++;
+            }
+            b["talents"] = tal;
+            if (SpecIndex(b, c) != tree) continue;
+            b["spells"] = f[4].Split(',').Where(x => x != "").Select(x => (object)new Dictionary<string, object> { { "key", x.Split(':')[0] }, { "w", x.Contains(":") ? int.Parse(x.Split(':')[1]) : 3 } }).ToList();
+            b["ban"] = f[5].Split(',').Where(x => x != "").ToDictionary(x => x, x => (object)true);
+            b["rings"] = f[6].Split(',').Where(x => x != "").Select(x => (object)Regex.Replace(x, ":[1-5]$", "")).ToList();
+            b["trinkets"] = f[7].Split(',').Where(x => x != "").Select(x => (object)Regex.Replace(x, ":[1-5]$", "")).ToList();
+            b["amulets"] = f[8].Split(',').Where(x => x != "").Select(x => (object)Regex.Replace(x, ":[1-5]$", "")).ToList();
+            string[] rv = f[9].Split(',');
+            string[] rk = { "rarity", "reserve", "reroll", "banishes", "fallbackLevel", "boost", "adapt" };
+            Dictionary<string, object> rules = new Dictionary<string, object>();
+            for (int i = 0; i < rk.Length && i < rv.Length; i++) rules[rk[i]] = double.Parse(rv[i], System.Globalization.CultureInfo.InvariantCulture);
+            b["rules"] = rules;
+            return b;
+        }
+        return null;
     }
 
     void BuildLua(StringBuilder L, Dictionary<string, object> c, Dictionary<string, object> b)
@@ -2075,7 +2125,7 @@ class Companion : Form
         object t = A(G(heroClass, "trees")).ElementAtOrDefault(tree);
         string treeName = S(G(G(t, "name"), fr ? "fr" : "en")) ?? S(G(G(t, "name"), "en"));
         string cls = S(heroClass["key"]);
-        Dictionary<string, object> pick = SpecIndex(build) == tree ? build : A(G(state, "builds")).Select(D).FirstOrDefault(b => S(G(b, "class")) == cls && SpecIndex(b) == tree);
+        Dictionary<string, object> pick = SpecIndex(build) == tree ? build : A(G(state, "builds")).Select(D).FirstOrDefault(b => S(G(b, "class")) == cls && SpecIndex(b) == tree) ?? PresetFor(heroClass, tree);
         if (pick == null) specNote = fr ? "Spé détectée : " + treeName + ", aucun build de cette spé, « " + S(G(build, "name")) + " » gardé" : "Spec detected: " + treeName + ", no build for it, keeping \"" + S(G(build, "name")) + "\"";
         else
         {
