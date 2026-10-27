@@ -185,7 +185,7 @@ const builds = [
     class: "mage", name: "Mage Feu", race: "gnome", alt: "",
     talents: T(`imp_fireball:5 imp_flamestrike:5 flame_throwing:2 ignite:1 incinerate:2 master_elements:3 critical_mass:3 hot_streak:1 fire_power:5 imp_blast_wave:3 pyroclasm:1
       arcane_subtlety:5 magic_absorption:5 arcane_concentration:1 arcane_meditation:3 imp_arcane_explosion:1 arcane_mind:5`),
-    spells: SP("pyroblast:5 flamestrike:5 blast_wave:4 fireball:3 fire_blast:3 ice_barrier:2"), ban: L("frostbolt polymorph arcane_missiles"),
+    spells: SP("pyroblast:5 flamestrike:5 blast_wave:4 ice_barrier:4 fireball:3 fire_blast:3"), ban: L("frostbolt polymorph arcane_missiles"),
     rings: L("accuria dragonslayer quick_strike spell_power"), trinkets: L("chosen blackhand earthstrike hoj"), amulets: L("leg:flamestrike leg:pyroblast leg:blast_wave fire_lord"),
     fr: "Explosion pyrotechnique dès le départ, les ennemis tués au feu explosent, Embrasement et Chaleur continue sur les critiques. L’Amulette de l’Enfer : Choc de flammes est la priorité absolue : à Gurubashi, améliorée 11 fois, elle a triplé le DPS (466 k contre 150 k). Subtilité des arcanes (40 % de chance) et Esprit des arcanes en appoint.",
     en: "Pyroblast from the start, enemies killed by fire explode, Ignite and Hot Streak on crits. The Amulet of the Inferno: Flamestrike is the top priority: at Gurubashi, upgraded 11 times, it tripled DPS (466k vs 150k). Arcane Subtlety (40% luck) and Arcane Mind on the side.",
