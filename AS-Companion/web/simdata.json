@@ -1,0 +1,1058 @@
+{
+ "spells": {
+  "mortal_strike": {
+   "text": "Strikes the nearest enemy within 7 yd for 426 Physical damage. Bosses and elites are targeted first.",
+   "kind": "single",
+   "targets": 1,
+   "range": 7,
+   "dmg": 426,
+   "samples": 53
+  },
+  "bloodthirst": {
+   "text": "Strikes the nearest enemy within 7 yd for 338 Physical damage. Bosses and elites are targeted first. Heals you for 50% of the damage dealt.",
+   "kind": "single",
+   "targets": 1,
+   "range": 7,
+   "dmg": 338,
+   "samples": 76
+  },
+  "demo_shout": {
+   "text": "Hits every enemy within 16 yd of you for 14 Physical damage. Enemies hit deal 35% less damage for 6 sec.",
+   "kind": "nova",
+   "radius": 16,
+   "dmg": 14,
+   "samples": 62
+  },
+  "rend": {
+   "text": "Afflicts the 3 healthiest enemies within 8 yd that are not already afflicted: 381 Physical damage over 7 sec, in 7 ticks. Bosses and elites are targeted first.",
+   "kind": "dot",
+   "targets": 3,
+   "dmg": 381,
+   "dur": 7,
+   "samples": 63
+  },
+  "shield_slam": {
+   "text": "Strikes up to 2 enemies within 7 yd for 477 Physical damage each. Bosses and elites are targeted first. Stuns them for 1.5 sec; bosses for a quarter as long.",
+   "kind": "multi",
+   "targets": 2,
+   "range": 7,
+   "dmg": 477,
+   "samples": 65
+  },
+  "thunder_clap": {
+   "text": "Hits every enemy within 11 yd of you for 39 Physical damage. Slows them by 50% for 3 sec.",
+   "kind": "nova",
+   "radius": 11,
+   "dmg": 39,
+   "samples": 67
+  },
+  "bloodrage": {
+   "text": "Each of your hits fills 2 rage, at most 12 a second. At 100 rage you erupt, dealing 795 Physical damage to every enemy within 10 yd, at most once every 8 sec. Rage drains when you stop fighting.",
+   "kind": "special",
+   "samples": 84
+  },
+  "whirlwind": {
+   "text": "Hits every enemy within 9.1 yd of you for 78 Physical damage.",
+   "kind": "nova",
+   "radius": 9.1,
+   "dmg": 78,
+   "samples": 19
+  },
+  "execute": {
+   "text": "Strikes an enemy within 10 yd for 380 Physical damage, doubled to 761 against an enemy below 30% health. Bosses and elites are targeted first, then the most wounded below 30% health.",
+   "kind": "single",
+   "targets": 1,
+   "range": 10,
+   "dmg": 380,
+   "execute": true,
+   "samples": 49
+  },
+  "battle_shout": {
+   "text": "Increases all your damage by 47% for 13 sec. Cast once enemies are within 30 yd.",
+   "kind": "buff",
+   "stat": "dmg",
+   "value": 0.47,
+   "dur": 13,
+   "samples": 66
+  },
+  "volley": {
+   "text": "Lands on the thickest group of enemies within 28 yd: every enemy within 9.1 yd of that spot takes 12 Arcane damage every 1 sec for 8.4 sec, 98 in all.",
+   "kind": "ground",
+   "radius": 9.1,
+   "tick": 12,
+   "every": 1,
+   "dur": 8.4,
+   "dmg": 98,
+   "samples": 53
+  },
+  "hunters_mark": {
+   "text": "Marks the toughest enemy within 35 yd: it takes 22% more damage from everything. When it dies the mark explodes, dealing 703 Arcane damage to every enemy within 9.1 yd, at most once every 2 sec, and a second later marks the next.",
+   "kind": "mark",
+   "value": 0.22,
+   "dmg": 703,
+   "radius": 9.1,
+   "samples": 44
+  },
+  "arcane_shot": {
+   "text": "Strikes the nearest enemy within 32 yd for 202 Arcane damage. Bosses and elites are targeted first.",
+   "kind": "single",
+   "targets": 1,
+   "range": 32,
+   "dmg": 202,
+   "samples": 57
+  },
+  "concussive_shot": {
+   "text": "Strikes the 2 nearest enemies within 30 yd for 48 Arcane damage each. Bosses and elites are targeted first. Slows them by 60% for 4 sec.",
+   "kind": "multi",
+   "targets": 2,
+   "range": 30,
+   "dmg": 48,
+   "samples": 61
+  },
+  "explosive_trap": {
+   "text": "Hits every enemy within 10 yd of you for 58 Fire damage.",
+   "kind": "nova",
+   "radius": 10,
+   "dmg": 58,
+   "samples": 40
+  },
+  "serpent_sting": {
+   "text": "Afflicts the 2 healthiest enemies within 30 yd: 251 Nature damage over 7 sec, in 7 ticks. Stacks up to 2 times on one enemy: bosses and elites take every stack first, then enemies not yet afflicted, then the rest.",
+   "kind": "dot",
+   "targets": 2,
+   "dmg": 251,
+   "dur": 7,
+   "samples": 61
+  },
+  "aimed_shot": {
+   "text": "Strikes the nearest enemy within 35 yd for 914 Physical damage. Bosses and elites are targeted first. An enemy under your Hunter's Mark comes before them.",
+   "kind": "single",
+   "targets": 1,
+   "range": 35,
+   "dmg": 914,
+   "samples": 30
+  },
+  "immolation_trap": {
+   "text": "Marks the ground where you stand once enemies come within 10 yd: every enemy within 10 yd of that spot takes 25 Fire damage every 1.9 sec for 11 sec, 149 in all.",
+   "kind": "ground",
+   "radius": 10,
+   "tick": 25,
+   "every": 1.9,
+   "dur": 11,
+   "dmg": 149,
+   "samples": 55
+  },
+  "multi_shot": {
+   "text": "Strikes the 5 nearest enemies within 30 yd for 90 Physical damage each. Bosses and elites are targeted first.",
+   "kind": "multi",
+   "targets": 5,
+   "range": 30,
+   "dmg": 90,
+   "samples": 26
+  },
+  "arcane_missiles": {
+   "text": "Fires 5 missiles at random enemies within 28 yd for 69 Arcane damage each, all of them at bosses and elites when any are near. With few enemies near, several can hit the same one.",
+   "kind": "missiles",
+   "hits": 5,
+   "range": 28,
+   "dmg": 69,
+   "samples": 21
+  },
+  "frost_nova": {
+   "text": "Hits every enemy within 12 yd of you for 18 Frost damage. Roots them for 3 sec; bosses for a quarter as long.",
+   "kind": "nova",
+   "radius": 12,
+   "dmg": 18,
+   "samples": 21
+  },
+  "blast_wave": {
+   "text": "Hits every enemy within 14 yd of you for 68 Fire damage. Slows them by 50% for 3 sec.",
+   "kind": "nova",
+   "radius": 14,
+   "dmg": 68,
+   "samples": 17
+  },
+  "arcane_explosion": {
+   "text": "Hits every enemy within 11 yd of you for 36 Arcane damage.",
+   "kind": "nova",
+   "radius": 11,
+   "dmg": 36,
+   "samples": 24
+  },
+  "frostbolt": {
+   "text": "Strikes the 2 nearest enemies within 30 yd for 109 Frost damage each. Bosses and elites are targeted first. Slows them by 50% for 3 sec.",
+   "kind": "multi",
+   "targets": 2,
+   "range": 30,
+   "dmg": 109,
+   "samples": 19
+  },
+  "cone_of_cold": {
+   "text": "Hits every enemy in a 15 yd cone in front of you for 50 Frost damage. Slows them by 60% for 3 sec.",
+   "kind": "cone",
+   "radius": 15,
+   "dmg": 50,
+   "samples": 24
+  },
+  "flamestrike": {
+   "text": "Lands on the thickest group of enemies within 30 yd: every enemy within 11 yd of that spot takes 37 Fire damage every 2.1 sec for 8.4 sec, 148 in all.",
+   "kind": "ground",
+   "radius": 11,
+   "tick": 37,
+   "every": 2.1,
+   "dur": 8.4,
+   "dmg": 148,
+   "samples": 23
+  },
+  "blizzard": {
+   "text": "Lands on the thickest group of enemies within 30 yd: every enemy within 11 yd of that spot takes 13 Frost damage every 1 sec for 9.8 sec, 128 in all. Slows them by 40% for 1.5 sec.",
+   "kind": "ground",
+   "radius": 11,
+   "tick": 13,
+   "every": 1,
+   "dur": 9.8,
+   "dmg": 128,
+   "samples": 29
+  },
+  "polymorph": {
+   "text": "Your spells have a 12% chance to turn the enemy they hit into a sheep, at most one every 3 sec and 3 at once. Bosses and guardians are immune. A sheep wanders harmlessly for 10 sec, and the next hit on it pops it in an arcane burst of 15% of its maximum health, up to 333, on every enemy within 8.5 yd.",
+   "kind": "special",
+   "samples": 20
+  },
+  "ice_barrier": {
+   "text": "Absorbs the next 381 damage you take, 68% of your max health. Cast again once the shield breaks.",
+   "kind": "defense",
+   "samples": 19
+  },
+  "fire_blast": {
+   "text": "Fires 2 missiles at random enemies within 22 yd for 314 Fire damage each. With few enemies near, several can hit the same one.",
+   "kind": "missiles",
+   "hits": 2,
+   "range": 22,
+   "dmg": 314,
+   "samples": 16
+  },
+  "holy_shock": {
+   "text": "Fires 2 missiles at random enemies within 22 yd for 190 Holy damage each. With few enemies near, several can hit the same one. Each hit heals you for 21.",
+   "kind": "missiles",
+   "hits": 2,
+   "range": 22,
+   "dmg": 190,
+   "samples": 15
+  },
+  "holy_light": {
+   "text": "Heals you for 232, 49% of your max health, at once. Cast when you fall below 85% health.",
+   "kind": "defense",
+   "samples": 22
+  },
+  "exorcism": {
+   "text": "Strikes the nearest enemy within 25 yd for 376 Holy damage. Bosses and elites are targeted first.",
+   "kind": "single",
+   "targets": 1,
+   "range": 25,
+   "dmg": 376,
+   "samples": 11
+  },
+  "holy_wrath": {
+   "text": "Hits every enemy within 14 yd of you for 69 Holy damage.",
+   "kind": "nova",
+   "radius": 14,
+   "dmg": 69,
+   "samples": 15
+  },
+  "hammer_of_wrath": {
+   "text": "Strikes the nearest enemy within 28 yd for 214 Holy damage. Bosses and elites are targeted first.",
+   "kind": "single",
+   "targets": 1,
+   "range": 28,
+   "dmg": 214,
+   "samples": 16
+  },
+  "divine_shield": {
+   "text": "Makes you immune to all damage for 5.6 sec. Cast when you fall below 35% health.",
+   "kind": "defense",
+   "samples": 28
+  },
+  "holy_shield": {
+   "text": "For 14 sec, enemies that hit you in melee take 40 damage. Cast once enemies are within 30 yd.",
+   "kind": "special",
+   "samples": 19
+  },
+  "redemption": {
+   "text": "Enemies you slay have a 11% chance to burst in holy light, dealing 117 Holy damage to every enemy within 8.2 yd of the body. A burst's kills may set off one more. At most two bursts a second.",
+   "kind": "special",
+   "samples": 25
+  },
+  "hammer_of_justice": {
+   "text": "Strikes the 2 nearest enemies within 12 yd for 187 Holy damage each. Bosses and elites are targeted first. Stuns them for 3 sec; bosses for a quarter as long.",
+   "kind": "multi",
+   "targets": 2,
+   "range": 12,
+   "dmg": 187,
+   "samples": 22
+  },
+  "judgement": {
+   "text": "Strikes the nearest enemy within 12 yd for 533 Holy damage. Bosses and elites are targeted first.",
+   "kind": "single",
+   "targets": 1,
+   "range": 12,
+   "dmg": 533,
+   "samples": 11
+  },
+  "frost_trap": {
+   "text": "Marks the ground where you stand once enemies come within 11 yd: every enemy within 11 yd of that spot takes 8.3 Frost damage every 2.1 sec for 8.4 sec, 33 in all. Roots them for 1.5 sec; bosses for a quarter as long.",
+   "kind": "ground",
+   "radius": 11,
+   "tick": 8.3,
+   "every": 2.1,
+   "dur": 8.4,
+   "dmg": 33,
+   "samples": 30
+  },
+  "blade_flurry": {
+   "text": "Hits every enemy within 7.5 yd of you for 34 Physical damage.",
+   "kind": "nova",
+   "radius": 7.5,
+   "dmg": 34,
+   "samples": 11
+  },
+  "kidney_shot": {
+   "text": "Strikes up to 2 enemies within 7 yd for 76 Physical damage each. Bosses and elites are targeted first. Stuns them for 2.5 sec; bosses for a quarter as long.",
+   "kind": "multi",
+   "targets": 2,
+   "range": 7,
+   "dmg": 76,
+   "samples": 31
+  },
+  "ghostly_strike": {
+   "text": "Strikes the nearest enemy within 7 yd for 120 Physical damage. Bosses and elites are targeted first. Shields you against 25 damage for every enemy hit, up to 126, until it breaks.",
+   "kind": "single",
+   "targets": 1,
+   "range": 7,
+   "dmg": 120,
+   "samples": 24
+  },
+  "eviscerate": {
+   "text": "Strikes up to 2 enemies within 8 yd for 262 Physical damage, doubled to 524 against an enemy below 30% health. Bosses and elites are targeted first, then the most wounded below 30% health.",
+   "kind": "multi",
+   "targets": 2,
+   "range": 8,
+   "dmg": 262,
+   "execute": true,
+   "samples": 21
+  },
+  "slice_and_dice": {
+   "text": "Increases all your damage by 32% for 13 sec. Cast once enemies are within 30 yd.",
+   "kind": "buff",
+   "stat": "dmg",
+   "value": 0.32,
+   "dur": 13,
+   "samples": 16
+  },
+  "seal_fate": {
+   "text": "Your strikes build combo points, a critical strike two, at most 2.1 a second. At 5 points a free Eviscerate strikes an enemy within 8 yd for 321 Physical damage, doubled against an enemy below 30% health. Bosses and elites are targeted first, then the most wounded below 30% health.",
+   "kind": "special",
+   "samples": 23
+  },
+  "gouge": {
+   "text": "Strikes up to 3 enemies within 7 yd for 98 Physical damage each. Bosses and elites are targeted first. Stuns them for 1.5 sec; bosses for a quarter as long.",
+   "kind": "multi",
+   "targets": 3,
+   "range": 7,
+   "dmg": 98,
+   "samples": 25
+  },
+  "adrenaline_rush": {
+   "text": "Your cooldowns recover 60% faster for 11 sec. Cast once enemies are within 30 yd.",
+   "kind": "buff",
+   "stat": "cdr",
+   "value": 0.6,
+   "dur": 11,
+   "samples": 23
+  },
+  "backstab": {
+   "text": "Strikes up to 2 enemies within 7 yd for 175 Physical damage, doubled to 349 against an enemy below 30% health. Bosses and elites are targeted first, then the most wounded below 30% health.",
+   "kind": "multi",
+   "targets": 2,
+   "range": 7,
+   "dmg": 175,
+   "execute": true,
+   "samples": 26
+  },
+  "rupture": {
+   "text": "Afflicts the 2 healthiest enemies within 8 yd that are not already afflicted: 329 Physical damage over 6 sec, in 6 ticks. Bosses and elites are targeted first.",
+   "kind": "dot",
+   "targets": 2,
+   "dmg": 329,
+   "dur": 6,
+   "samples": 17
+  },
+  "mind_flay": {
+   "text": "Hits every enemy in a 19 yd cone in front of you for 73 Shadow damage. Slows them by 50% for 2 sec.",
+   "kind": "cone",
+   "radius": 19,
+   "dmg": 73,
+   "samples": 12
+  },
+  "lightwell": {
+   "text": "Every 17 sec, once enemies are within 25 yd, a Lightwell rises where you stand. For 10 sec it strikes the nearest enemy within 25 yd of it for 180 Holy damage every second. Bosses and elites are targeted first.",
+   "kind": "special",
+   "samples": 12
+  },
+  "devouring_plague": {
+   "text": "Afflicts the 3 healthiest enemies within 28 yd that are not already afflicted: 402 Shadow damage over 8 sec, in 8 ticks. Bosses and elites are targeted first. Heals you for 30% of the damage dealt.",
+   "kind": "dot",
+   "targets": 3,
+   "dmg": 402,
+   "dur": 8,
+   "samples": 11
+  },
+  "mind_blast": {
+   "text": "Strikes the nearest enemy within 28 yd for 225 Shadow damage. Bosses and elites are targeted first.",
+   "kind": "single",
+   "targets": 1,
+   "range": 28,
+   "dmg": 225,
+   "samples": 7
+  },
+  "holy_fire": {
+   "text": "Strikes the nearest enemy within 28 yd for 374 Holy damage. Bosses and elites are targeted first.",
+   "kind": "single",
+   "targets": 1,
+   "range": 28,
+   "dmg": 374,
+   "samples": 9
+  },
+  "holy_nova": {
+   "text": "Hits every enemy within 15 yd of you for 39 Holy damage. Heals you for 14, plus 14 for every enemy hit.",
+   "kind": "nova",
+   "radius": 15,
+   "dmg": 39,
+   "samples": 8
+  },
+  "sw_pain": {
+   "text": "Afflicts the 2 healthiest enemies within 28 yd that are not already afflicted: 262 Shadow damage over 8 sec, in 8 ticks. Bosses and elites are targeted first.",
+   "kind": "dot",
+   "targets": 2,
+   "dmg": 262,
+   "dur": 8,
+   "samples": 3
+  },
+  "renew": {
+   "text": "Heals you for 192, 55% of your max health, over 14 sec. Cast when you fall below 85% health.",
+   "kind": "defense",
+   "samples": 11
+  },
+  "smite": {
+   "text": "Strikes the nearest enemy within 28 yd for 103 Holy damage. Bosses and elites are targeted first.",
+   "kind": "single",
+   "targets": 1,
+   "range": 28,
+   "dmg": 103,
+   "samples": 7
+  },
+  "psychic_scream": {
+   "text": "Hits every enemy within 12 yd of you for 14 Shadow damage. They flee for 3 sec. Bosses are unaffected.",
+   "kind": "nova",
+   "radius": 12,
+   "dmg": 14,
+   "samples": 12
+  },
+  "searing_totem": {
+   "text": "Drops a totem beside you for 26 sec once enemies are within 25 yd. Every 1.5 sec it shoots the nearest enemy within 22 yd for 61 Fire damage. Bosses and elites are targeted first.",
+   "kind": "totem",
+   "dur": 26,
+   "every": 1.5,
+   "range": 22,
+   "tick": 61,
+   "aoe": false,
+   "samples": 7
+  },
+  "flame_shock": {
+   "text": "Afflicts the 2 healthiest enemies within 20 yd that are not already afflicted: 272 Fire damage over 8 sec, in 8 ticks. Bosses and elites are targeted first.",
+   "kind": "dot",
+   "targets": 2,
+   "dmg": 272,
+   "dur": 8,
+   "samples": 8
+  },
+  "healing_wave": {
+   "text": "Heals you for 99, 39% of your max health, at once. Cast when you fall below 85% health.",
+   "kind": "defense",
+   "samples": 7
+  },
+  "earth_shock": {
+   "text": "Strikes the nearest enemy within 20 yd for 197 Nature damage. Bosses and elites are targeted first.",
+   "kind": "single",
+   "targets": 1,
+   "range": 20,
+   "dmg": 197,
+   "samples": 4
+  },
+  "frost_shock": {
+   "text": "Strikes the 2 nearest enemies within 20 yd for 193 Frost damage each. Bosses and elites are targeted first. Slows them by 50% for 4 sec.",
+   "kind": "multi",
+   "targets": 2,
+   "range": 20,
+   "dmg": 193,
+   "samples": 8
+  },
+  "lightning_shield": {
+   "text": "For 21 sec, enemies that hit you in melee take 30 damage. Cast once enemies are within 30 yd.",
+   "kind": "special",
+   "samples": 11
+  },
+  "magma_totem": {
+   "text": "Drops a totem beside you for 21 sec once enemies are within 25 yd. Every 2 sec it deals 51 Fire damage to every enemy within 10 yd of it.",
+   "kind": "totem",
+   "dur": 21,
+   "every": 2,
+   "tick": 51,
+   "radius": 10,
+   "aoe": true,
+   "samples": 6
+  },
+  "chain_lightning": {
+   "text": "Strikes the nearest enemy within 28 yd for 75 Nature damage, then jumps to up to 4 more enemies within 12 yd of the last, 8% weaker with each jump. Bosses and elites are targeted first.",
+   "kind": "chain",
+   "range": 28,
+   "dmg": 75,
+   "jumps": 4,
+   "decay": 0.08,
+   "samples": 3
+  },
+  "fire_nova": {
+   "text": "Hits every enemy within 12 yd of you for 44 Fire damage.",
+   "kind": "nova",
+   "radius": 12,
+   "dmg": 44,
+   "samples": 5
+  },
+  "call_of_flame": {
+   "text": "Your totems explode in flame when they expire, dealing 1326 Fire damage to every enemy within 8.2 yd of them, at most once every 1.5 sec.",
+   "kind": "special",
+   "samples": 1
+  },
+  "immolate": {
+   "text": "Afflicts the 2 healthiest enemies within 30 yd that are not already afflicted: 338 Fire damage over 8 sec, in 8 ticks. Bosses and elites are targeted first.",
+   "kind": "dot",
+   "targets": 2,
+   "dmg": 338,
+   "dur": 8,
+   "samples": 4
+  },
+  "soul_fire": {
+   "text": "Your kills gather soul shards, at most one every 1 sec. At 5 shards a free Soulfire strikes the toughest enemy within 35 yd for 1402 Fire damage.",
+   "kind": "special",
+   "samples": 15
+  },
+  "searing_pain": {
+   "text": "Strikes a random enemy within 26 yd for 124 Fire damage.",
+   "kind": "single",
+   "targets": 1,
+   "range": 26,
+   "dmg": 124,
+   "samples": 8
+  },
+  "rain_of_fire": {
+   "text": "Lands on the thickest group of enemies within 30 yd: every enemy within 9.1 yd of that spot takes 16 Fire damage every 1.9 sec for 11 sec, 96 in all.",
+   "kind": "ground",
+   "radius": 9.1,
+   "tick": 16,
+   "every": 1.9,
+   "dur": 11,
+   "dmg": 96,
+   "samples": 7
+  },
+  "curse_of_agony": {
+   "text": "Afflicts the 4 healthiest enemies within 30 yd that are not already afflicted: 648 Shadow damage over 15 sec, in 15 ticks. Bosses and elites are targeted first.",
+   "kind": "dot",
+   "targets": 4,
+   "dmg": 648,
+   "dur": 15,
+   "samples": 8
+  },
+  "hellfire": {
+   "text": "Hits every enemy within 8 yd of you for 24 Fire damage.",
+   "kind": "nova",
+   "radius": 8,
+   "dmg": 24,
+   "samples": 13
+  },
+  "fear": {
+   "text": "Strikes the 3 nearest enemies within 20 yd for 25 Shadow damage each. Bosses and elites are targeted first. They flee for 4 sec. Bosses are unaffected.",
+   "kind": "multi",
+   "targets": 3,
+   "range": 20,
+   "dmg": 25,
+   "samples": 16
+  },
+  "drain_life": {
+   "text": "Afflicts the 2 healthiest enemies within 22 yd that are not already afflicted: 558 Shadow damage over 5 sec, in 5 ticks. Bosses and elites are targeted first. Heals you for 60% of the damage dealt.",
+   "kind": "dot",
+   "targets": 2,
+   "dmg": 558,
+   "dur": 5,
+   "samples": 10
+  },
+  "death_coil": {
+   "text": "Strikes the nearest enemy within 25 yd for 351 Shadow damage. Bosses and elites are targeted first. Heals you for all the damage dealt.",
+   "kind": "single",
+   "targets": 1,
+   "range": 25,
+   "dmg": 351,
+   "samples": 14
+  },
+  "demonic_empowerment": {
+   "text": "Your demons deal 40% more damage for 11 sec. Cast once enemies are within 30 yd and a demon fights for you.",
+   "kind": "buff",
+   "stat": "pet",
+   "value": 0.4,
+   "dur": 11,
+   "samples": 6
+  },
+  "swipe": {
+   "text": "Hits every enemy within 7.7 yd of you for 29 Physical damage.",
+   "kind": "nova",
+   "radius": 7.7,
+   "dmg": 29,
+   "samples": 5
+  },
+  "hurricane": {
+   "text": "Lands on the thickest group of enemies within 28 yd: every enemy within 14 yd of that spot takes 12 Nature damage every 1 sec for 11 sec, 135 in all. Slows them by 40% for 1.5 sec.",
+   "kind": "ground",
+   "radius": 14,
+   "tick": 12,
+   "every": 1,
+   "dur": 11,
+   "dmg": 135,
+   "samples": 5
+  },
+  "insect_swarm": {
+   "text": "Afflicts the 3 healthiest enemies within 28 yd that are not already afflicted: 271 Nature damage over 8 sec, in 8 ticks. Bosses and elites are targeted first. Enemies hit deal 15% less damage for 12 sec.",
+   "kind": "dot",
+   "targets": 3,
+   "dmg": 271,
+   "dur": 8,
+   "samples": 9
+  },
+  "entangling_roots": {
+   "text": "Strikes the 3 nearest enemies within 25 yd for 93 Nature damage each. Bosses and elites are targeted first. Roots them for 3 sec; bosses for a quarter as long.",
+   "kind": "multi",
+   "targets": 3,
+   "range": 25,
+   "dmg": 93,
+   "samples": 4
+  },
+  "faerie_fire": {
+   "text": "Marks the nearest enemy within 30 yd, a boss or an elite first. Your hits on a marked enemy arc 86% of their damage, up to 494, as Nature damage to the 2 enemies nearest it within 8.8 yd, at most 4 times a second for each mark. When a marked enemy dies, its mark moves to one nearby.",
+   "kind": "special",
+   "samples": 6
+  },
+  "regrowth": {
+   "text": "Heals you for 319, 68% of your max health, at once. Cast when you fall below 85% health.",
+   "kind": "defense",
+   "samples": 4
+  },
+  "rejuvenation": {
+   "text": "Heals you for 242, 45% of your max health, over 17 sec. Cast when you fall below 85% health.",
+   "kind": "defense",
+   "samples": 9
+  },
+  "thorns": {
+   "text": "For 28 sec, enemies that hit you in melee take 44 damage. Cast once enemies are within 30 yd.",
+   "kind": "special",
+   "samples": 7
+  },
+  "shred": {
+   "text": "Strikes the nearest enemy within 7 yd for 282 Physical damage. Bosses and elites are targeted first.",
+   "kind": "single",
+   "targets": 1,
+   "range": 7,
+   "dmg": 282,
+   "samples": 5
+  },
+  "starfire": {
+   "text": "Strikes the nearest enemy within 32 yd for 362 Arcane damage. Bosses and elites are targeted first.",
+   "kind": "single",
+   "targets": 1,
+   "range": 32,
+   "dmg": 362,
+   "samples": 7
+  }
+ },
+ "upgrades": {
+  "damage": [
+   {
+    "2": 18,
+    "3": 18,
+    "4": 12,
+    "5": 12,
+    "6": 12,
+    "7": 9,
+    "8": 7,
+    "9": 9,
+    "10": 9,
+    "11": 6,
+    "12": 12,
+    "13": 9,
+    "14": 7,
+    "15": 4,
+    "18": 6
+   },
+   {
+    "2": 25,
+    "3": 25,
+    "4": 17,
+    "5": 12,
+    "6": 17,
+    "7": 17,
+    "8": 10,
+    "9": 12,
+    "10": 8,
+    "11": 17,
+    "12": 10,
+    "18": 8
+   },
+   {
+    "2": 34,
+    "3": 34,
+    "4": 23,
+    "5": 34,
+    "6": 23,
+    "7": 17,
+    "8": 17,
+    "9": 23,
+    "10": 17,
+    "11": 14,
+    "13": 8,
+    "17": 14,
+    "19": 10
+   },
+   {
+    "2": 46,
+    "3": 46,
+    "4": 46,
+    "5": 23,
+    "6": 23,
+    "7": 23,
+    "8": 23,
+    "9": 18,
+    "10": 46,
+    "11": 18
+   },
+   {
+    "2": 65,
+    "3": 43,
+    "4": 65,
+    "5": 32,
+    "6": 43,
+    "7": 32,
+    "9": 43,
+    "12": 32,
+    "14": 32
+   }
+  ],
+  "cooldown": [
+   {
+    "2": -7,
+    "3": -7,
+    "4": -6,
+    "5": -6,
+    "6": -6,
+    "7": -5,
+    "8": -5,
+    "9": -4,
+    "10": -5,
+    "11": -4,
+    "12": -5,
+    "13": -4,
+    "14": -4,
+    "19": -3
+   },
+   {
+    "2": -10,
+    "3": -10,
+    "4": -9,
+    "5": -8,
+    "6": -7,
+    "7": -7,
+    "8": -6,
+    "9": -5,
+    "10": -5,
+    "11": -5,
+    "12": -6,
+    "14": -6
+   },
+   {
+    "2": -13,
+    "3": -13,
+    "4": -13,
+    "5": -11,
+    "6": -8,
+    "7": -9,
+    "8": -9,
+    "9": -7,
+    "10": -4,
+    "11": -8,
+    "12": -9,
+    "13": -9
+   },
+   {
+    "2": -17,
+    "3": -16,
+    "4": -16,
+    "5": -14,
+    "6": -14,
+    "7": -14,
+    "8": -11,
+    "9": -11,
+    "10": -8,
+    "11": -8,
+    "15": -8
+   },
+   {
+    "2": -23,
+    "3": -23,
+    "4": -21,
+    "5": -19,
+    "6": -16,
+    "7": -16,
+    "8": -12,
+    "9": -19,
+    "10": -8
+   }
+  ],
+  "area": [
+   {
+    "2": 12,
+    "3": 12,
+    "4": 12,
+    "5": 12,
+    "6": 11,
+    "7": 9,
+    "8": 12,
+    "9": 11,
+    "10": 11,
+    "11": 11,
+    "14": 10
+   },
+   {
+    "2": 18,
+    "3": 18,
+    "4": 17,
+    "5": 17,
+    "6": 17,
+    "7": 14,
+    "8": 16,
+    "10": 18,
+    "13": 15,
+    "14": 14
+   },
+   {
+    "2": 25,
+    "3": 25,
+    "4": 25,
+    "5": 25,
+    "6": 21,
+    "7": 23,
+    "8": 24,
+    "16": 16
+   },
+   {
+    "2": 35,
+    "3": 35,
+    "4": 32,
+    "5": 33,
+    "6": 29,
+    "7": 28,
+    "9": 32,
+    "10": 33,
+    "11": 25
+   },
+   {
+    "2": 50,
+    "3": 50,
+    "4": 46,
+    "6": 50,
+    "7": 47,
+    "8": 42,
+    "14": 35
+   }
+  ],
+  "duration": [
+   {
+    "2": 15,
+    "3": 15,
+    "4": 15,
+    "5": 15,
+    "6": 15,
+    "8": 14,
+    "9": 14,
+    "12": 12
+   },
+   {
+    "2": 22,
+    "3": 22,
+    "4": 21,
+    "5": 20,
+    "6": 22,
+    "7": 21,
+    "8": 20,
+    "11": 18
+   },
+   {
+    "2": 30,
+    "3": 30,
+    "4": 30,
+    "5": 28,
+    "6": 30,
+    "7": 29,
+    "9": 27,
+    "10": 28,
+    "11": 27
+   },
+   {
+    "2": 40,
+    "4": 37,
+    "5": 35,
+    "7": 35,
+    "9": 37
+   },
+   {
+    "2": 60,
+    "3": 60,
+    "4": 58,
+    "6": 60,
+    "7": 58,
+    "9": 55,
+    "10": 53,
+    "12": 46
+   }
+  ],
+  "targets": [
+   null,
+   {
+    "2": 1,
+    "3": 1,
+    "4": 1,
+    "5": 1,
+    "6": 1,
+    "7": 1,
+    "8": 1,
+    "9": 1,
+    "10": 1,
+    "11": 1,
+    "12": 1,
+    "15": 1
+   },
+   {
+    "2": 1,
+    "3": 1,
+    "4": 1,
+    "5": 1,
+    "6": 1,
+    "7": 1,
+    "8": 1,
+    "9": 1,
+    "10": 1,
+    "12": 1,
+    "13": 1,
+    "17": 1
+   },
+   {
+    "2": 2,
+    "3": 2,
+    "4": 2,
+    "5": 2,
+    "6": 2,
+    "7": 2,
+    "8": 2,
+    "9": 2,
+    "10": 2,
+    "11": 2,
+    "16": 2
+   },
+   {
+    "2": 2,
+    "3": 2,
+    "4": 2,
+    "5": 2,
+    "6": 2,
+    "7": 2,
+    "9": 2,
+    "10": 2
+   }
+  ],
+  "absorb": [
+   {
+    "2": 9,
+    "3": 6,
+    "4": 6,
+    "5": 6,
+    "6": 4,
+    "7": 4,
+    "8": 4
+   },
+   {
+    "2": 12,
+    "4": 8,
+    "5": 8,
+    "6": 6
+   },
+   {
+    "4": 16,
+    "5": 8,
+    "8": 6,
+    "10": 5,
+    "12": 4
+   },
+   {
+    "2": 21,
+    "7": 11,
+    "10": 6,
+    "11": 7
+   },
+   {
+    "2": 28,
+    "3": 20,
+    "4": 20,
+    "6": 12,
+    "8": 12,
+    "10": 9
+   }
+  ],
+  "healing": [
+   {
+    "3": 6,
+    "4": 9,
+    "5": 6,
+    "7": 4,
+    "8": 4,
+    "9": 3,
+    "10": 3,
+    "11": 2
+   },
+   {
+    "2": 12,
+    "8": 5,
+    "10": 4
+   },
+   {
+    "5": 8,
+    "6": 7,
+    "8": 7
+   },
+   {
+    "3": 21,
+    "7": 7,
+    "11": 6
+   },
+   {
+    "5": 15,
+    "9": 8
+   }
+  ]
+ },
+ "levels": {}
+}

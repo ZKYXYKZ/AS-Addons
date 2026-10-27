@@ -186,3 +186,59 @@ header { flex: none; }
 .hidden { display: none !important; }
 .raceline { margin: 6px 0 2px; font-size: 13px; }
 .raceline b { color: var(--gold); cursor: help; }
+.simtop { display: flex; gap: 16px; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.simtop .hint { max-width: 760px; }
+.simcmp { display: flex; gap: 8px; align-items: center; white-space: nowrap; cursor: pointer; }
+.simgrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+.simgrid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.simcol { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.simgrid:not(.two) .simcol { display: grid; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); grid-template-areas: "head res" "name res" "opts res" "h1 res" "spells res" "h2 res" "jw res" "x res"; column-gap: 24px; align-items: start; }
+.simgrid:not(.two) .simcol > .simres { grid-area: res; grid-row: 1 / span 20; }
+.simhead { display: flex; gap: 8px; }
+.simhead select { flex: 1; }
+.simname { color: var(--gold); font-weight: 600; }
+.simcol h3 { margin: 6px 0 0; font-size: 13px; color: var(--mute); text-transform: uppercase; letter-spacing: .5px; }
+.simopts { display: flex; flex-direction: column; gap: 8px; }
+.simfield { display: grid; grid-template-columns: 130px 1fr; align-items: center; gap: 10px; font-size: 13px; }
+.simrange { display: flex; align-items: center; gap: 8px; }
+.simrange input { flex: 1; }
+.simrange span { min-width: 84px; text-align: right; color: var(--gold); font-size: 12px; }
+.simspells { display: flex; flex-direction: column; gap: 6px; }
+.simspell { display: grid; grid-template-columns: 1fr 64px; gap: 6px; }
+.simspell input { width: 100%; }
+.simres { display: flex; flex-direction: column; gap: 14px; }
+.simtiles { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 10px; }
+.simtile { background: #15151a; border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
+.simtile span { color: var(--mute); font-size: 12px; }
+.simtile b { font-size: 20px; color: var(--text); }
+.simtile.big b { font-size: 26px; color: var(--gold); }
+.simtile small { font-size: 13px; margin-left: 6px; }
+.simbars { display: flex; flex-direction: column; gap: 8px; }
+.simbar { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: center; }
+.simbar .ic { width: 34px; height: 34px; }
+.simbartop { display: flex; justify-content: space-between; font-size: 13px; }
+.simbartop small { color: var(--mute); }
+.simtrack { height: 8px; background: #222228; border-radius: 4px; overflow: hidden; margin: 4px 0 2px; }
+.simfill { height: 100%; background: linear-gradient(90deg, #b8862f, var(--gold)); border-radius: 4px; }
+.simstats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px 14px; font-size: 12px; }
+.simstats div { display: flex; justify-content: space-between; border-bottom: 1px solid var(--line); padding: 3px 0; }
+.simstats span { color: var(--mute); }
+.simsug { display: flex; flex-direction: column; gap: 6px; }
+.simsugrow { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; border-bottom: 1px solid var(--line); }
+.good { color: #6fcf6f; }
+.bad { color: var(--red); }
+.simgear { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; }
+.simgearf { display: grid; grid-template-columns: 1fr 64px 14px; align-items: center; gap: 6px; font-size: 12px; }
+.simgearf input { width: 100%; }
+.simgearf small { color: var(--mute); }
+.simmc { margin-top: 18px; display: flex; flex-direction: column; gap: 12px; }
+.simmcbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; }
+.simmcbar b { color: var(--gold); margin-right: 6px; }
+.simcol.mc { display: flex !important; }
+.simhistbox { background: #15151a; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px 4px; }
+.simhist { width: 100%; height: 70px; display: block; }
+.simhist rect { fill: var(--gold); opacity: .85; }
+.simhistax { display: flex; justify-content: space-between; margin-top: 2px; }
+.simtbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.simtbl th { text-align: left; color: var(--mute); font-weight: 500; padding: 4px 6px; border-bottom: 1px solid var(--line); }
+.simtbl td { padding: 4px 6px; border-bottom: 1px solid var(--line); }

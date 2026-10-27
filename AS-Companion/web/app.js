@@ -7,7 +7,7 @@ const RARITY_COLORS = ["#d9d9d9", "#1eff00", "#0070dd", "#a335ee", "#ff8000"];
 const STR = {
   fr: {
     new: "Nouveau", dup: "Dupliquer", ren: "Renommer", del: "Supprimer", delConfirm: "Supprimer ce build ?", imp: "Importer", exp: "Exporter",
-    launch: "Lancer le jeu", running: "Jeu en cours", builds: "Builds", stats: "Statistiques", addons: "Addons", build: "Build", talents: "Talents", spells: "Sorts", jewels: "Bijoux", rules: "Règles", options: "Options",
+    launch: "Lancer le jeu", running: "Jeu en cours", builds: "Builds", stats: "Statistiques", sim: "Simulateur", addons: "Addons", build: "Build", talents: "Talents", spells: "Sorts", jewels: "Bijoux", rules: "Règles", options: "Options",
     none: "Aucun build pour cette classe. Cliquez sur Nouveau.", spec: "Spé", baseVal: "Valeurs de base, plus fortes aux raretés supérieures", pts: "points", rank: "Rang", next: "Rang suivant", locked: "Rangée verrouillée : {n} points requis dans cet arbre",
     clickTalent: "Clic gauche : +1 · Clic droit : -1", reset: "Réinitialiser les talents",
     pool: "Sorts de la classe", poolHint: "Clic : ajouter · Clic droit : bannir", prio: "Ordre de priorité", prioHint: "Un run garde 6 sorts : les 6 premiers sont visés, les suivants servent de repli. Le poids (1 à 5) entre dans le score avec la rareté.",
@@ -28,7 +28,7 @@ const STR = {
   },
   en: {
     new: "New", dup: "Duplicate", ren: "Rename", del: "Delete", delConfirm: "Delete this build?", imp: "Import", exp: "Export",
-    launch: "Launch game", running: "Game running", builds: "Builds", stats: "Statistics", addons: "Addons", build: "Build", talents: "Talents", spells: "Spells", jewels: "Jewelry", rules: "Rules", options: "Options",
+    launch: "Launch game", running: "Game running", builds: "Builds", stats: "Statistics", sim: "Simulator", addons: "Addons", build: "Build", talents: "Talents", spells: "Spells", jewels: "Jewelry", rules: "Rules", options: "Options",
     none: "No build for this class. Click New.", spec: "Spec", baseVal: "Base values, stronger at higher rarities", pts: "points", rank: "Rank", next: "Next rank", locked: "Row locked: {n} points required in this tree",
     clickTalent: "Left click: +1 · Right click: -1", reset: "Reset talents",
     pool: "Class spells", poolHint: "Click: add · Right click: ban", prio: "Priority order", prioHint: "A run holds 6 spells: the first 6 are targets, the rest are fallbacks. Weight (1 to 5) counts in the score with rarity.",
@@ -501,7 +501,7 @@ function renderHeader() {
   $("presetBtn").classList.toggle("hidden", !PRESETS.some((p) => p.class === CLASS));
   const pages = $("pages");
   pages.innerHTML = "";
-  ["builds", "stats", "addons", "options"].forEach((p) => {
+  ["builds", "stats", "sim", "addons", "options"].forEach((p) => {
     const x = el("button", p === PAGE ? "active" : "", T(p));
     x.onclick = () => { PAGE = p; render(); };
     pages.appendChild(x);
@@ -524,12 +524,13 @@ function render() {
   hideTip();
   renderHeader();
   const b = active();
-  ["builds", "stats", "addons", "options"].forEach((p) => ($("page-" + p).className = p === PAGE ? "show" : ""));
+  ["builds", "stats", "sim", "addons", "options"].forEach((p) => ($("page-" + p).className = p === PAGE ? "show" : ""));
   const opt = $("page-options");
   opt.innerHTML = "";
   if (PAGE === "options") renderOptions(opt);
   const st = $("page-stats");
   if (PAGE === "stats") renderStats(st); else st.innerHTML = "";
+  if (PAGE === "sim") renderSim($("page-sim")); else $("page-sim").innerHTML = "";
   const ad = $("page-addons");
   if (PAGE === "addons") renderAddons(ad); else ad.innerHTML = "";
   ["build", "rules"].forEach((t) => {
@@ -640,7 +641,7 @@ async function init() {
   STATE.nextId = STATE.nextId || 1;
   CLASS = STATE.lastClass || "warrior";
   const qp = new URLSearchParams(location.search);
-  if (["builds", "stats", "addons", "options"].includes(qp.get("page"))) PAGE = qp.get("page");
+  if (["builds", "stats", "sim", "addons", "options"].includes(qp.get("page"))) PAGE = qp.get("page");
   if (qp.get("tab") === "rules") TAB = "rules";
   $("classSel").onchange = (e) => { CLASS = e.target.value; STATE.lastClass = CLASS; changed(); };
   $("buildSel").onchange = (e) => { STATE.active[CLASS] = +e.target.value; changed(); };
