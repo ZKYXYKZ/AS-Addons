@@ -2356,6 +2356,23 @@ class Companion : Form
             System.Globalization.CultureInfo inv = System.Globalization.CultureInfo.InvariantCulture;
             List<string[]> details = Regex.Matches(File.ReadAllText(file, Utf8), "\"(AZD1\\|[^\"]*)\"").Cast<Match>().Select(m => m.Groups[1].Value.Split('|')).Where(f => f.Length >= 15).ToList();
             if (details.Count == 0) return;
+            string rf = Path.Combine(dataDir, "runs.json");
+            if (File.Exists(rf))
+            {
+                List<object> runs = A(json.DeserializeObject(File.ReadAllText(rf, Utf8))).ToList();
+                int marked = 0;
+                foreach (string[] d in details)
+                {
+                    string[] head = d[1].Split(',');
+                    int hl;
+                    if (head.Length < 4 || !int.TryParse(head[3], out hl) || hl <= 0) continue;
+                    Dictionary<string, object> run = runs.Select(D).LastOrDefault(x => x != null && G(x, "heroic") == null && S(G(x, "class")) == head[0] && Math.Abs(N(G(x, "level"), -1) - double.Parse(d[3], inv)) < 0.5 && Math.Abs(N(G(x, "kills"), -1) - double.Parse(d[4], inv)) <= 5);
+                    if (run == null) continue;
+                    run["heroic"] = hl;
+                    marked++;
+                }
+                if (marked > 0) File.WriteAllText(rf, json.Serialize(runs), Utf8);
+            }
             lock (shareLock)
             {
                 string qf = Path.Combine(dataDir, "share-queue.json");
@@ -2369,6 +2386,9 @@ class Companion : Form
                     string[] d = details.LastOrDefault(f => f[1].Split(',')[0] == S(G(run, "class")) && Math.Abs(double.Parse(f[3], inv) - N(G(run, "level"), -1)) < 0.5 && Math.Abs(double.Parse(f[4], inv) - N(G(run, "kills"), -1)) <= 5);
                     if (d == null) continue;
                     run["detail"] = string.Join("|", d);
+                    int hl;
+                    string[] head = d[1].Split(',');
+                    if (G(run, "difficulty") == null && head.Length > 3 && int.TryParse(head[3], out hl)) run["difficulty"] = hl;
                     n++;
                 }
                 if (n > 0) { File.WriteAllText(qf, json.Serialize(q), Utf8); Log("run details attached: " + n); }
