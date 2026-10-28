@@ -110,6 +110,7 @@ f:SetScript("OnUpdate", function()
   local phase = AZS_GetPhase()
   if phase == "playing" and not rec and (prevPhase == nil or prevPhase == "ready" or prevPhase == "dead" or prevPhase == "victory") then start() end
   if rec and (phase == "dead" or phase == "victory") and phase ~= prevPhase then finish(phase == "victory" and "victory" or "defeat") end
+  if rec and (phase == "ready" or phase == nil) and prevPhase ~= phase then finish("defeat") end
   prevPhase = phase
   if not rec or phase ~= "playing" and phase ~= "choosing" then return end
   local t = AZS_GetRunTime and AZS_GetRunTime() or 0
