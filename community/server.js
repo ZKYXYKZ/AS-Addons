@@ -12,6 +12,7 @@ const LIMIT_IP = 60;
 const LIMIT_INSTALL = 30;
 const RECENT = 50;
 const MAX_BUILDS = 5000;
+const MIN_VICTORY = 15 * 60;
 const DAY_BYTES = 300 * 1024 * 1024;
 const KEY = /^[\p{L}\p{N} _:'().,!-]{1,40}$/u;
 const CTRL = /[\u0000-\u001f\u007f]/;
@@ -72,6 +73,7 @@ function clean(r, ip) {
   if (!run.time || run.level == null || !run.zone) return null;
   const real = (Date.parse(run.endedAt) - Date.parse(run.startedAt)) / 1000;
   if (isFinite(real) && real < run.time * 0.9) run.suspect = true;
+  if (run.result === "victory" && run.time < MIN_VICTORY) run.suspect = true;
   return run;
 }
 
