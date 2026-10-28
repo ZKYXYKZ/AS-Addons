@@ -31,6 +31,8 @@ C'est tout. Windows 10 ou 11, rien d'autre à installer. Le compagnon se tient �
 - **Sorts** : votre ordre de priorité, un poids de 1 à 5 pour chacun, et les sorts dont vous ne voulez jamais. Une partie garde 6 sorts : les 6 premiers sont vos cibles, les suivants servent de repli.
 - **Bijoux** : les anneaux, bijoux et amulettes que vous voulez, amulettes légendaires comprises, chacun avec un poids de 1 à 5. Survolez un bijou pour voir ses effets.
 - **Règles** : le poids de la rareté, le nombre de relances à garder, le moment où accepter les bijoux de repli, et plus encore.
+- **Builds proposés** : un build prêt à l'emploi pour chacune des 28 spés, avec une race conseillée, ajouté en un clic.
+- **Appliquer au jeu** : ouvrez l'Armurerie sur la spé voulue, cliquez sur **Appliquer au jeu** et ne bougez plus la souris (une vingtaine de secondes) : le compagnon clique sur Reset et pose les points de talent du build. Il ne change jamais votre classe ni votre spé, et marche à toutes les résolutions, 4K comprise.
 - **Partage** : exportez un build en une ligne de texte, importez celui d'un ami en un clic.
 
 ### Choisir les cartes à votre place
@@ -40,18 +42,27 @@ Lancez toujours le jeu avec **Lancer le jeu** : c'est ainsi que le compagnon voi
 - Un bandeau par-dessus le jeu indique la meilleure carte.
 - Activez la **Sélection auto** dans Options, et le compagnon choisit et relance pour vous.
 - Ses choix suivent la partie : sorts déjà pris et leur rang, dégâts réels de chaque sort, amulette portée, votre chance et les emplacements de bijoux encore libres. Les anneaux et bijoux ne se changent plus une fois pris : il les choisit avec soin.
-- Il reconnaît votre spé au sort ou au familier que donne votre dernier talent en début de partie, et passe sur votre build de cette spé.
+- Il suit votre build, rien d'autre : quand aucune carte n'en fait partie, il relance tant qu'il vous reste des relances, puis propose un skip, et sinon vous laisse choisir.
+- Il reconnaît votre spé au sort ou au familier que donne votre dernier talent en début de partie, et passe sur votre build de cette spé. Les flèches du panneau en jeu changent aussi le build du compagnon.
+- Rejouer depuis l'écran de fin de partie garde votre classe et votre build.
 - Passer et Bannir n'ont pas encore de touche dans le jeu : ils restent manuels.
 
 ### Suivre vos parties
 
 ![Page Statistiques](docs/companion-stats.png)
 
-La page **Statistiques** enregistre chaque partie lancée depuis le compagnon, mode endless compris : durée de survie, niveau, victimes, DPS, boss et gardiens, avec des graphiques par partie, par classe, par spécialisation et par race, et la part des dégâts de chaque sort.
+La page **Statistiques** a deux onglets :
+
+- **Solo** enregistre chaque partie lancée depuis le compagnon, modes endless et héroïque compris : durée de survie, niveau, victimes, DPS, boss et gardiens, avec des graphiques par partie, par classe, par spécialisation et par race, et la part des dégâts de chaque sort.
+- **Communauté** montre les parties partagées par tous les joueurs du compagnon, aussi sur [as-stats.zkysolutions.com](https://as-stats.zkysolutions.com) : meilleures parties par zone et difficulté, taux de victoire par classe, spé et race, builds les plus joués (ajoutés aux vôtres en un clic) et sorts qui font le plus de dégâts.
+
+### Simuler un build
+
+La page **Simulateur** fait jouer un build avec les données du jeu (sorts, ennemis, zones et boss lus dans les fichiers du jeu) pour comparer des builds avant de les essayer. Il est calé sur de vraies parties, et gagne en précision à mesure que les parties partagées arrivent.
 
 ### Gérer les addons
 
-La page **Addons** présente chaque addon avec son rôle, sa version, et des boutons pour l'installer, le mettre à jour, l'activer, le désactiver ou le désinstaller.
+La page **Addons** présente chaque addon avec son rôle, sa version, et des boutons pour l'installer, le mettre à jour, l'activer, le désactiver ou le désinstaller. La mise à jour automatique se coupe pour tous les addons ou pour chacun, et un addon n'est réinstallé que s'il a vraiment changé.
 
 ![Page Addons](docs/companion-addons.png)
 
@@ -61,7 +72,9 @@ La page **Addons** présente chaque addon avec son rôle, sa version, et des bou
 
 <img src="docs/build-panel.png" alt="Panneau Build en partie" align="right" width="260">
 
-Affiche votre build à l'écran pendant la partie : les 6 sorts visés avec leur rang, les bijoux portés dans la couleur de leur qualité, et ce qui manque encore. Pendant le choix d'une carte, il rappelle quoi bannir et combien de relances il reste. Il suit votre spé comme le compagnon, et les flèches à côté de son titre passent à un autre de vos builds. En fin de partie, il enregistre le compteur de dégâts du jeu (familiers et effets compris) pour les statistiques du compagnon.
+Affiche votre build à l'écran pendant la partie : les 6 sorts visés avec leur rang, les bijoux portés dans la couleur de leur qualité, ce qui manque encore, et les bijoux de repli avec le niveau à partir duquel ils sont acceptés. Pendant le choix d'une carte, il rappelle quoi bannir et combien de relances il reste. Il suit votre spé comme le compagnon, et les flèches à côté de son titre passent à un autre de vos builds, dans le compagnon aussi. Les spés sans build de votre part reçoivent le build proposé.
+
+Il enregistre aussi chaque partie (vie, ennemis, boss, statistiques, rangs des sorts et compteur de dégâts, familiers et effets compris) pour les statistiques et le simulateur. Le compagnon en a besoin : s'il manque, il vous prévient et propose de l'installer ou de l'activer.
 
 <br clear="right">
 
@@ -92,7 +105,7 @@ Les trois partagent une fenêtre : le bouton doré **S** sur la minicarte, ou `/
 ## Est-ce sûr ?
 
 - Tout le code est dans ce dépôt. Chaque version est compilée par GitHub Actions à partir de ce code, pas sur le PC de quelqu'un, et `SHA256SUMS.txt` donne l'empreinte de chaque fichier.
-- Le compagnon ne parle qu'à GitHub (pour les mises à jour) et, s'il manque, à Microsoft pour WebView2. Pas de compte, pas de télémétrie : vos builds et statistiques restent sur votre PC.
+- Le compagnon ne parle qu'à GitHub (pour les mises à jour), au site communautaire [as-stats.zkysolutions.com](https://as-stats.zkysolutions.com) et, s'il manque, à Microsoft pour WebView2. Pas de compte. Vos builds restent sur votre PC. À la fin de chaque partie, un résumé anonyme part vers le site communautaire pour améliorer les builds proposés et le simulateur : ni pseudo, ni chemin, ni adresse, seulement un identifiant aléatoire lié à l'installation, et les adresses IP ne sont pas conservées. **Partager mes parties**, activé par défaut, se coupe dans les options.
 - L'exe n'est pas encore signé : Windows SmartScreen peut avertir au premier lancement, **Informations complémentaires → Exécuter quand même**.
 - La sélection automatique est désactivée par défaut. Les addons ne font que lire le jeu par son API officielle pour les addons.
 

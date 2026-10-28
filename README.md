@@ -31,6 +31,8 @@ That's all. Windows 10 or 11, nothing else to install. The companion keeps itsel
 - **Spells**: your priority order, a weight from 1 to 5 for each, and the spells you never want. A run holds 6 spells: the first 6 are your targets, the rest are fallbacks.
 - **Jewelry**: the rings, trinkets and amulets you want, legendary amulets included, each with a weight from 1 to 5. Hover any piece to see its effects.
 - **Rules**: how much rarity counts, how many rerolls to keep, when to accept fallback jewelry, and more.
+- **Suggested builds**: a ready-made build for each of the 28 specs, with a recommended race, added in one click.
+- **Apply in game**: open the Armory on the spec you want, click **Apply in game** and don't move the mouse (about twenty seconds): the companion clicks Reset and places the build's talent points. It never changes your class or spec, and works at any resolution, 4K included.
 - **Share**: export a build as one line of text, import a friend's build in one click.
 
 ### Pick the cards for you
@@ -40,18 +42,27 @@ Always start the game with **Launch game**: that's how the companion sees the le
 - A banner over the game shows the best card.
 - Turn on **Auto-pick** in Options and the companion chooses and rerolls for you.
 - Its choices follow the run: spells you already have and their rank, how much damage each spell really does, the amulet you wear, your luck, and the jewelry slots still free. Rings and trinkets can't be swapped once taken, so it is careful with them.
-- It recognizes your spec from the spell or pet your last talent gives at the start of a run, and switches to your build for that spec.
+- It follows your build, nothing else: when no card belongs to it, it rerolls while you have rerolls, then suggests a skip, and otherwise leaves the choice to you.
+- It recognizes your spec from the spell or pet your last talent gives at the start of a run, and switches to your build for that spec. The arrows of the in-game panel switch the companion's build too.
+- Replaying from the end-of-run screen keeps your class and build.
 - Skip and Banish have no key in the game yet, so they stay manual.
 
 ### Track your runs
 
 ![Statistics page](docs/companion-stats.png)
 
-The **Statistics** page records every run launched from the companion, endless mode included: time survived, level, kills, DPS, bosses and guardians, with charts by run, by class, by spec and by race, and the damage share of each spell.
+The **Statistics** page has two tabs:
+
+- **Solo** records every run launched from the companion, endless and heroic modes included: time survived, level, kills, DPS, bosses and guardians, with charts by run, by class, by spec and by race, and the damage share of each spell.
+- **Community** shows the runs shared by all companion players, also on [as-stats.zkysolutions.com](https://as-stats.zkysolutions.com): best runs per zone and difficulty, win rate per class, spec and race, the most played builds (added to yours in one click) and the spells that deal the most damage.
+
+### Simulate a build
+
+The **Simulator** page plays a build against the game's own data (spells, enemies, zones and bosses read from the game files) to compare builds before trying them. It is calibrated with real runs, and gets more accurate as shared runs come in.
 
 ### Manage the addons
 
-The **Addons** page shows each addon with what it does, its version, and buttons to install, update, enable, disable or uninstall it.
+The **Addons** page shows each addon with what it does, its version, and buttons to install, update, enable, disable or uninstall it. Auto-update can be turned off for all addons or for each one, and an addon is only reinstalled when it actually changed.
 
 ![Addons page](docs/companion-addons.png)
 
@@ -61,7 +72,9 @@ The **Addons** page shows each addon with what it does, its version, and buttons
 
 <img src="docs/build-panel.png" alt="Build panel in a run" align="right" width="260">
 
-Shows your build on screen during the run: the 6 target spells with their rank, the jewelry you wear in its quality color, and what's still missing. While you pick a card, it reminds you what to banish and how many rerolls are left. It follows your spec like the companion, and the arrows next to its title switch to another of your builds. At the end of a run it saves the game damage meter (pets and procs included) for the companion statistics.
+Shows your build on screen during the run: the 6 target spells with their rank, the jewelry you wear in its quality color, what's still missing, and the fallback jewelry with the level it's accepted from. While you pick a card, it reminds you what to banish and how many rerolls are left. It follows your spec like the companion, and the arrows next to its title switch to another of your builds, in the companion too. Specs without a build of yours get the suggested one.
+
+It also records each run (health, enemies, bosses, stats, spell ranks and damage meter, pets and procs included) for the statistics and the simulator. The companion needs it: it warns you and offers to install or enable it if it's missing.
 
 <br clear="right">
 
@@ -92,7 +105,7 @@ All three share one window: the gold **S** button on the minimap, or `/survivors
 ## Is it safe?
 
 - The whole source is in this repository. Every release is built by GitHub Actions from that source, not on someone's PC, and `SHA256SUMS.txt` lists the fingerprint of each file.
-- The companion only talks to GitHub (to check for updates) and, if it is missing, to Microsoft for WebView2. No account. Your builds and stats stay on your PC, except an anonymous summary of each run sent to the community site to improve the suggested builds and the simulator (**Share my runs**, on by default, can be turned off in the options).
+- The companion only talks to GitHub (to check for updates), to the community site [as-stats.zkysolutions.com](https://as-stats.zkysolutions.com), and, if it is missing, to Microsoft for WebView2. No account. Your builds stay on your PC. At the end of each run, an anonymous summary goes to the community site to improve the suggested builds and the simulator: no player name, path or address, only a random ID tied to the install, and IP addresses are not stored. **Share my runs**, on by default, can be turned off in the options.
 - The exe is not signed yet, so Windows SmartScreen may warn on first launch: **More info → Run anyway**.
 - Auto-pick is off by default. The addons only read the game through its official addon API.
 
