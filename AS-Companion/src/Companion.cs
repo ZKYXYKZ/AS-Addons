@@ -2357,7 +2357,7 @@ class Companion : Form
             string install = InstallId();
             double total = spellDmg.Values.Sum();
             Dictionary<string, object> run = new Dictionary<string, object> {
-                { "v", 1 }, { "client", CurrentVersion }, { "install", install }, { "startedAt", runStarted.ToUniversalTime().ToString("o") }, { "endedAt", DateTime.UtcNow.ToString("o") },
+                { "v", 1 }, { "runId", Guid.NewGuid().ToString("N").Substring(0, 16) }, { "client", CurrentVersion }, { "install", install }, { "startedAt", runStarted.ToUniversalTime().ToString("o") }, { "endedAt", DateTime.UtcNow.ToString("o") },
                 { "class", S(heroClass["key"]) }, { "race", G(r, "race") }, { "spec", G(r, "spec") },
                 { "zone", G(r, "bg") }, { "difficulty", null }, { "coop", coopSize > 1 ? coopSize : 1 },
                 { "result", G(r, "result") }, { "time", G(r, "time") }, { "level", G(r, "level") }, { "kills", G(r, "kills") },
@@ -2417,8 +2417,7 @@ class Companion : Form
             lock (shareLock)
             {
                 string qf = Path.Combine(dataDir, "share-queue.json");
-                if (!File.Exists(qf)) return;
-                List<object> q = A(json.DeserializeObject(File.ReadAllText(qf, Utf8))).ToList();
+                List<object> q = File.Exists(qf) ? A(json.DeserializeObject(File.ReadAllText(qf, Utf8))).ToList() : new List<object>();
                 int n = 0;
                 foreach (object o in q)
                 {
@@ -2432,7 +2431,19 @@ class Companion : Form
                     if (G(run, "difficulty") == null && head.Length > 3 && int.TryParse(head[3], out hl)) run["difficulty"] = hl;
                     n++;
                 }
-                if (n > 0) { File.WriteAllText(qf, json.Serialize(q), Utf8); Log("run details attached: " + n); }
+                string sf = Path.Combine(dataDir, "share-sent.json");
+                List<object> sentRuns = File.Exists(sf) ? A(json.DeserializeObject(File.ReadAllText(sf, Utf8))).ToList() : new List<object>();
+                foreach (object o in sentRuns.ToList())
+                {
+                    Dictionary<string, object> run = D(o);
+                    if (run == null) continue;
+                    string[] d = details.LastOrDefault(f => f[1].Split(',')[0] == S(G(run, "class")) && Math.Abs(double.Parse(f[3], inv) - N(G(run, "level"), -1)) < 0.5 && Math.Abs(double.Parse(f[4], inv) - N(G(run, "kills"), -1)) <= 5);
+                    if (d == null) continue;
+                    q.Add(new Dictionary<string, object> { { "v", 1 }, { "kind", "detail" }, { "install", InstallId() }, { "runId", G(run, "runId") }, { "class", G(run, "class") }, { "level", G(run, "level") }, { "kills", G(run, "kills") }, { "detail", string.Join("|", d) } });
+                    sentRuns.Remove(o);
+                    n++;
+                }
+                if (n > 0) { File.WriteAllText(qf, json.Serialize(q), Utf8); File.WriteAllText(sf, json.Serialize(sentRuns), Utf8); Log("run details attached: " + n); }
             }
         }
         catch (Exception ex) { Log("details failed: " + ex.Message); }
@@ -2448,6 +2459,8 @@ class Companion : Form
             if (!File.Exists(qf)) return;
             List<object> q = A(json.DeserializeObject(File.ReadAllText(qf, Utf8))).ToList();
             int sent = 0;
+            string sf = Path.Combine(dataDir, "share-sent.json");
+            List<object> sentRuns = File.Exists(sf) ? A(json.DeserializeObject(File.ReadAllText(sf, Utf8))).ToList() : new List<object>();
             while (q.Count > 0)
             {
                 try
@@ -2462,7 +2475,10 @@ class Companion : Form
                             byte[] raw = Utf8.GetBytes(json.Serialize(q[0]));
                             gz.Write(raw, 0, raw.Length);
                         }
-                        w.UploadData(url.TrimEnd('/') + "/api/runs", "POST", ms.ToArray());
+                        bool detail = S(G(D(q[0]), "kind")) == "detail";
+                        w.UploadData(url.TrimEnd('/') + (detail ? "/api/details" : "/api/runs"), "POST", ms.ToArray());
+                        if (!detail && G(D(q[0]), "detail") == null && G(D(q[0]), "runId") != null)
+                            sentRuns.Add(new Dictionary<string, object> { { "runId", G(D(q[0]), "runId") }, { "class", G(D(q[0]), "class") }, { "level", G(D(q[0]), "level") }, { "kills", G(D(q[0]), "kills") } });
                     }
                     q.RemoveAt(0);
                     sent++;
@@ -2470,6 +2486,8 @@ class Companion : Form
                 catch (Exception ex) { Log("share failed: " + ex.Message); break; }
             }
             File.WriteAllText(qf, json.Serialize(q), Utf8);
+            while (sentRuns.Count > 30) sentRuns.RemoveAt(0);
+            File.WriteAllText(sf, json.Serialize(sentRuns), Utf8);
             if (sent > 0) Log("shared runs: " + sent);
         }
     }
@@ -2490,7 +2508,8 @@ class Companion : Form
                 if (File.Exists(qf))
                 {
                     List<object> q = A(json.DeserializeObject(File.ReadAllText(qf, Utf8))).ToList();
-                    if (q.Count > 0) { D(q[q.Count - 1])["difficulty"] = level; File.WriteAllText(qf, json.Serialize(q), Utf8); }
+                    Dictionary<string, object> last = q.Count > 0 ? D(q[q.Count - 1]) : null;
+                    if (last != null && S(G(last, "kind")) != "detail") { last["difficulty"] = level; File.WriteAllText(qf, json.Serialize(q), Utf8); }
                 }
             }
             Log("heroic " + level + " beaten");
@@ -2545,7 +2564,11 @@ class Companion : Form
         File.WriteAllText(rf, json.Serialize(runs), Utf8);
         ResearchCombat();
         Research("run", r);
-        if (!r.ContainsKey("endless")) QueueShare(r);
+        if (!r.ContainsKey("endless"))
+        {
+            QueueShare(r);
+            new Thread(() => { Thread.Sleep(15000); FlushShare(); }) { IsBackground = true }.Start();
+        }
         Log("run recorded: " + r["result"] + " lvl " + r["level"] + " " + Math.Round(time) + "s dps " + r["dps"]);
     }
 

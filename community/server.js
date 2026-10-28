@@ -42,6 +42,7 @@ function clean(r, ip) {
   const run = {
     at: new Date().toISOString(),
     install: hash(install),
+    runId: typeof r.runId === "string" && /^[0-9a-f]{16}$/.test(r.runId) ? r.runId : null,
     client: str(r.client, 20),
     class: cls,
     race: keyOf(RACE_OF, r.race),
@@ -83,7 +84,11 @@ function clean(r, ip) {
   return run;
 }
 
-let stats;
+let stats, open = new Map();
+function heroicOf(detail) {
+  const h = +((detail.split("|")[1] || "").split(",")[3]);
+  return isFinite(h) && h >= 0 && h <= 10 ? h : null;
+}
 function emptyStats() {
   return { runs: 0, installs: new Set(), groups: Object.create(null), builds: Object.create(null), spells: Object.create(null), recent: [], best: Object.create(null), nbuilds: 0 };
 }
@@ -94,19 +99,24 @@ function add(r) {
   if (r.suspect) return;
   stats.runs++;
   stats.installs.add(r.install);
-  const g = (stats.groups[groupKey(r)] = stats.groups[groupKey(r)] || { n: 0, wins: 0, time: 0, level: 0, dps: 0, best: 0 });
+  const g = (stats.groups[groupKey(r)] = stats.groups[groupKey(r)] || { n: 0, wins: 0, time: 0, level: 0, dps: 0, best: 0, dmg: 0, kills: 0, bestDmg: 0 });
   g.n++;
   if (r.result === "victory") g.wins++;
   g.time += r.time || 0;
   g.level += r.level || 0;
   g.dps += r.dps || 0;
   g.best = Math.max(g.best, r.dps || 0);
+  g.dmg += r.damage || 0;
+  g.kills += r.kills || 0;
+  g.bestDmg = Math.max(g.bestDmg, r.damage || 0);
   if (r.build && (r.coop || 1) === 1 && (stats.builds[r.build] || stats.nbuilds < MAX_BUILDS)) {
     if (!stats.builds[r.build]) stats.nbuilds++;
-    const b = (stats.builds[r.build] = stats.builds[r.build] || { n: 0, wins: 0, dps: 0, class: r.class });
+    const b = (stats.builds[r.build] = stats.builds[r.build] || { n: 0, wins: 0, dps: 0, dmg: 0, kills: 0, class: r.class });
     b.n++;
     if (r.result === "victory") b.wins++;
     b.dps += r.dps || 0;
+    b.dmg += r.damage || 0;
+    b.kills += r.kills || 0;
   }
   for (const [k, v] of Object.entries(r.spells || {})) {
     if (!KEY.test(k)) continue;
@@ -115,8 +125,8 @@ function add(r) {
     s.share += v.share || 0;
   }
   const zk = (r.zone || "?") + "|" + (r.difficulty == null ? "?" : r.difficulty) + "|" + (r.coop || 1);
-  if (!stats.best[zk] || (r.dps || 0) > stats.best[zk].dps) stats.best[zk] = { dps: r.dps, class: r.class, spec: r.spec, race: r.race, level: r.level, time: r.time, result: r.result, at: r.at };
-  stats.recent.unshift({ class: r.class, spec: r.spec, race: r.race, zone: r.zone, difficulty: r.difficulty, coop: r.coop || 1, result: r.result, level: r.level, time: r.time, dps: r.dps, at: r.at });
+  if (!stats.best[zk] || (r.damage || 0) > (stats.best[zk].damage || 0)) stats.best[zk] = { dps: r.dps, damage: r.damage, kills: r.kills, class: r.class, spec: r.spec, race: r.race, level: r.level, time: r.time, result: r.result, at: r.at };
+  stats.recent.unshift({ class: r.class, spec: r.spec, race: r.race, zone: r.zone, difficulty: r.difficulty, coop: r.coop || 1, result: r.result, level: r.level, time: r.time, dps: r.dps, damage: r.damage, kills: r.kills, at: r.at });
   if (stats.recent.length > RECENT) stats.recent.length = RECENT;
 }
 
@@ -125,11 +135,19 @@ function files() {
 }
 function rebuild() {
   stats = emptyStats();
+  open = new Map();
+  const runs = [], patch = new Map();
   for (const f of files())
     for (const line of fs.readFileSync(path.join(DATA, f), "utf8").split("\n")) {
       if (!line) continue;
-      try { add(JSON.parse(line)); } catch (e) {}
+      try { const r = JSON.parse(line); if (r.patch) patch.set(r.install + "|" + r.patch, r.difficulty); else runs.push(r); } catch (e) {}
     }
+  for (const r of runs) {
+    const k = r.install + "|" + r.runId;
+    if (r.runId && patch.has(k)) r.difficulty = patch.get(k);
+    if (r.runId && r.difficulty == null) open.set(k, r.at.slice(0, 7));
+    add(r);
+  }
   cache = null;
 }
 
@@ -138,11 +156,11 @@ function snapshot() {
   if (cache && Date.now() - cacheAt < 60000) return cache;
   const groups = Object.entries(stats.groups).map(([k, g]) => {
     const [cls, spec, race, zone, difficulty, coop] = k.split("|");
-    return { class: cls, spec, race, zone, difficulty, coop: +coop || 1, runs: g.n, wins: g.wins, avgTime: Math.round(g.time / g.n), avgLevel: Math.round((g.level / g.n) * 10) / 10, avgDps: Math.round(g.dps / g.n), bestDps: Math.round(g.best) };
+    return { class: cls, spec, race, zone, difficulty, coop: +coop || 1, runs: g.n, wins: g.wins, avgTime: Math.round(g.time / g.n), avgLevel: Math.round((g.level / g.n) * 10) / 10, avgDps: Math.round(g.dps / g.n), bestDps: Math.round(g.best), avgDamage: Math.round(g.dmg / g.n), bestDamage: Math.round(g.bestDmg), avgKills: Math.round(g.kills / g.n) };
   });
-  const builds = Object.entries(stats.builds).map(([code, b]) => ({ code, class: b.class, name: code.split(";")[2] || "", runs: b.n, wins: b.wins, avgDps: Math.round(b.dps / b.n) })).sort((a, b) => b.runs - a.runs).slice(0, 50);
+  const builds = Object.entries(stats.builds).map(([code, b]) => ({ code, class: b.class, name: code.split(";")[2] || "", runs: b.n, wins: b.wins, avgDps: Math.round(b.dps / b.n), avgDamage: Math.round(b.dmg / b.n), avgKills: Math.round(b.kills / b.n) })).sort((a, b) => b.runs - a.runs).slice(0, 50);
   const spells = Object.entries(stats.spells).map(([k, s]) => ({ class: k.split("|")[0], spell: k.split("|")[1], runs: s.n, avgShare: Math.round((s.share / s.n) * 1000) / 10 })).filter((s) => s.runs >= 3).sort((a, b) => b.avgShare - a.avgShare);
-  const best = Object.entries(stats.best).map(([k, v]) => Object.assign({ zone: k.split("|")[0], difficulty: k.split("|")[1], coop: +k.split("|")[2] || 1 }, v)).sort((a, b) => b.dps - a.dps);
+  const best = Object.entries(stats.best).map(([k, v]) => Object.assign({ zone: k.split("|")[0], difficulty: k.split("|")[1], coop: +k.split("|")[2] || 1 }, v)).sort((a, b) => (b.damage || 0) - (a.damage || 0));
   cache = JSON.stringify({ updated: new Date().toISOString(), runs: stats.runs, players: stats.installs.size, groups, builds, spells, best, recent: stats.recent });
   cacheAt = Date.now();
   return cache;
@@ -199,10 +217,47 @@ const server = http.createServer((req, res) => {
       delete r.detail;
       if (detail && CTRL.test(detail)) detail = null;
       if (!quota(JSON.stringify(r).length + (detail ? detail.length : 0))) return send(res, 503, '{"error":"busy"}');
-      if (detail) fs.appendFile(path.join(DATA, "details-" + month + ".ndjson"), JSON.stringify({ at: r.at, install: r.install, class: r.class, zone: r.zone, level: r.level, kills: r.kills, detail }) + "\n", () => {});
+      if (detail) fs.appendFile(path.join(DATA, "details-" + month + ".ndjson"), JSON.stringify({ at: r.at, install: r.install, runId: r.runId, class: r.class, zone: r.zone, level: r.level, kills: r.kills, detail }) + "\n", () => {});
       fs.appendFile(path.join(DATA, "runs-" + month + ".ndjson"), JSON.stringify(r) + "\n", (err) => {
         if (err) return send(res, 500, '{"error":"store"}');
+        if (r.runId && r.difficulty == null && !detail) open.set(r.install + "|" + r.runId, month);
         add(r);
+        send(res, 201, '{"ok":true}');
+      });
+    });
+    return;
+  }
+  if (req.method === "POST" && url === "/api/details") {
+    if (limited("ip:" + ip, LIMIT_IP)) return send(res, 429, '{"error":"too many"}');
+    let size = 0;
+    const chunks = [];
+    req.on("data", (c) => {
+      size += c.length;
+      if (size > MAX_BODY) { send(res, 413, '{"error":"too large"}'); req.destroy(); return; }
+      chunks.push(c);
+    });
+    req.on("end", () => {
+      if (size > MAX_BODY) return;
+      let d;
+      try {
+        let body = Buffer.concat(chunks);
+        if ((req.headers["content-encoding"] || "").includes("gzip")) body = zlib.gunzipSync(body, { maxOutputLength: 2 * 1024 * 1024 });
+        d = JSON.parse(body.toString("utf8"));
+      } catch (e) { d = null; }
+      const install = d && str(d.install, 64);
+      const ok = d && d.v === 1 && install && install.length >= 16 && typeof d.runId === "string" && /^[0-9a-f]{16}$/.test(d.runId) && CLASSES.includes(d.class) && typeof d.detail === "string" && d.detail.startsWith("AZD1|") && d.detail.length <= 1000000 && !CTRL.test(d.detail);
+      if (!ok) return send(res, 400, '{"error":"invalid"}');
+      const who = hash(install);
+      if (limited("in:" + who, LIMIT_INSTALL)) return send(res, 429, '{"error":"too many"}');
+      if (!quota(d.detail.length + 200)) return send(res, 503, '{"error":"busy"}');
+      const at = new Date().toISOString();
+      fs.appendFile(path.join(DATA, "details-" + at.slice(0, 7) + ".ndjson"), JSON.stringify({ at, install: who, runId: d.runId, class: d.class, level: num(d.level, 0, 500), kills: num(d.kills, 0, 1e7), detail: d.detail }) + "\n", (err) => {
+        if (err) return send(res, 500, '{"error":"store"}');
+        const k = who + "|" + d.runId, month = open.get(k), h = heroicOf(d.detail);
+        if (month && h != null) {
+          open.delete(k);
+          fs.appendFile(path.join(DATA, "runs-" + month + ".ndjson"), JSON.stringify({ patch: d.runId, install: who, difficulty: h }) + "\n", () => rebuild());
+        }
         send(res, 201, '{"ok":true}');
       });
     });

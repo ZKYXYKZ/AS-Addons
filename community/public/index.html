@@ -8,7 +8,7 @@
 :root { --bg: #111114; --panel: #1a1a20; --line: #2c2c35; --text: #e6e2d8; --mute: #8f8b80; --gold: #e6b84c; --good: #7fd67f; }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 "Segoe UI", system-ui, sans-serif; }
-main { max-width: 1100px; margin: 0 auto; padding: 20px 16px 40px; }
+main { margin: 0 auto; padding: 20px clamp(16px, 2.5vw, 48px) 40px; }
 header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
 h1 { color: var(--gold); font-size: 22px; margin: 0 0 4px; }
 h2 { color: var(--gold); font-size: 16px; margin: 28px 0 8px; }
@@ -56,6 +56,7 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 let I18N, STATS, L;
 const t = (k) => L.ui[k] || k;
+const int = (n) => n == null ? "" : Math.round(n).toLocaleString(document.documentElement.lang || "en");
 const fmt = (n) => n == null ? "" : n >= 1e6 ? (n / 1e6).toFixed(1) + " M" : n >= 1e3 ? Math.round(n / 1e3) + " k" : Math.round(n);
 const dur = (s) => s == null ? "" : Math.floor(s / 60) + ":" + String(Math.round(s % 60)).padStart(2, "0");
 const cls = (k) => L.classes[k] || k;
@@ -92,7 +93,7 @@ function render() {
   table($("best"), [
     { h: t("zone"), v: (x) => zone(x.zone) }, { h: t("difficulty"), v: (x) => diff(x.difficulty) }, { h: t("players"), v: (x) => x.coop || 1, num: 1 },
     { h: t("class"), v: (x) => cls(x.class) }, { h: t("spec"), v: (x) => spec(x.spec, x.class) }, { h: t("race"), v: (x) => race(x.race) },
-    { h: "DPS", v: (x) => x.dps, f: (x) => fmt(x.dps), num: 1 }, { h: t("level"), v: (x) => x.level, num: 1 }, { h: t("duration"), v: (x) => x.time, f: (x) => dur(x.time), num: 1 },
+    { h: t("damage"), v: (x) => x.damage, f: (x) => fmt(x.damage), num: 1 }, { h: t("kills"), v: (x) => x.kills, f: (x) => int(x.kills), num: 1 }, { h: t("level"), v: (x) => x.level, num: 1 }, { h: t("duration"), v: (x) => x.time, f: (x) => dur(x.time), num: 1 },
     { h: t("result"), v: (x) => x.result, f: (x) => res(x.result) },
   ], s.best);
   const drawGroups = () => {
@@ -102,7 +103,7 @@ function render() {
       { h: t("zone"), v: (x) => zone(x.zone) }, { h: t("difficulty"), v: (x) => diff(x.difficulty) }, { h: t("players"), v: (x) => x.coop || 1, num: 1 },
       { h: t("runs"), v: (x) => x.runs, num: 1 }, { h: t("wins"), v: (x) => x.wins / x.runs, f: (x) => Math.round(100 * x.wins / x.runs) + " %", num: 1 },
       { h: t("avgTime"), v: (x) => x.avgTime, f: (x) => dur(x.avgTime), num: 1 }, { h: t("avgLevel"), v: (x) => x.avgLevel, num: 1 },
-      { h: t("avgDps"), v: (x) => x.avgDps, f: (x) => fmt(x.avgDps), num: 1 }, { h: t("bestDps"), v: (x) => x.bestDps, f: (x) => fmt(x.bestDps), num: 1 },
+      { h: t("avgDamage"), v: (x) => x.avgDamage, f: (x) => fmt(x.avgDamage), num: 1 }, { h: t("bestDamage"), v: (x) => x.bestDamage, f: (x) => fmt(x.bestDamage), num: 1 }, { h: t("avgKills"), v: (x) => x.avgKills, f: (x) => int(x.avgKills), num: 1 },
     ], s.groups.filter((g) => (!c || g.class === c) && (!z || g.zone === z)).sort((a, b) => b.runs - a.runs));
   };
   fillSelect($("fClass"), [...new Set(s.groups.map((g) => g.class))], cls, drawGroups);
@@ -111,7 +112,7 @@ function render() {
   table($("builds"), [
     { h: t("class"), v: (x) => cls(x.class) }, { h: t("build"), v: (x) => x.name },
     { h: t("runs"), v: (x) => x.runs, num: 1 }, { h: t("wins"), v: (x) => x.wins / x.runs, f: (x) => Math.round(100 * x.wins / x.runs) + " %", num: 1 },
-    { h: t("avgDps"), v: (x) => x.avgDps, f: (x) => fmt(x.avgDps), num: 1 },
+    { h: t("avgDamage"), v: (x) => x.avgDamage, f: (x) => fmt(x.avgDamage), num: 1 }, { h: t("avgKills"), v: (x) => x.avgKills, f: (x) => int(x.avgKills), num: 1 },
     { h: "", v: () => "", html: (x) => "<button data-code='" + esc(x.code) + "'>" + esc(t("copy")) + "</button>" },
   ], s.builds);
   const drawSpells = () => {
@@ -125,7 +126,7 @@ function render() {
     { h: t("class"), v: (x) => cls(x.class) }, { h: t("spec"), v: (x) => spec(x.spec, x.class) }, { h: t("race"), v: (x) => race(x.race) },
     { h: t("zone"), v: (x) => zone(x.zone) }, { h: t("difficulty"), v: (x) => diff(x.difficulty) }, { h: t("players"), v: (x) => x.coop || 1, num: 1 },
     { h: t("result"), v: (x) => x.result, f: (x) => res(x.result) },
-    { h: t("level"), v: (x) => x.level, num: 1 }, { h: t("duration"), v: (x) => x.time, f: (x) => dur(x.time), num: 1 }, { h: "DPS", v: (x) => x.dps, f: (x) => fmt(x.dps), num: 1 },
+    { h: t("level"), v: (x) => x.level, num: 1 }, { h: t("duration"), v: (x) => x.time, f: (x) => dur(x.time), num: 1 }, { h: t("damage"), v: (x) => x.damage, f: (x) => fmt(x.damage), num: 1 }, { h: t("kills"), v: (x) => x.kills, f: (x) => int(x.kills), num: 1 },
   ], s.recent);
 }
 
