@@ -164,3 +164,10 @@ Fichiers : `Movers.lua` (registre des blocs déplaçables, grille, aimantation, 
 - Explosions à la mort : dégâts du sort déclencheur × 50 % (part qui achève) × pourcentage de l'explosion × ennemis dans le rayon, avec un facteur par effet calé sur les parts mesurées (Pyroclasme 0,3 car limité à 3 par seconde, Forme d'ombre 2, Graine de corruption 0,6).
 - Survie, relevée sur 13 morts : le DPS au moment de la mort suit environ 9 × difficulté de la zone × (minutes)³. Les builds qui tuent assez vite ne subissent presque rien (Mages à Gurubashi : 100 à 500 par minute), les autres voient les dégâts subis s'emballer.
 - Écart restant : le simulateur reste loin du DPS réel en valeur absolue (Prêtre Sacré au Monastère : réel / simulé de 0,5 en début à 4 en fin ; Mage Feu stuff Naxxramas à Ahn'Qiraj : de 1 à 30). Il manque la montée des stats avec le niveau, le rythme réel des améliorations (environ 45 bijoux en 16 minutes) et la collection. Tant que ce n'est pas calé, le simulateur sert à comparer des builds, pas à prédire une durée de survie.
+
+## Statistiques communautaires (1.7.29)
+
+- Site : https://as-stats.zkysolutions.com (VPS ZKYSolutions, pm2 « as-stats », port 3040, `/srv/www/as-stats`, code dans `community/`).
+- Le compagnon envoie à la fin de chaque partie un résumé anonyme (option « Partager mes parties », activée par défaut, message affiché une fois au premier lancement, bouton de suppression). Les parties attendent dans `share-queue.json` (200 au plus) si le serveur ne répond pas.
+- Le jeu n'annonce la difficulté héroïque qu'à la victoire (`{"type":"heroic","bg":…,"level":1,"open":2}`) : le compagnon la reporte sur la partie déjà enregistrée et retarde l'envoi de 5 s pour l'inclure. Il annonce aussi les objets obtenus (`drop`) et les hauts faits (`achievement`).
+- Test de bout en bout sans le jeu : un faux `AzerothSurvivors.exe` qui rejoue les lignes `rogue:` d'un fichier `research` (sortie en UTF-8, sinon les classes accentuées ne sont pas reconnues).
