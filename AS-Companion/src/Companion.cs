@@ -2688,7 +2688,7 @@ class Companion : Form
                 else if (info.Cat == "amulets")
                 {
                     double wornW = amulet != null ? JewelWeight("amulets", amulet) * (1 + 0.25 * amuletUps) : 0;
-                    if (w > wornW && !(idx >= want && lvl < N(G(rules, "fallbackLevel"), 10))) { baseW = amulet == null ? w * 1.5 : w; target = idx >= 0 && idx < want; }
+                    if (w > wornW) { baseW = amulet == null && !(idx >= want && lvl < N(G(rules, "fallbackLevel"), 10)) ? w * 1.5 : w; target = idx >= 0 && idx < want; }
                 }
                 else if (jewels.Values.Count(v => v == info.Cat) < 2)
                 {
