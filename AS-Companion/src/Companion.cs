@@ -1410,7 +1410,7 @@ class Companion : Form
             }
             if (path == "/api/share/forget" && method == "POST")
             {
-                string url = S(G(settings, "shareUrl")), install = File.Exists(Path.Combine(dataDir, "install-id.txt")) ? InstallId() : null, res = "ok";
+                string url = ShareUrl(), install = File.Exists(Path.Combine(dataDir, "install-id.txt")) ? InstallId() : null, res = "ok";
                 try { File.Delete(Path.Combine(dataDir, "share-queue.json")); } catch { }
                 if (!string.IsNullOrEmpty(url) && !string.IsNullOrEmpty(install))
                     try { using (WebClient w = Web()) w.UploadData(url.TrimEnd('/') + "/api/install/" + Uri.EscapeDataString(install), "DELETE", new byte[0]); }
@@ -2275,6 +2275,14 @@ class Companion : Form
             string.Join(",", rk.Select((k, i) => N(G(rules, k), rd[i]).ToString(System.Globalization.CultureInfo.InvariantCulture))) });
     }
 
+    const string DefaultShareUrl = "https://as-stats.zkysolutions.com";
+
+    string ShareUrl()
+    {
+        string u = S(G(settings, "shareUrl"));
+        return string.IsNullOrEmpty(u) ? DefaultShareUrl : u;
+    }
+
     string InstallId()
     {
         string f = Path.Combine(dataDir, "install-id.txt");
@@ -2318,8 +2326,8 @@ class Companion : Form
 
     void FlushShare()
     {
-        string url = S(G(settings, "shareUrl"));
-        if (string.IsNullOrEmpty(url) || N(G(settings, "shareRuns"), 1) == 0) return;
+        string url = ShareUrl();
+        if (N(G(settings, "shareRuns"), 1) == 0) return;
         lock (shareLock)
         {
             string qf = Path.Combine(dataDir, "share-queue.json");
