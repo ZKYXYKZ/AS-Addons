@@ -1431,16 +1431,6 @@ class Companion : Form
                 Respond(ctx, 200, "application/json", Utf8.GetBytes("{}"));
                 return;
             }
-            if (path == "/api/share/forget" && method == "POST")
-            {
-                string url = ShareUrl(), install = File.Exists(Path.Combine(dataDir, "install-id.txt")) ? InstallId() : null, res = "ok";
-                try { File.Delete(Path.Combine(dataDir, "share-queue.json")); } catch { }
-                if (!string.IsNullOrEmpty(url) && !string.IsNullOrEmpty(install))
-                    try { using (WebClient w = Web()) w.UploadData(url.TrimEnd('/') + "/api/install/" + Uri.EscapeDataString(install), "DELETE", new byte[0]); }
-                    catch (Exception ex) { res = ex.Message; }
-                Respond(ctx, 200, "application/json", Utf8.GetBytes(json.Serialize(new Dictionary<string, object> { { "result", res } })));
-                return;
-            }
             if (path == "/api/report" && method == "POST")
             {
                 string zip = null, err = null;

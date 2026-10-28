@@ -3,7 +3,6 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const zlib = require("zlib");
-const readline = require("readline");
 
 const PORT = +process.env.PORT || 3040;
 const DATA = process.env.DATA_DIR || path.join(__dirname, "data");
@@ -150,21 +149,6 @@ function send(res, code, body, type) {
   res.end(body);
 }
 
-async function filterFile(p, keep) {
-  const tmp = p + ".tmp";
-  const out = fs.createWriteStream(tmp);
-  const rl = readline.createInterface({ input: fs.createReadStream(p), crlfDelay: Infinity });
-  for await (const line of rl) if (line && keep(line)) out.write(line + "\n");
-  await new Promise((ok) => out.end(ok));
-  fs.renameSync(tmp, p);
-}
-
-async function forget(installHash) {
-  const tag = '"install":"' + installHash + '"';
-  for (const f of fs.readdirSync(DATA).filter((x) => /^(runs|details)-\d{4}-\d{2}\.ndjson$/.test(x))) await filterFile(path.join(DATA, f), (l) => !l.includes(tag));
-  rebuild();
-}
-
 const server = http.createServer((req, res) => {
   const ip = (req.headers["x-real-ip"] || req.socket.remoteAddress || "").toString();
   const url = req.url.split("?")[0];
@@ -197,12 +181,6 @@ const server = http.createServer((req, res) => {
         send(res, 201, '{"ok":true}');
       });
     });
-    return;
-  }
-  if (req.method === "DELETE" && url.startsWith("/api/install/")) {
-    const id = decodeURIComponent(url.slice("/api/install/".length));
-    if (!id || id.length < 16 || limited("del:" + ip, 10)) return send(res, 400, '{"error":"invalid"}');
-    forget(hash(id)).then(() => send(res, 200, '{"ok":true}'), () => send(res, 500, '{"error":"forget"}'));
     return;
   }
   if (req.method === "GET" && url === "/api/stats") return send(res, 200, snapshot(), "application/json; charset=utf-8");
