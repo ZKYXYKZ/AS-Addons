@@ -47,7 +47,7 @@ function clean(r, ip) {
     spec: typeof r.spec === "string" && new RegExp("^" + cls + "-[0-2]$").test(r.spec) ? r.spec : null,
     zone: keyOf(ZONE_OF, r.zone),
     difficulty: num(r.difficulty, 0, 10),
-    coop: num(r.coop, 1, 8),
+    coop: Math.round(num(r.coop, 1, 5) || 1),
     result: RESULTS.includes(r.result) ? r.result : "defeat",
     time: num(r.time, 0, 36000),
     level: num(r.level, 0, 500),
@@ -82,7 +82,7 @@ function emptyStats() {
   return { runs: 0, installs: new Set(), groups: Object.create(null), builds: Object.create(null), spells: Object.create(null), recent: [], best: Object.create(null), nbuilds: 0 };
 }
 function groupKey(r) {
-  return [r.class, r.spec || "?", r.race || "?", r.zone || "?", r.difficulty == null ? "?" : r.difficulty].join("|");
+  return [r.class, r.spec || "?", r.race || "?", r.zone || "?", r.difficulty == null ? "?" : r.difficulty, r.coop || 1].join("|");
 }
 function add(r) {
   if (r.suspect) return;
@@ -95,7 +95,7 @@ function add(r) {
   g.level += r.level || 0;
   g.dps += r.dps || 0;
   g.best = Math.max(g.best, r.dps || 0);
-  if (r.build && (stats.builds[r.build] || stats.nbuilds < MAX_BUILDS)) {
+  if (r.build && (r.coop || 1) === 1 && (stats.builds[r.build] || stats.nbuilds < MAX_BUILDS)) {
     if (!stats.builds[r.build]) stats.nbuilds++;
     const b = (stats.builds[r.build] = stats.builds[r.build] || { n: 0, wins: 0, dps: 0, class: r.class });
     b.n++;
@@ -108,9 +108,9 @@ function add(r) {
     s.n++;
     s.share += v.share || 0;
   }
-  const zk = (r.zone || "?") + "|" + (r.difficulty == null ? "?" : r.difficulty);
+  const zk = (r.zone || "?") + "|" + (r.difficulty == null ? "?" : r.difficulty) + "|" + (r.coop || 1);
   if (!stats.best[zk] || (r.dps || 0) > stats.best[zk].dps) stats.best[zk] = { dps: r.dps, class: r.class, spec: r.spec, race: r.race, level: r.level, time: r.time, result: r.result, at: r.at };
-  stats.recent.unshift({ class: r.class, spec: r.spec, race: r.race, zone: r.zone, difficulty: r.difficulty, result: r.result, level: r.level, time: r.time, dps: r.dps, at: r.at });
+  stats.recent.unshift({ class: r.class, spec: r.spec, race: r.race, zone: r.zone, difficulty: r.difficulty, coop: r.coop || 1, result: r.result, level: r.level, time: r.time, dps: r.dps, at: r.at });
   if (stats.recent.length > RECENT) stats.recent.length = RECENT;
 }
 
@@ -131,12 +131,12 @@ let cache = null, cacheAt = 0;
 function snapshot() {
   if (cache && Date.now() - cacheAt < 60000) return cache;
   const groups = Object.entries(stats.groups).map(([k, g]) => {
-    const [cls, spec, race, zone, difficulty] = k.split("|");
-    return { class: cls, spec, race, zone, difficulty, runs: g.n, wins: g.wins, avgTime: Math.round(g.time / g.n), avgLevel: Math.round((g.level / g.n) * 10) / 10, avgDps: Math.round(g.dps / g.n), bestDps: Math.round(g.best) };
+    const [cls, spec, race, zone, difficulty, coop] = k.split("|");
+    return { class: cls, spec, race, zone, difficulty, coop: +coop || 1, runs: g.n, wins: g.wins, avgTime: Math.round(g.time / g.n), avgLevel: Math.round((g.level / g.n) * 10) / 10, avgDps: Math.round(g.dps / g.n), bestDps: Math.round(g.best) };
   });
   const builds = Object.entries(stats.builds).map(([code, b]) => ({ code, class: b.class, name: code.split(";")[2] || "", runs: b.n, wins: b.wins, avgDps: Math.round(b.dps / b.n) })).sort((a, b) => b.runs - a.runs).slice(0, 50);
   const spells = Object.entries(stats.spells).map(([k, s]) => ({ class: k.split("|")[0], spell: k.split("|")[1], runs: s.n, avgShare: Math.round((s.share / s.n) * 1000) / 10 })).filter((s) => s.runs >= 3).sort((a, b) => b.avgShare - a.avgShare);
-  const best = Object.entries(stats.best).map(([k, v]) => Object.assign({ zone: k.split("|")[0], difficulty: k.split("|")[1] }, v)).sort((a, b) => b.dps - a.dps);
+  const best = Object.entries(stats.best).map(([k, v]) => Object.assign({ zone: k.split("|")[0], difficulty: k.split("|")[1], coop: +k.split("|")[2] || 1 }, v)).sort((a, b) => b.dps - a.dps);
   cache = JSON.stringify({ updated: new Date().toISOString(), runs: stats.runs, players: stats.installs.size, groups, builds, spells, best, recent: stats.recent });
   cacheAt = Date.now();
   return cache;

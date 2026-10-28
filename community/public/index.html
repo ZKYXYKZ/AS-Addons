@@ -90,7 +90,7 @@ function render() {
   document.querySelectorAll("[data-t]").forEach((e) => (e.textContent = t(e.dataset.t)));
   $("tiles").innerHTML = [[t("runs"), s.runs], [t("players"), s.players], [t("wins"), s.groups.reduce((a, g) => a + g.wins, 0)], [t("combos"), s.groups.length]].map(([l, v]) => "<div class='tile'><b>" + fmt(v) + "</b><span>" + esc(l) + "</span></div>").join("");
   table($("best"), [
-    { h: t("zone"), v: (x) => zone(x.zone) }, { h: t("difficulty"), v: (x) => diff(x.difficulty) },
+    { h: t("zone"), v: (x) => zone(x.zone) }, { h: t("difficulty"), v: (x) => diff(x.difficulty) }, { h: t("players"), v: (x) => x.coop || 1, num: 1 },
     { h: t("class"), v: (x) => cls(x.class) }, { h: t("spec"), v: (x) => spec(x.spec, x.class) }, { h: t("race"), v: (x) => race(x.race) },
     { h: "DPS", v: (x) => x.dps, f: (x) => fmt(x.dps), num: 1 }, { h: t("level"), v: (x) => x.level, num: 1 }, { h: t("duration"), v: (x) => x.time, f: (x) => dur(x.time), num: 1 },
     { h: t("result"), v: (x) => x.result, f: (x) => res(x.result) },
@@ -99,7 +99,7 @@ function render() {
     const c = $("fClass").value, z = $("fZone").value;
     table($("groups"), [
       { h: t("class"), v: (x) => cls(x.class) }, { h: t("spec"), v: (x) => spec(x.spec, x.class) }, { h: t("race"), v: (x) => race(x.race) },
-      { h: t("zone"), v: (x) => zone(x.zone) }, { h: t("difficulty"), v: (x) => diff(x.difficulty) },
+      { h: t("zone"), v: (x) => zone(x.zone) }, { h: t("difficulty"), v: (x) => diff(x.difficulty) }, { h: t("players"), v: (x) => x.coop || 1, num: 1 },
       { h: t("runs"), v: (x) => x.runs, num: 1 }, { h: t("wins"), v: (x) => x.wins / x.runs, f: (x) => Math.round(100 * x.wins / x.runs) + " %", num: 1 },
       { h: t("avgTime"), v: (x) => x.avgTime, f: (x) => dur(x.avgTime), num: 1 }, { h: t("avgLevel"), v: (x) => x.avgLevel, num: 1 },
       { h: t("avgDps"), v: (x) => x.avgDps, f: (x) => fmt(x.avgDps), num: 1 }, { h: t("bestDps"), v: (x) => x.bestDps, f: (x) => fmt(x.bestDps), num: 1 },
@@ -123,7 +123,7 @@ function render() {
   table($("recent"), [
     { h: t("date"), v: (x) => x.at, f: (x) => new Date(x.at).toLocaleString($("lang").value, { dateStyle: "short", timeStyle: "short" }) },
     { h: t("class"), v: (x) => cls(x.class) }, { h: t("spec"), v: (x) => spec(x.spec, x.class) }, { h: t("race"), v: (x) => race(x.race) },
-    { h: t("zone"), v: (x) => zone(x.zone) }, { h: t("difficulty"), v: (x) => diff(x.difficulty) },
+    { h: t("zone"), v: (x) => zone(x.zone) }, { h: t("difficulty"), v: (x) => diff(x.difficulty) }, { h: t("players"), v: (x) => x.coop || 1, num: 1 },
     { h: t("result"), v: (x) => x.result, f: (x) => res(x.result) },
     { h: t("level"), v: (x) => x.level, num: 1 }, { h: t("duration"), v: (x) => x.time, f: (x) => dur(x.time), num: 1 }, { h: "DPS", v: (x) => x.dps, f: (x) => fmt(x.dps), num: 1 },
   ], s.recent);

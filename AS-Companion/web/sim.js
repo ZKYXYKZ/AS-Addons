@@ -1,6 +1,6 @@
 const SIM_STR = {
   fr: {
-    title: "Simulateur", intro: "Dégâts théoriques d'un build : sorts et rangs, talents, bijoux, race et densité d'ennemis. Les chiffres viennent des cartes du jeu ; les effets marqués « non simulé » ne sont pas comptés.",
+    title: "Simulateur", experimental: "Expérimental, en attente de plus de données : les chiffres servent à comparer deux builds, pas à prédire vos dégâts réels. Le simulateur sera calé sur les parties partagées.", intro: "Dégâts théoriques d'un build : sorts et rangs, talents, bijoux, race et densité d'ennemis. Les chiffres viennent des cartes du jeu ; les effets marqués « non simulé » ne sont pas comptés.",
     build: "Build", fromBuild: "Charger depuis", race: "Race", level: "Rangs des sorts", rarity: "Rareté moyenne des cartes", density: "Ennemis à moins de 10 m", boss: "Temps sur les boss",
     spells: "Sorts", rank: "Rang", jewels: "Bijoux", rings: "Anneaux", trinkets: "Bijoux", amulet: "Amulette", none: "Aucun",
     total: "DPS total", pack: "En meute", single: "Sur un boss", share: "Part", perCast: "par lancer", every: "toutes les {v} s",
@@ -10,7 +10,7 @@ const SIM_STR = {
     rarities: ["Commun", "Inhabituel", "Rare", "Épique", "Légendaire"], toBuild: "Créer le build", mcTitle: "Parties simulées", runs: "parties", simulate: "Simuler", running: "Simulation…", mcHelp: "Rejoue des parties complètes : montées de niveau, cartes tirées selon la chance, choix du compagnon, coffres.", mcMean: "DPS moyen sur la partie", mcRange: "Pire 10 % / meilleur 10 %", mcLevel: "Niveau final moyen", mcDist: "répartition des parties", mcHave: "Obtenu", mcRank: "Rang moyen", mcWin: "Le build B fait mieux que le A dans {v} % des parties.", mcDone: "{n} parties simulées en {ms} ms.", gear: "Équipement et collection", group: "Groupe (coop)", noAlly: "Pas d'allié", allyShout: "Cri de guerre d'un guerrier : +{v} % de dégâts en moyenne", allyMark: "Marque du chasseur : la cible subit +{v} % de dégâts", pets: "Familiers et démons", kills: "Explosions à la mort", procs: "Effets déclenchés", procNote: "dont {v} lancers gratuits par seconde", amuletUps: "amulette améliorée {v} fois", amuletNoUp: "amulette sans amélioration",
   },
   en: {
-    title: "Simulator", intro: "Theoretical damage of a build: spells and ranks, talents, jewelry, race and enemy density. Numbers come from the game's cards; effects marked \"not simulated\" are left out.",
+    title: "Simulator", experimental: "Experimental, waiting for more data: the numbers compare two builds, they don't predict your real damage. The simulator will be calibrated on shared runs.", intro: "Theoretical damage of a build: spells and ranks, talents, jewelry, race and enemy density. Numbers come from the game's cards; effects marked \"not simulated\" are left out.",
     build: "Build", fromBuild: "Load from", race: "Race", level: "Spell ranks", rarity: "Average card rarity", density: "Enemies within 10 yd", boss: "Time on bosses",
     spells: "Spells", rank: "Rank", jewels: "Jewelry", rings: "Rings", trinkets: "Trinkets", amulet: "Amulet", none: "None",
     total: "Total DPS", pack: "In a pack", single: "On a boss", share: "Share", perCast: "per cast", every: "every {v} sec",
@@ -587,6 +587,7 @@ function renderSim(sec) {
   if (!SIMS.a) { const b = active() || builds(CLASS)[0]; SIMS.a = b ? simFromBuild(b) : simFromBuild(decodePreset(CLASS)); }
   sec.innerHTML = "";
   const top = el("div", "simtop");
+  top.appendChild(el("div", "warnline", esc(SM("experimental"))));
   top.appendChild(el("div", "hint", esc(SM("intro"))));
   const cmp = el("label", "simcmp");
   const cb = el("input"); cb.type = "checkbox"; cb.checked = SIMS.compare;

@@ -239,10 +239,10 @@ async function renderCommunity(sec) {
   sec.appendChild(bar);
   const okC = (x) => !COMM_FILTER.cls || x.class === COMM_FILTER.cls;
   const okZ = (x) => !COMM_FILTER.zone || x.zone === COMM_FILTER.zone;
-  sec.appendChild(table(ST("bestZone"), [ST("zone"), ST("difficulty"), ST("cls"), ST("spec"), ST("race"), "DPS", ST("level"), ST("time"), ST("result")],
-    C.best.filter((x) => okC(x) && okZ(x)).map((x) => [esc(zoneName(x.zone)), esc(diff(x.difficulty)), esc(className(x.class)), esc(specName(x.spec)), esc(raceName(x.race)), fmt(x.dps), x.level, mmss(x.time), esc(res(x.result))])));
-  sec.appendChild(table(ST("groups"), [ST("cls"), ST("spec"), ST("race"), ST("zone"), ST("difficulty"), ST("n"), ST("winRate"), ST("avgTime"), ST("maxLvl"), ST("dps"), ST("maxDps")],
-    C.groups.filter((x) => okC(x) && okZ(x)).sort((a, b) => b.runs - a.runs).map((x) => [esc(className(x.class)), esc(specName(x.spec)), esc(raceName(x.race)), esc(zoneName(x.zone)), esc(diff(x.difficulty)), x.runs, Math.round((100 * x.wins) / x.runs) + " %", mmss(x.avgTime), x.avgLevel, fmt(x.avgDps), fmt(x.bestDps)])));
+  sec.appendChild(table(ST("bestZone"), [ST("zone"), ST("difficulty"), ST("players"), ST("cls"), ST("spec"), ST("race"), "DPS", ST("level"), ST("time"), ST("result")],
+    C.best.filter((x) => okC(x) && okZ(x)).map((x) => [esc(zoneName(x.zone)), esc(diff(x.difficulty)), x.coop || 1, esc(className(x.class)), esc(specName(x.spec)), esc(raceName(x.race)), fmt(x.dps), x.level, mmss(x.time), esc(res(x.result))])));
+  sec.appendChild(table(ST("groups"), [ST("cls"), ST("spec"), ST("race"), ST("zone"), ST("difficulty"), ST("players"), ST("n"), ST("winRate"), ST("avgTime"), ST("maxLvl"), ST("dps"), ST("maxDps")],
+    C.groups.filter((x) => okC(x) && okZ(x)).sort((a, b) => b.runs - a.runs).map((x) => [esc(className(x.class)), esc(specName(x.spec)), esc(raceName(x.race)), esc(zoneName(x.zone)), esc(diff(x.difficulty)), x.coop || 1, x.runs, Math.round((100 * x.wins) / x.runs) + " %", mmss(x.avgTime), x.avgLevel, fmt(x.avgDps), fmt(x.bestDps)])));
   const builds = C.builds.filter(okC);
   const bt = table(ST("commBuilds"), [ST("cls"), ST("build"), ST("n"), ST("winRate"), ST("dps"), ""],
     builds.map((x, i) => {
@@ -260,8 +260,8 @@ async function renderCommunity(sec) {
   sec.appendChild(bt);
   sec.appendChild(table(ST("commSpells"), [ST("cls"), ST("spell"), ST("n"), ST("share")],
     C.spells.filter(okC).map((x) => [esc(className(x.class)), esc(cSpell(x.class, x.spell)), x.runs, x.avgShare + " %"])));
-  sec.appendChild(table(ST("recent"), [ST("date"), ST("cls"), ST("spec"), ST("race"), ST("zone"), ST("difficulty"), ST("result"), ST("level"), ST("time"), "DPS"],
-    C.recent.filter((x) => okC(x) && okZ(x)).map((x) => [esc(new Date(x.at).toLocaleString(lang() === "fr" ? "fr-FR" : "en-US", { dateStyle: "short", timeStyle: "short" })), esc(className(x.class)), esc(specName(x.spec)), esc(raceName(x.race)), esc(zoneName(x.zone)), esc(diff(x.difficulty)), esc(res(x.result)), x.level, mmss(x.time), fmt(x.dps)])));
+  sec.appendChild(table(ST("recent"), [ST("date"), ST("cls"), ST("spec"), ST("race"), ST("zone"), ST("difficulty"), ST("players"), ST("result"), ST("level"), ST("time"), "DPS"],
+    C.recent.filter((x) => okC(x) && okZ(x)).map((x) => [esc(new Date(x.at).toLocaleString(lang() === "fr" ? "fr-FR" : "en-US", { dateStyle: "short", timeStyle: "short" })), esc(className(x.class)), esc(specName(x.spec)), esc(raceName(x.race)), esc(zoneName(x.zone)), esc(diff(x.difficulty)), x.coop || 1, esc(res(x.result)), x.level, mmss(x.time), fmt(x.dps)])));
 }
 
 async function renderSolo(sec) {
