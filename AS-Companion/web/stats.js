@@ -206,6 +206,8 @@ async function renderStats(sec) {
   if (STATS_TAB === "community") await renderCommunity(body); else await renderSolo(body);
 }
 
+const unnamed = (c) => { const p = String(c).split(";"); p[2] = ""; return p.join(";"); };
+
 async function renderCommunity(sec) {
   if (!COMM || Date.now() - COMM_AT > 60000) {
     try {
@@ -249,7 +251,7 @@ async function renderCommunity(sec) {
   const builds = C.builds.filter(okC);
   const bt = table(ST("commBuilds"), [ST("cls"), ST("build"), ST("group"), ST("n"), ST("winRate"), ST("avgDamage"), ST("avgKills"), ""],
     builds.map((x, i) => {
-      const have = STATE.builds.some((b) => b.class === x.class && encode(Object.assign({}, b, { name: x.name })) === x.code);
+      const have = STATE.builds.some((b) => b.class === x.class && unnamed(encode(b)) === unnamed(x.code));
       return [esc(className(x.class)), esc(x.name), esc(party(x)), x.runs, Math.round((100 * x.wins) / x.runs) + " %", fmt(x.avgDamage), num(x.avgKills), have ? esc(ST("added")) : "<button class='small' data-i='" + i + "'>" + esc(ST("add")) + "</button>"];
     }));
   bt.addEventListener("click", (e) => {

@@ -99,6 +99,11 @@ function allies(r) {
 function selfHost(r) {
   return Array.isArray(r.party) && r.party.some((m) => m && m.me && m.host);
 }
+function named(code, name) {
+  const p = code.split(";");
+  p[2] = name;
+  return p.join(";");
+}
 function groupKey(r) {
   return [r.class, r.spec || "?", r.race || "?", r.zone || "?", r.difficulty == null ? "?" : r.difficulty, r.coop || 1, allies(r).map((m) => m.class || "?").sort().join("+")].join("|");
 }
@@ -116,11 +121,13 @@ function add(r) {
   g.dmg += r.damage || 0;
   g.kills += r.kills || 0;
   g.bestDmg = Math.max(g.bestDmg, r.damage || 0);
-  const bk = r.build && r.build + "#" + (r.coop || 1) + "|" + allies(r).map((m) => m.class || "?").sort().join("+");
+  const bk = r.build && named(r.build, "") + "#" + (r.coop || 1) + "|" + allies(r).map((m) => m.class || "?").sort().join("+");
   if (bk && (stats.builds[bk] || stats.nbuilds < MAX_BUILDS)) {
     if (!stats.builds[bk]) stats.nbuilds++;
-    const b = (stats.builds[bk] = stats.builds[bk] || { n: 0, wins: 0, dps: 0, dmg: 0, kills: 0, class: r.class });
+    const b = (stats.builds[bk] = stats.builds[bk] || { n: 0, wins: 0, dps: 0, dmg: 0, kills: 0, class: r.class, names: Object.create(null) });
     b.n++;
+    const nm = r.build.split(";")[2] || "";
+    b.names[nm] = (b.names[nm] || 0) + 1;
     if (r.result === "victory") b.wins++;
     b.dps += r.dps || 0;
     b.dmg += r.damage || 0;
@@ -167,8 +174,8 @@ function snapshot() {
     return { class: cls, spec, race, zone, difficulty, coop: +coop || 1, with: mates ? mates.split("+").map((c) => ({ class: c === "?" ? null : c })) : [], runs: g.n, wins: g.wins, avgTime: Math.round(g.time / g.n), avgLevel: Math.round((g.level / g.n) * 10) / 10, avgDps: Math.round(g.dps / g.n), bestDps: Math.round(g.best), avgDamage: Math.round(g.dmg / g.n), bestDamage: Math.round(g.bestDmg), avgKills: Math.round(g.kills / g.n) };
   });
   const builds = Object.entries(stats.builds).map(([k, b]) => {
-    const code = k.slice(0, k.lastIndexOf("#")), [coop, mates] = k.slice(k.lastIndexOf("#") + 1).split("|");
-    return { code, coop: +coop || 1, with: mates ? mates.split("+").map((c) => ({ class: c === "?" ? null : c })) : [], class: b.class, name: code.split(";")[2] || "", runs: b.n, wins: b.wins, avgDps: Math.round(b.dps / b.n), avgDamage: Math.round(b.dmg / b.n), avgKills: Math.round(b.kills / b.n) };
+    const name = Object.entries(b.names).sort((x, y) => y[1] - x[1])[0][0], code = named(k.slice(0, k.lastIndexOf("#")), name), [coop, mates] = k.slice(k.lastIndexOf("#") + 1).split("|");
+    return { code, coop: +coop || 1, with: mates ? mates.split("+").map((c) => ({ class: c === "?" ? null : c })) : [], class: b.class, name, names: Object.keys(b.names), runs: b.n, wins: b.wins, avgDps: Math.round(b.dps / b.n), avgDamage: Math.round(b.dmg / b.n), avgKills: Math.round(b.kills / b.n) };
   }).sort((a, b) => b.runs - a.runs).slice(0, 50);
   const spells = Object.entries(stats.spells).map(([k, s]) => ({ class: k.split("|")[0], spell: k.split("|")[1], runs: s.n, avgShare: Math.round((s.share / s.n) * 1000) / 10 })).filter((s) => s.runs >= 3).sort((a, b) => b.avgShare - a.avgShare);
   const best = Object.entries(stats.best).map(([k, v]) => Object.assign({ zone: k.split("|")[0], difficulty: k.split("|")[1], coop: +k.split("|")[2] || 1 }, v)).sort((a, b) => (b.damage || 0) - (a.damage || 0));
