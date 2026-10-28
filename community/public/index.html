@@ -121,7 +121,7 @@ function render() {
   fillSelect($("fZone"), [...new Set(s.groups.map((g) => g.zone))], zone, drawGroups);
   drawGroups();
   table($("builds"), [
-    { h: t("class"), v: (x) => cls(x.class) }, { h: t("build"), v: (x) => x.name },
+    { h: t("class"), v: (x) => cls(x.class) }, { h: t("build"), v: (x) => x.name }, { h: t("group"), v: (x) => (x.coop || 1) * 100 + (x.with || []).length, f: party },
     { h: t("runs"), v: (x) => x.runs, num: 1 }, { h: t("wins"), v: (x) => x.wins / x.runs, f: (x) => Math.round(100 * x.wins / x.runs) + " %", num: 1 },
     { h: t("avgDamage"), v: (x) => x.avgDamage, f: (x) => fmt(x.avgDamage), num: 1 }, { h: t("avgKills"), v: (x) => x.avgKills, f: (x) => int(x.avgKills), num: 1 },
     { h: "", v: () => "", html: (x) => "<button data-code='" + esc(x.code) + "'>" + esc(t("copy")) + "</button>" },

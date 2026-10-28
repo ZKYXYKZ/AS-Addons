@@ -247,10 +247,10 @@ async function renderCommunity(sec) {
   sec.appendChild(table(ST("groups"), [ST("cls"), ST("spec"), ST("race"), ST("group"), ST("zone"), ST("difficulty"), ST("n"), ST("winRate"), ST("avgTime"), ST("maxLvl"), ST("avgDamage"), ST("bestDamage"), ST("avgKills")],
     C.groups.filter((x) => okC(x) && okZ(x)).sort((a, b) => b.runs - a.runs).map((x) => [esc(className(x.class)), esc(specName(x.spec)), esc(raceName(x.race)), esc(party(x)), esc(zoneName(x.zone)), esc(diff(x.difficulty)), x.runs, Math.round((100 * x.wins) / x.runs) + " %", mmss(x.avgTime), x.avgLevel, fmt(x.avgDamage), fmt(x.bestDamage), num(x.avgKills)])));
   const builds = C.builds.filter(okC);
-  const bt = table(ST("commBuilds"), [ST("cls"), ST("build"), ST("n"), ST("winRate"), ST("avgDamage"), ST("avgKills"), ""],
+  const bt = table(ST("commBuilds"), [ST("cls"), ST("build"), ST("group"), ST("n"), ST("winRate"), ST("avgDamage"), ST("avgKills"), ""],
     builds.map((x, i) => {
       const have = STATE.builds.some((b) => b.class === x.class && encode(Object.assign({}, b, { name: x.name })) === x.code);
-      return [esc(className(x.class)), esc(x.name), x.runs, Math.round((100 * x.wins) / x.runs) + " %", fmt(x.avgDamage), num(x.avgKills), have ? esc(ST("added")) : "<button class='small' data-i='" + i + "'>" + esc(ST("add")) + "</button>"];
+      return [esc(className(x.class)), esc(x.name), esc(party(x)), x.runs, Math.round((100 * x.wins) / x.runs) + " %", fmt(x.avgDamage), num(x.avgKills), have ? esc(ST("added")) : "<button class='small' data-i='" + i + "'>" + esc(ST("add")) + "</button>"];
     }));
   bt.addEventListener("click", (e) => {
     const i = e.target.dataset && e.target.dataset.i;
