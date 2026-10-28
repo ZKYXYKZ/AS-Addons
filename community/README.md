@@ -14,3 +14,13 @@ tar czf - server.js names.json nginx.conf public | ssh ludo@51.75.19.40 'tar xzf
 ```
 
 Première installation : `PORT=3040 DATA_DIR=/srv/www/as-stats/data pm2 start server.js --name as-stats --max-memory-restart 120M && pm2 save`, puis Nginx (`nginx.conf`) et certificat Let's Encrypt pour `as-stats.zkysolutions.com`.
+
+## Analyse
+
+Récupérer les parties brutes (une ligne JSON par partie, avec les courbes minute par minute, la part des sorts et les cartes prises) :
+
+```bash
+mkdir -p community/data && scp "ludo@51.75.19.40:/srv/www/as-stats/data/*.ndjson" community/data/
+```
+
+`community/data/` est exclu du dépôt. Les cartes ne sont connues que quand la sélection automatique du compagnon les prend : un choix fait à la main n'est pas transmis par le jeu.

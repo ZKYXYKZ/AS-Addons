@@ -54,6 +54,7 @@ function clean(r, ip) {
     amuletUps: num(r.amuletUps, 0, 50),
     minutes: Array.isArray(r.minutes) ? r.minutes.slice(0, 120).map((m) => ({ dps: num(m && m.dps, 0, 1e12), taken: num(m && m.taken, 0, 1e12), level: num(m && m.level, 0, 500) })) : [],
     spells: {},
+    picks: Array.isArray(r.picks) ? r.picks.slice(0, 400).map((p) => ({ t: num(p && p.t, 0, 36000), took: str(p && p.took, 40), kind: str(p && p.kind, 20), rarity: num(p && p.rarity, 0, 10) })) : [],
   };
   if (r.spells && typeof r.spells === "object")
     for (const [k, v] of Object.entries(r.spells).slice(0, 40)) {
