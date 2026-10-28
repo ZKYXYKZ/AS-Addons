@@ -92,8 +92,15 @@ function heroicOf(detail) {
 function emptyStats() {
   return { runs: 0, installs: new Set(), groups: Object.create(null), builds: Object.create(null), spells: Object.create(null), recent: [], best: Object.create(null), nbuilds: 0 };
 }
+function allies(r) {
+  if (!Array.isArray(r.party) || (r.coop || 1) < 2) return [];
+  return r.party.filter((m) => m && !m.me).map((m) => ({ class: m.class, race: m.race, host: !!m.host }));
+}
+function selfHost(r) {
+  return Array.isArray(r.party) && r.party.some((m) => m && m.me && m.host);
+}
 function groupKey(r) {
-  return [r.class, r.spec || "?", r.race || "?", r.zone || "?", r.difficulty == null ? "?" : r.difficulty, r.coop || 1].join("|");
+  return [r.class, r.spec || "?", r.race || "?", r.zone || "?", r.difficulty == null ? "?" : r.difficulty, r.coop || 1, allies(r).map((m) => m.class || "?").sort().join("+")].join("|");
 }
 function add(r) {
   if (r.suspect) return;
@@ -125,8 +132,8 @@ function add(r) {
     s.share += v.share || 0;
   }
   const zk = (r.zone || "?") + "|" + (r.difficulty == null ? "?" : r.difficulty) + "|" + (r.coop || 1);
-  if (!stats.best[zk] || (r.damage || 0) > (stats.best[zk].damage || 0)) stats.best[zk] = { dps: r.dps, damage: r.damage, kills: r.kills, class: r.class, spec: r.spec, race: r.race, level: r.level, time: r.time, result: r.result, at: r.at };
-  stats.recent.unshift({ class: r.class, spec: r.spec, race: r.race, zone: r.zone, difficulty: r.difficulty, coop: r.coop || 1, result: r.result, level: r.level, time: r.time, dps: r.dps, damage: r.damage, kills: r.kills, at: r.at });
+  if (!stats.best[zk] || (r.damage || 0) > (stats.best[zk].damage || 0)) stats.best[zk] = { dps: r.dps, damage: r.damage, kills: r.kills, with: allies(r), host: selfHost(r), class: r.class, spec: r.spec, race: r.race, level: r.level, time: r.time, result: r.result, at: r.at };
+  stats.recent.unshift({ class: r.class, spec: r.spec, race: r.race, zone: r.zone, difficulty: r.difficulty, coop: r.coop || 1, with: allies(r), host: selfHost(r), result: r.result, level: r.level, time: r.time, dps: r.dps, damage: r.damage, kills: r.kills, at: r.at });
   if (stats.recent.length > RECENT) stats.recent.length = RECENT;
 }
 
@@ -155,8 +162,8 @@ let cache = null, cacheAt = 0;
 function snapshot() {
   if (cache && Date.now() - cacheAt < 60000) return cache;
   const groups = Object.entries(stats.groups).map(([k, g]) => {
-    const [cls, spec, race, zone, difficulty, coop] = k.split("|");
-    return { class: cls, spec, race, zone, difficulty, coop: +coop || 1, runs: g.n, wins: g.wins, avgTime: Math.round(g.time / g.n), avgLevel: Math.round((g.level / g.n) * 10) / 10, avgDps: Math.round(g.dps / g.n), bestDps: Math.round(g.best), avgDamage: Math.round(g.dmg / g.n), bestDamage: Math.round(g.bestDmg), avgKills: Math.round(g.kills / g.n) };
+    const [cls, spec, race, zone, difficulty, coop, mates] = k.split("|");
+    return { class: cls, spec, race, zone, difficulty, coop: +coop || 1, with: mates ? mates.split("+").map((c) => ({ class: c === "?" ? null : c })) : [], runs: g.n, wins: g.wins, avgTime: Math.round(g.time / g.n), avgLevel: Math.round((g.level / g.n) * 10) / 10, avgDps: Math.round(g.dps / g.n), bestDps: Math.round(g.best), avgDamage: Math.round(g.dmg / g.n), bestDamage: Math.round(g.bestDmg), avgKills: Math.round(g.kills / g.n) };
   });
   const builds = Object.entries(stats.builds).map(([code, b]) => ({ code, class: b.class, name: code.split(";")[2] || "", runs: b.n, wins: b.wins, avgDps: Math.round(b.dps / b.n), avgDamage: Math.round(b.dmg / b.n), avgKills: Math.round(b.kills / b.n) })).sort((a, b) => b.runs - a.runs).slice(0, 50);
   const spells = Object.entries(stats.spells).map(([k, s]) => ({ class: k.split("|")[0], spell: k.split("|")[1], runs: s.n, avgShare: Math.round((s.share / s.n) * 1000) / 10 })).filter((s) => s.runs >= 3).sort((a, b) => b.avgShare - a.avgShare);
