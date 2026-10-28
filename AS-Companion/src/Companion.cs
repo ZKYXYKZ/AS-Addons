@@ -1135,8 +1135,9 @@ class Companion : Form
             if (c.G < 240 || Math.Abs(c.R % 16 - 8) > 2 || Math.Abs(c.B % 16 - 8) > 2) return;
             int v = c.R / 16 + 16 * (c.B / 16);
             if (v == gamePick) return;
+            int prev = gamePick;
             gamePick = v;
-            ApplyGamePick();
+            if (v > 0 || prev > 0) ApplyGamePick();
         }
         catch { }
         finally { try { if (dpi != IntPtr.Zero) SetThreadDpiAwarenessContext(dpi); } catch { } }
@@ -1153,6 +1154,7 @@ class Companion : Form
             Dictionary<string, object> g = sent[gamePick - 1];
             pick = A(G(state, "builds")).Select(D).FirstOrDefault(b => G(g, "id") != null && S(G(b, "id")) == S(G(g, "id"))) ?? g;
         }
+        if (pick == null && detectedTree >= 0) pick = A(G(state, "builds")).Select(D).FirstOrDefault(b => S(G(b, "class")) == ck && SpecIndex(b) == detectedTree) ?? PresetFor(heroClass, detectedTree);
         if (pick == null) pick = ActiveBuild(state, ck) ?? ClassPresets(heroClass).FirstOrDefault();
         if (pick == null || pick == build) return;
         build = pick;
