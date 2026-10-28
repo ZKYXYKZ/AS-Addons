@@ -2612,15 +2612,15 @@ class Companion : Form
     double SpellWeight(string key)
     {
         double w = 0;
-        int i = 0;
+        int i = 0, at = -1;
         foreach (object s in A(G(build, "spells")))
         {
-            if (S(G(s, "key")) == key) { w = N(G(s, "w"), 3); if (i >= 6) w *= 0.5; }
+            if (S(G(s, "key")) == key) { w = N(G(s, "w"), 3); at = i; if (i >= 6) w *= 0.5; }
             i++;
         }
         if (N(G(G(build, "rules"), "adapt"), 1) != 0)
         {
-            if (owned.ContainsKey(key)) w = Math.Max(w, 1) * 1.25 * DmgFactor(key);
+            if (owned.ContainsKey(key)) w = Math.Max(w, 1) * 1.25 * (at >= 0 && at < 6 ? Math.Max(0.6, DmgFactor(key)) : DmgFactor(key));
             if (amulet == "leg:" + key) w = Math.Max(w, 2) * Boost();
         }
         return w;
@@ -2667,6 +2667,7 @@ class Companion : Form
             if (info.Type == "spell" && info.Key != null)
             {
                 baseW = SpellWeight(info.Key);
+                if (S(G(card, "kind")) == "upgrade") { int r = (int)N(G(card, "rank"), 2); baseW *= r <= 3 ? 1 : r <= 6 ? 0.67 : r <= 10 ? 0.5 : 0.35; }
                 List<object> sp = A(G(build, "spells")).ToList();
                 int idx = sp.FindIndex(x => S(G(x, "key")) == info.Key);
                 target = idx >= 0 && idx < 6;
@@ -2687,7 +2688,7 @@ class Companion : Form
                 else if (info.Cat == "amulets")
                 {
                     double wornW = amulet != null ? JewelWeight("amulets", amulet) * (1 + 0.25 * amuletUps) : 0;
-                    if (w > wornW) { baseW = amulet == null ? w * 1.5 : w; target = idx >= 0 && idx < want; }
+                    if (w > wornW && !(idx >= want && lvl < N(G(rules, "fallbackLevel"), 10))) { baseW = amulet == null ? w * 1.5 : w; target = idx >= 0 && idx < want; }
                 }
                 else if (jewels.Values.Count(v => v == info.Cat) < 2)
                 {
