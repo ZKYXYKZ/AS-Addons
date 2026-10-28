@@ -54,11 +54,11 @@ Lancez toujours le jeu avec **Lancer le jeu** : c'est ainsi que le compagnon voi
 La page **Statistiques** a deux onglets :
 
 - **Solo** enregistre chaque partie lancée depuis le compagnon, modes endless et héroïque compris : durée de survie, niveau, victimes, DPS, boss et gardiens, avec des graphiques par partie, par classe, par spécialisation et par race, et la part des dégâts de chaque sort.
-- **Communauté** montre les parties partagées par tous les joueurs du compagnon, aussi sur [as-stats.zkysolutions.com](https://as-stats.zkysolutions.com) : meilleures parties par zone et difficulté, taux de victoire par classe, spé et race, builds les plus joués (ajoutés aux vôtres en un clic) et sorts qui font le plus de dégâts.
+- **Communauté** montre les parties partagées par tous les joueurs du compagnon, aussi sur [as-stats.zkysolutions.com](https://as-stats.zkysolutions.com) : meilleures parties par zone et difficulté, taux de victoire par classe, spé, race et nombre de joueurs (coop jusqu'à 5), builds les plus joués (ajoutés aux vôtres en un clic) et sorts qui font le plus de dégâts.
 
 ### Simuler un build
 
-La page **Simulateur** fait jouer un build avec les données du jeu (sorts, ennemis, zones et boss lus dans les fichiers du jeu) pour comparer des builds avant de les essayer. Il est calé sur de vraies parties, et gagne en précision à mesure que les parties partagées arrivent.
+La page **Simulateur** (expérimentale, en attente de plus de données) fait jouer un build avec les données du jeu (sorts, ennemis, zones et boss lus dans les fichiers du jeu) pour comparer des builds avant de les essayer. Il est calé sur de vraies parties, et gagne en précision à mesure que les parties partagées arrivent.
 
 ### Gérer les addons
 

@@ -54,11 +54,11 @@ Always start the game with **Launch game**: that's how the companion sees the le
 The **Statistics** page has two tabs:
 
 - **Solo** records every run launched from the companion, endless and heroic modes included: time survived, level, kills, DPS, bosses and guardians, with charts by run, by class, by spec and by race, and the damage share of each spell.
-- **Community** shows the runs shared by all companion players, also on [as-stats.zkysolutions.com](https://as-stats.zkysolutions.com): best runs per zone and difficulty, win rate per class, spec and race, the most played builds (added to yours in one click) and the spells that deal the most damage.
+- **Community** shows the runs shared by all companion players, also on [as-stats.zkysolutions.com](https://as-stats.zkysolutions.com): best runs per zone and difficulty, win rate per class, spec, race and number of players (co-op up to 5), the most played builds (added to yours in one click) and the spells that deal the most damage.
 
 ### Simulate a build
 
-The **Simulator** page plays a build against the game's own data (spells, enemies, zones and bosses read from the game files) to compare builds before trying them. It is calibrated with real runs, and gets more accurate as shared runs come in.
+The **Simulator** page (experimental, waiting for more data) plays a build against the game's own data (spells, enemies, zones and bosses read from the game files) to compare builds before trying them. It is calibrated with real runs, and gets more accurate as shared runs come in.
 
 ### Manage the addons
 
