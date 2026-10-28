@@ -9,6 +9,8 @@ const STATS_STR = {
     spec: "Spé", race: "Race", cls: "Classe", n: "Parties", winRate: "Victoires", avgTime: "Survie moy.", maxLvl: "Niv. max", dps: "DPS moy.",
     date: "Date", build: "Build", result: "Résultat", time: "Durée", level: "Niv.", kills: "Victimes", run: "Partie", attack: "Attaque", pets: "Familiers", other: "Autres", endless: "Endless", bestEndless: "Meilleur endless",
     noDmg: "Pas encore de données de dégâts : activez le journal de combat (fait automatiquement par l'addon SurvivorsBuilds).",
+    tabSolo: "Solo", tabCommunity: "Communauté", commOff: "Le site communautaire ne répond pas pour l'instant.", commHint: "Parties partagées anonymement par les joueurs du compagnon, mises à jour chaque minute.",
+    players: "Joueurs", combos: "Combinaisons", bestZone: "Meilleures parties par zone", groups: "Classes, spés et races", commBuilds: "Builds les plus joués", commSpells: "Part moyenne des dégâts par sort", zone: "Zone", difficulty: "Difficulté", normal: "Normal", heroic: "Héroïque", share: "Part", add: "Ajouter", added: "Déjà ajouté", allClasses: "Toutes les classes", spell: "Sort",
   },
   en: {
     empty: "No run recorded yet. Runs started from the companion show up here when they end.",
@@ -20,6 +22,8 @@ const STATS_STR = {
     spec: "Spec", race: "Race", cls: "Class", n: "Runs", winRate: "Victories", avgTime: "Avg survival", maxLvl: "Max lvl", dps: "Avg DPS",
     date: "Date", build: "Build", result: "Result", time: "Time", level: "Lvl", kills: "Kills", run: "Run", attack: "Attack", pets: "Pets", other: "Others", endless: "Endless", bestEndless: "Best endless",
     noDmg: "No damage data yet: the combat log must be on (the SurvivorsBuilds addon turns it on).",
+    tabSolo: "Solo", tabCommunity: "Community", commOff: "The community site isn't responding right now.", commHint: "Runs shared anonymously by companion players, updated every minute.",
+    players: "Players", combos: "Combinations", bestZone: "Best runs per zone", groups: "Classes, specs and races", commBuilds: "Most played builds", commSpells: "Average damage share by spell", zone: "Zone", difficulty: "Difficulty", normal: "Normal", heroic: "Heroic", share: "Share", add: "Add", added: "Already added", allClasses: "All classes", spell: "Spell",
   },
 };
 const ST = (k) => (STATS_STR[lang()] || STATS_STR.en)[k] || k;
@@ -183,7 +187,84 @@ function tile(label, value, sub) {
   return el("div", "tile", `<div class="tl">${esc(label)}</div><div class="tv">${value}</div>${sub ? `<div class="ts">${sub}</div>` : ""}`);
 }
 
+let STATS_TAB = "solo", COMM = null, COMM_I18N = null, COMM_AT = 0;
+const COMM_FILTER = { cls: "", zone: "" };
+
 async function renderStats(sec) {
+  sec.innerHTML = "";
+  const nav = el("nav", "subnav");
+  [["solo", ST("tabSolo")], ["community", ST("tabCommunity")]].forEach(([k, label]) => {
+    const b = el("button", k === STATS_TAB ? "active" : "", esc(label));
+    b.onclick = () => { STATS_TAB = k; renderStats(sec); };
+    nav.appendChild(b);
+  });
+  sec.appendChild(nav);
+  const body = el("div");
+  sec.appendChild(body);
+  if (STATS_TAB === "community") await renderCommunity(body); else await renderSolo(body);
+}
+
+async function renderCommunity(sec) {
+  if (!COMM || Date.now() - COMM_AT > 60000) {
+    try {
+      const [s, i] = await Promise.all([fetch("/api/community/stats").then((r) => r.json()), COMM_I18N ? Promise.resolve(COMM_I18N) : fetch("/api/community/i18n").then((r) => r.json())]);
+      if (!s.error && !i.error) { COMM = s; COMM_I18N = i; COMM_AT = Date.now(); }
+    } catch (e) {}
+  }
+  if (PAGE !== "stats" || STATS_TAB !== "community") return;
+  if (!COMM || !COMM_I18N) { sec.appendChild(el("div", "empty", esc(ST("commOff")))); return; }
+  const C = COMM, LC = COMM_I18N.t[lang()] || COMM_I18N.t.en;
+  const zoneName = (z) => LC.zones[z] || z || "?";
+  const raceName = (r) => LC.races[r] || r || "?";
+  const cSpell = (c, k) => { const n = spellName(c, k); return n === k ? LC.spells[k] || k : n; };
+  const diff = (d) => d === "?" || d == null || d === "" ? "" : +d === 0 ? ST("normal") : ST("heroic") + " " + ["", "I", "II", "III", "IV", "V"][+d];
+  const res = (r) => r === "victory" ? ST("win") : ST("loss");
+  const fmt = (n) => n >= 1e6 ? (n / 1e6).toFixed(1) + " M" : n >= 1e3 ? Math.round(n / 1e3) + " k" : Math.round(n || 0);
+  sec.appendChild(el("div", "hint", esc(ST("commHint"))));
+  const tiles = el("div", "tiles");
+  tiles.appendChild(tile(ST("runs"), num(C.runs)));
+  tiles.appendChild(tile(ST("players"), num(C.players)));
+  tiles.appendChild(tile(ST("wins"), num(C.groups.reduce((a, g) => a + g.wins, 0))));
+  tiles.appendChild(tile(ST("combos"), num(C.groups.length)));
+  sec.appendChild(tiles);
+  const bar = el("div", "row filters");
+  const sel = (opts, value, onchange) => {
+    const s = el("select");
+    opts.forEach(([v, l]) => { const o = el("option", "", esc(l)); o.value = v; if (v === value) o.selected = true; s.appendChild(o); });
+    s.onchange = () => { onchange(s.value); renderStats(sec.parentNode); };
+    return s;
+  };
+  bar.appendChild(sel([["", ST("allClasses")]].concat([...new Set(C.groups.map((g) => g.class))].map((k) => [k, className(k)])), COMM_FILTER.cls, (v) => (COMM_FILTER.cls = v)));
+  bar.appendChild(sel([["", ST("allZones")]].concat([...new Set(C.groups.map((g) => g.zone))].map((k) => [k, zoneName(k)])), COMM_FILTER.zone, (v) => (COMM_FILTER.zone = v)));
+  sec.appendChild(bar);
+  const okC = (x) => !COMM_FILTER.cls || x.class === COMM_FILTER.cls;
+  const okZ = (x) => !COMM_FILTER.zone || x.zone === COMM_FILTER.zone;
+  sec.appendChild(table(ST("bestZone"), [ST("zone"), ST("difficulty"), ST("cls"), ST("spec"), ST("race"), "DPS", ST("level"), ST("time"), ST("result")],
+    C.best.filter((x) => okC(x) && okZ(x)).map((x) => [esc(zoneName(x.zone)), esc(diff(x.difficulty)), esc(className(x.class)), esc(specName(x.spec)), esc(raceName(x.race)), fmt(x.dps), x.level, mmss(x.time), esc(res(x.result))])));
+  sec.appendChild(table(ST("groups"), [ST("cls"), ST("spec"), ST("race"), ST("zone"), ST("difficulty"), ST("n"), ST("winRate"), ST("avgTime"), ST("maxLvl"), ST("dps"), ST("maxDps")],
+    C.groups.filter((x) => okC(x) && okZ(x)).sort((a, b) => b.runs - a.runs).map((x) => [esc(className(x.class)), esc(specName(x.spec)), esc(raceName(x.race)), esc(zoneName(x.zone)), esc(diff(x.difficulty)), x.runs, Math.round((100 * x.wins) / x.runs) + " %", mmss(x.avgTime), x.avgLevel, fmt(x.avgDps), fmt(x.bestDps)])));
+  const builds = C.builds.filter(okC);
+  const bt = table(ST("commBuilds"), [ST("cls"), ST("build"), ST("n"), ST("winRate"), ST("dps"), ""],
+    builds.map((x, i) => {
+      const have = STATE.builds.some((b) => b.class === x.class && encode(Object.assign({}, b, { name: x.name })) === x.code);
+      return [esc(className(x.class)), esc(x.name), x.runs, Math.round((100 * x.wins) / x.runs) + " %", fmt(x.avgDps), have ? esc(ST("added")) : "<button class='small' data-i='" + i + "'>" + esc(ST("add")) + "</button>"];
+    }));
+  bt.addEventListener("click", (e) => {
+    const i = e.target.dataset && e.target.dataset.i;
+    if (i == null) return;
+    const x = builds[+i], b = decode(x.code);
+    if (!b) return;
+    b.name = x.name;
+    changed();
+  });
+  sec.appendChild(bt);
+  sec.appendChild(table(ST("commSpells"), [ST("cls"), ST("spell"), ST("n"), ST("share")],
+    C.spells.filter(okC).map((x) => [esc(className(x.class)), esc(cSpell(x.class, x.spell)), x.runs, x.avgShare + " %"])));
+  sec.appendChild(table(ST("recent"), [ST("date"), ST("cls"), ST("spec"), ST("race"), ST("zone"), ST("difficulty"), ST("result"), ST("level"), ST("time"), "DPS"],
+    C.recent.filter((x) => okC(x) && okZ(x)).map((x) => [esc(new Date(x.at).toLocaleString(lang() === "fr" ? "fr-FR" : "en-US", { dateStyle: "short", timeStyle: "short" })), esc(className(x.class)), esc(specName(x.spec)), esc(raceName(x.race)), esc(zoneName(x.zone)), esc(diff(x.difficulty)), esc(res(x.result)), x.level, mmss(x.time), fmt(x.dps)])));
+}
+
+async function renderSolo(sec) {
   if (!RUNS || sec.dataset.fresh !== "1") {
     try { RUNS = await (await fetch("/api/runs")).json(); } catch (e) { RUNS = []; }
     sec.dataset.fresh = "1";
@@ -198,7 +279,7 @@ async function renderStats(sec) {
   const sel = (opts, value, onchange) => {
     const s = el("select");
     opts.forEach(([v, l]) => { const o = el("option", "", esc(l)); o.value = v; if (v === value) o.selected = true; s.appendChild(o); });
-    s.onchange = () => { onchange(s.value); renderStats(sec); };
+    s.onchange = () => { onchange(s.value); renderStats(sec.parentNode); };
     bar.appendChild(s);
   };
   const classes = [...new Set(RUNS.map((r) => r.class))];

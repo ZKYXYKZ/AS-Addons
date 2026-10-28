@@ -1381,6 +1381,13 @@ class Companion : Form
                 Respond(ctx, 200, "application/json", Utf8.GetBytes("{\"ok\":true}"));
                 return;
             }
+            if (path == "/api/community/stats" || path == "/api/community/i18n")
+            {
+                bool stats = path.EndsWith("stats");
+                byte[] body = CommunityGet(stats ? "/api/stats" : "/i18n.json", stats ? 60 : 3600);
+                Respond(ctx, body != null ? 200 : 502, "application/json", body ?? Utf8.GetBytes("{\"error\":\"offline\"}"));
+                return;
+            }
             if (path == "/api/runs")
             {
                 string rf = Path.Combine(dataDir, "runs.json");
@@ -2296,6 +2303,25 @@ class Companion : Form
     {
         string u = Environment.GetEnvironmentVariable("AS_COMPANION_SHARE_URL");
         return string.IsNullOrEmpty(u) ? DefaultShareUrl : u;
+    }
+
+    readonly Dictionary<string, KeyValuePair<DateTime, byte[]>> communityCache = new Dictionary<string, KeyValuePair<DateTime, byte[]>>();
+
+    byte[] CommunityGet(string route, int seconds)
+    {
+        lock (communityCache)
+        {
+            KeyValuePair<DateTime, byte[]> hit;
+            if (communityCache.TryGetValue(route, out hit) && DateTime.Now < hit.Key) return hit.Value;
+            try
+            {
+                byte[] body;
+                using (WebClient w = Web()) body = w.DownloadData(ShareUrl().TrimEnd('/') + route);
+                communityCache[route] = new KeyValuePair<DateTime, byte[]>(DateTime.Now.AddSeconds(seconds), body);
+                return body;
+            }
+            catch (Exception ex) { Log("community " + route + ": " + ex.Message); return communityCache.TryGetValue(route, out hit) ? hit.Value : null; }
+        }
     }
 
     string InstallId()
