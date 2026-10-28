@@ -2304,7 +2304,7 @@ class Companion : Form
 
     string ShareUrl()
     {
-        string u = S(G(settings, "shareUrl"));
+        string u = Environment.GetEnvironmentVariable("AS_COMPANION_SHARE_URL");
         return string.IsNullOrEmpty(u) ? DefaultShareUrl : u;
     }
 
