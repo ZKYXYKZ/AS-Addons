@@ -11,6 +11,10 @@ const MAX_BODY = 64 * 1024;
 const LIMIT_IP = 60;
 const LIMIT_INSTALL = 30;
 const RECENT = 50;
+const MAX_BUILDS = 5000;
+const DAY_BYTES = 300 * 1024 * 1024;
+const KEY = /^[\p{L}\p{N} _:'().,!-]{1,40}$/u;
+const CTRL = /[\u0000-\u001f\u007f]/;
 
 fs.mkdirSync(DATA, { recursive: true });
 
@@ -39,7 +43,7 @@ function clean(r, ip) {
     client: str(r.client, 20),
     class: cls,
     race: keyOf(RACE_OF, r.race),
-    spec: str(r.spec, 30),
+    spec: typeof r.spec === "string" && new RegExp("^" + cls + "-[0-2]$").test(r.spec) ? r.spec : null,
     zone: keyOf(ZONE_OF, r.zone),
     difficulty: num(r.difficulty, 0, 10),
     coop: num(r.coop, 1, 8),
@@ -50,20 +54,20 @@ function clean(r, ip) {
     dps: num(r.dps, 0, 1e12),
     damage: num(r.damage, 0, 1e15),
     taken: num(r.taken, 0, 1e12),
-    build: str(r.build, 2000),
+    build: typeof r.build === "string" && r.build.startsWith("SB1;" + cls + ";") && !CTRL.test(r.build) ? r.build.slice(0, 2000) : null,
     startedAt: str(r.startedAt, 40),
     endedAt: str(r.endedAt, 40),
-    jewels: Array.isArray(r.jewels) ? r.jewels.slice(0, 8).map((j) => str(j, 40)).filter(Boolean) : [],
+    jewels: Array.isArray(r.jewels) ? r.jewels.slice(0, 8).map((j) => str(j, 40)).filter((j) => j && KEY.test(j)) : [],
     amuletUps: num(r.amuletUps, 0, 50),
     minutes: Array.isArray(r.minutes) ? r.minutes.slice(0, 120).map((m) => ({ dps: num(m && m.dps, 0, 1e12), taken: num(m && m.taken, 0, 1e12), level: num(m && m.level, 0, 500) })) : [],
-    spells: {},
+    spells: Object.create(null),
     detail: typeof r.detail === "string" && r.detail.startsWith("AZD1|") ? r.detail.slice(0, 1000000) : null,
     picks: Array.isArray(r.picks) ? r.picks.slice(0, 400).map((p) => ({ t: num(p && p.t, 0, 36000), took: str(p && p.took, 40), kind: str(p && p.kind, 20), rarity: num(p && p.rarity, 0, 10) })) : [],
   };
   if (r.spells && typeof r.spells === "object")
     for (const [k, v] of Object.entries(r.spells).slice(0, 40)) {
       const key = str(k, 40);
-      if (key && v && typeof v === "object") run.spells[key] = { rank: num(v.rank, 0, 100), share: num(v.share, 0, 1) };
+      if (key && KEY.test(key) && v && typeof v === "object") run.spells[key] = { rank: num(v.rank, 0, 100), share: num(v.share, 0, 1) };
     }
   if (!run.time || run.level == null || !run.zone) return null;
   const real = (Date.parse(run.endedAt) - Date.parse(run.startedAt)) / 1000;
@@ -73,7 +77,7 @@ function clean(r, ip) {
 
 let stats;
 function emptyStats() {
-  return { runs: 0, installs: new Set(), groups: {}, builds: {}, spells: {}, recent: [], best: {} };
+  return { runs: 0, installs: new Set(), groups: Object.create(null), builds: Object.create(null), spells: Object.create(null), recent: [], best: Object.create(null), nbuilds: 0 };
 }
 function groupKey(r) {
   return [r.class, r.spec || "?", r.race || "?", r.zone || "?", r.difficulty == null ? "?" : r.difficulty].join("|");
@@ -89,13 +93,15 @@ function add(r) {
   g.level += r.level || 0;
   g.dps += r.dps || 0;
   g.best = Math.max(g.best, r.dps || 0);
-  if (r.build) {
+  if (r.build && (stats.builds[r.build] || stats.nbuilds < MAX_BUILDS)) {
+    if (!stats.builds[r.build]) stats.nbuilds++;
     const b = (stats.builds[r.build] = stats.builds[r.build] || { n: 0, wins: 0, dps: 0, class: r.class });
     b.n++;
     if (r.result === "victory") b.wins++;
     b.dps += r.dps || 0;
   }
   for (const [k, v] of Object.entries(r.spells || {})) {
+    if (!KEY.test(k)) continue;
     const s = (stats.spells[r.class + "|" + k] = stats.spells[r.class + "|" + k] || { n: 0, share: 0 });
     s.n++;
     s.share += v.share || 0;
@@ -132,6 +138,15 @@ function snapshot() {
   cache = JSON.stringify({ updated: new Date().toISOString(), runs: stats.runs, players: stats.installs.size, groups, builds, spells, best, recent: stats.recent });
   cacheAt = Date.now();
   return cache;
+}
+
+let day = "", dayBytes = 0;
+function quota(n) {
+  const d = new Date().toISOString().slice(0, 10);
+  if (d !== day) { day = d; dayBytes = 0; }
+  if (dayBytes + n > DAY_BYTES) return false;
+  dayBytes += n;
+  return true;
 }
 
 const hits = new Map();
@@ -172,8 +187,10 @@ const server = http.createServer((req, res) => {
       if (!r) return send(res, 400, '{"error":"invalid"}');
       if (limited("in:" + r.install, LIMIT_INSTALL)) return send(res, 429, '{"error":"too many"}');
       const month = r.at.slice(0, 7);
-      const detail = r.detail;
+      let detail = r.detail;
       delete r.detail;
+      if (detail && CTRL.test(detail)) detail = null;
+      if (!quota(JSON.stringify(r).length + (detail ? detail.length : 0))) return send(res, 503, '{"error":"busy"}');
       if (detail) fs.appendFile(path.join(DATA, "details-" + month + ".ndjson"), JSON.stringify({ at: r.at, install: r.install, class: r.class, zone: r.zone, level: r.level, kills: r.kills, detail }) + "\n", () => {});
       fs.appendFile(path.join(DATA, "runs-" + month + ".ndjson"), JSON.stringify(r) + "\n", (err) => {
         if (err) return send(res, 500, '{"error":"store"}');
