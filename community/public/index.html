@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Azeroth Survivors · Stats</title>
+<style>
+:root { --bg: #111114; --panel: #1a1a20; --line: #2c2c35; --text: #e6e2d8; --mute: #8f8b80; --gold: #e6b84c; --good: #7fd67f; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 "Segoe UI", system-ui, sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 20px 16px 40px; }
+header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+h1 { color: var(--gold); font-size: 22px; margin: 0 0 4px; }
+h2 { color: var(--gold); font-size: 16px; margin: 28px 0 8px; }
+.sub { color: var(--mute); margin-bottom: 18px; }
+.tiles { display: flex; gap: 12px; flex-wrap: wrap; }
+.tile { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 16px; min-width: 150px; }
+.tile b { display: block; font-size: 22px; color: var(--gold); }
+.tile span { color: var(--mute); font-size: 12px; }
+.wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--mute); font-weight: 500; cursor: pointer; user-select: none; }
+td.n { text-align: right; font-variant-numeric: tabular-nums; }
+tr.win td:first-child { color: var(--good); }
+select { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; }
+.bar { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; color: var(--mute); }
+button { background: var(--panel); color: var(--gold); border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px; cursor: pointer; }
+.empty { color: var(--mute); padding: 12px; }
+footer { color: var(--mute); font-size: 12px; margin-top: 30px; }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div><h1>Azeroth Survivors · <span data-t="title"></span></h1><div class="sub" data-t="sub"></div></div>
+  <select id="lang"></select>
+</header>
+<div class="tiles" id="tiles"></div>
+<h2 data-t="best"></h2>
+<div class="wrap"><table id="best"></table></div>
+<h2 data-t="groups"></h2>
+<div class="bar"><span data-t="class"></span> <select id="fClass"></select> <span data-t="zone"></span> <select id="fZone"></select></div>
+<div class="wrap"><table id="groups"></table></div>
+<h2 data-t="builds"></h2>
+<div class="wrap"><table id="builds"></table></div>
+<h2 data-t="spells"></h2>
+<div class="bar"><span data-t="class"></span> <select id="sClass"></select></div>
+<div class="wrap"><table id="spells"></table></div>
+<h2 data-t="recent"></h2>
+<div class="wrap"><table id="recent"></table></div>
+<footer data-t="footer"></footer>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+let I18N, STATS, L;
+const t = (k) => L.ui[k] || k;
+const fmt = (n) => n == null ? "" : n >= 1e6 ? (n / 1e6).toFixed(1) + " M" : n >= 1e3 ? Math.round(n / 1e3) + " k" : Math.round(n);
+const dur = (s) => s == null ? "" : Math.floor(s / 60) + ":" + String(Math.round(s % 60)).padStart(2, "0");
+const cls = (k) => L.classes[k] || k;
+const spec = (s, c) => { const m = /-(\d+)$/.exec(s || ""); return m && L.trees[c] ? L.trees[c][+m[1]] || "?" : "?"; };
+const race = (r) => L.races[r] || r || "?";
+const zone = (z) => L.zones[z] || z || "?";
+const spell = (k) => L.spells[k] || k;
+const diff = (d) => d === "?" || d == null ? "" : +d === 0 ? t("normal") : t("heroic") + " " + ["", "I", "II", "III", "IV", "V"][+d];
+const res = (r) => r === "victory" ? t("victory") : t("defeat");
+
+function table(el, cols, rows) {
+  if (!rows.length) { el.innerHTML = '<tr><td class="empty">' + esc(t("empty")) + "</td></tr>"; return; }
+  let sortI = -1, dir = 1;
+  const draw = () => {
+    const r = sortI < 0 ? rows : rows.slice().sort((a, b) => { const x = cols[sortI].v(a), y = cols[sortI].v(b); return (x > y ? 1 : x < y ? -1 : 0) * dir; });
+    el.innerHTML = "<tr>" + cols.map((c, i) => "<th data-i='" + i + "'>" + esc(c.h) + (i === sortI ? (dir > 0 ? " ▲" : " ▼") : "") + "</th>").join("") + "</tr>" +
+      r.map((x) => "<tr" + (x.result === "victory" ? " class='win'" : "") + ">" + cols.map((c) => "<td" + (c.num ? " class='n'" : "") + ">" + (c.html ? c.html(x) : esc(c.f ? c.f(x) : c.v(x))) + "</td>").join("") + "</tr>").join("");
+    el.querySelectorAll("th").forEach((th) => th.onclick = () => { const i = +th.dataset.i; dir = i === sortI ? -dir : -1; sortI = i; draw(); });
+  };
+  draw();
+}
+function fillSelect(el, values, label, onchange) {
+  const cur = el.value;
+  el.innerHTML = '<option value="">' + esc(t("all")) + "</option>" + values.map((v) => "<option value='" + esc(v) + "'>" + esc(label(v)) + "</option>").join("");
+  if (values.includes(cur)) el.value = cur;
+  el.onchange = onchange;
+}
+
+function render() {
+  const s = STATS;
+  document.documentElement.lang = $("lang").value;
+  document.querySelectorAll("[data-t]").forEach((e) => (e.textContent = t(e.dataset.t)));
+  $("tiles").innerHTML = [[t("runs"), s.runs], [t("players"), s.players], [t("wins"), s.groups.reduce((a, g) => a + g.wins, 0)], [t("combos"), s.groups.length]].map(([l, v]) => "<div class='tile'><b>" + fmt(v) + "</b><span>" + esc(l) + "</span></div>").join("");
+  table($("best"), [
+    { h: t("zone"), v: (x) => zone(x.zone) }, { h: t("difficulty"), v: (x) => diff(x.difficulty) },
+    { h: t("class"), v: (x) => cls(x.class) }, { h: t("spec"), v: (x) => spec(x.spec, x.class) }, { h: t("race"), v: (x) => race(x.race) },
+    { h: "DPS", v: (x) => x.dps, f: (x) => fmt(x.dps), num: 1 }, { h: t("level"), v: (x) => x.level, num: 1 }, { h: t("duration"), v: (x) => x.time, f: (x) => dur(x.time), num: 1 },
+    { h: t("result"), v: (x) => x.result, f: (x) => res(x.result) },
+  ], s.best);
+  const drawGroups = () => {
+    const c = $("fClass").value, z = $("fZone").value;
+    table($("groups"), [
+      { h: t("class"), v: (x) => cls(x.class) }, { h: t("spec"), v: (x) => spec(x.spec, x.class) }, { h: t("race"), v: (x) => race(x.race) },
+      { h: t("zone"), v: (x) => zone(x.zone) }, { h: t("difficulty"), v: (x) => diff(x.difficulty) },
+      { h: t("runs"), v: (x) => x.runs, num: 1 }, { h: t("wins"), v: (x) => x.wins / x.runs, f: (x) => Math.round(100 * x.wins / x.runs) + " %", num: 1 },
+      { h: t("avgTime"), v: (x) => x.avgTime, f: (x) => dur(x.avgTime), num: 1 }, { h: t("avgLevel"), v: (x) => x.avgLevel, num: 1 },
+      { h: t("avgDps"), v: (x) => x.avgDps, f: (x) => fmt(x.avgDps), num: 1 }, { h: t("bestDps"), v: (x) => x.bestDps, f: (x) => fmt(x.bestDps), num: 1 },
+    ], s.groups.filter((g) => (!c || g.class === c) && (!z || g.zone === z)).sort((a, b) => b.runs - a.runs));
+  };
+  fillSelect($("fClass"), [...new Set(s.groups.map((g) => g.class))], cls, drawGroups);
+  fillSelect($("fZone"), [...new Set(s.groups.map((g) => g.zone))], zone, drawGroups);
+  drawGroups();
+  table($("builds"), [
+    { h: t("class"), v: (x) => cls(x.class) }, { h: t("build"), v: (x) => x.name },
+    { h: t("runs"), v: (x) => x.runs, num: 1 }, { h: t("wins"), v: (x) => x.wins / x.runs, f: (x) => Math.round(100 * x.wins / x.runs) + " %", num: 1 },
+    { h: t("avgDps"), v: (x) => x.avgDps, f: (x) => fmt(x.avgDps), num: 1 },
+    { h: "", v: () => "", html: (x) => "<button data-code='" + esc(x.code) + "'>" + esc(t("copy")) + "</button>" },
+  ], s.builds);
+  const drawSpells = () => {
+    const c = $("sClass").value;
+    table($("spells"), [{ h: t("class"), v: (x) => cls(x.class) }, { h: t("spell"), v: (x) => spell(x.spell) }, { h: t("runs"), v: (x) => x.runs, num: 1 }, { h: t("share"), v: (x) => x.avgShare, f: (x) => x.avgShare + " %", num: 1 }], s.spells.filter((x) => !c || x.class === c));
+  };
+  fillSelect($("sClass"), [...new Set(s.spells.map((x) => x.class))], cls, drawSpells);
+  drawSpells();
+  table($("recent"), [
+    { h: t("date"), v: (x) => x.at, f: (x) => new Date(x.at).toLocaleString($("lang").value, { dateStyle: "short", timeStyle: "short" }) },
+    { h: t("class"), v: (x) => cls(x.class) }, { h: t("spec"), v: (x) => spec(x.spec, x.class) }, { h: t("race"), v: (x) => race(x.race) },
+    { h: t("zone"), v: (x) => zone(x.zone) }, { h: t("difficulty"), v: (x) => diff(x.difficulty) },
+    { h: t("result"), v: (x) => x.result, f: (x) => res(x.result) },
+    { h: t("level"), v: (x) => x.level, num: 1 }, { h: t("duration"), v: (x) => x.time, f: (x) => dur(x.time), num: 1 }, { h: "DPS", v: (x) => x.dps, f: (x) => fmt(x.dps), num: 1 },
+  ], s.recent);
+}
+
+$("builds").addEventListener("click", (e) => { const c = e.target.dataset && e.target.dataset.code; if (c) navigator.clipboard.writeText(c).then(() => (e.target.textContent = t("copied"))); });
+
+Promise.all([fetch("/i18n.json").then((r) => r.json()), fetch("/api/stats").then((r) => r.json())]).then(([i, s]) => {
+  I18N = i;
+  STATS = s;
+  let saved = null;
+  try { saved = localStorage.getItem("lang"); } catch (e) {}
+  const nav = (navigator.language || "en").slice(0, 2);
+  const code = I18N.t[saved] ? saved : I18N.t[nav] ? nav : "en";
+  $("lang").innerHTML = I18N.langs.map((l) => "<option value='" + l.code + "'>" + esc(l.name) + "</option>").join("");
+  $("lang").value = code;
+  $("lang").onchange = () => { try { localStorage.setItem("lang", $("lang").value); } catch (e) {} L = I18N.t[$("lang").value]; render(); };
+  L = I18N.t[code];
+  render();
+});
+</script>
+</body>
+</html>
