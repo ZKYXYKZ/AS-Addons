@@ -2325,7 +2325,7 @@ class Companion : Form
             string install = InstallId();
             double total = spellDmg.Values.Sum();
             Dictionary<string, object> run = new Dictionary<string, object> {
-                { "v", 1 }, { "client", CurrentVersion }, { "install", install },
+                { "v", 1 }, { "client", CurrentVersion }, { "install", install }, { "startedAt", runStarted.ToUniversalTime().ToString("o") }, { "endedAt", DateTime.UtcNow.ToString("o") },
                 { "class", S(heroClass["key"]) }, { "race", G(r, "race") }, { "spec", G(r, "spec") },
                 { "zone", G(r, "bg") }, { "difficulty", null }, { "coop", coopSize > 1 ? coopSize : 1 },
                 { "result", G(r, "result") }, { "time", G(r, "time") }, { "level", G(r, "level") }, { "kills", G(r, "kills") },

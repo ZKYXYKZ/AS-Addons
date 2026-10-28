@@ -52,6 +52,8 @@ function clean(r, ip) {
     damage: num(r.damage, 0, 1e15),
     taken: num(r.taken, 0, 1e12),
     build: str(r.build, 2000),
+    startedAt: str(r.startedAt, 40),
+    endedAt: str(r.endedAt, 40),
     jewels: Array.isArray(r.jewels) ? r.jewels.slice(0, 8).map((j) => str(j, 40)).filter(Boolean) : [],
     amuletUps: num(r.amuletUps, 0, 50),
     minutes: Array.isArray(r.minutes) ? r.minutes.slice(0, 120).map((m) => ({ dps: num(m && m.dps, 0, 1e12), taken: num(m && m.taken, 0, 1e12), level: num(m && m.level, 0, 500) })) : [],
@@ -65,6 +67,8 @@ function clean(r, ip) {
       if (key && v && typeof v === "object") run.spells[key] = { rank: num(v.rank, 0, 100), share: num(v.share, 0, 1) };
     }
   if (!run.time || run.level == null || !run.zone) return null;
+  const real = (Date.parse(run.endedAt) - Date.parse(run.startedAt)) / 1000;
+  if (isFinite(real) && real < run.time * 0.9) run.suspect = true;
   return run;
 }
 
@@ -76,6 +80,7 @@ function groupKey(r) {
   return [r.class, r.spec || "?", r.race || "?", r.zone || "?", r.difficulty == null ? "?" : r.difficulty].join("|");
 }
 function add(r) {
+  if (r.suspect) return;
   stats.runs++;
   stats.installs.add(r.install);
   const g = (stats.groups[groupKey(r)] = stats.groups[groupKey(r)] || { n: 0, wins: 0, time: 0, level: 0, dps: 0, best: 0 });
