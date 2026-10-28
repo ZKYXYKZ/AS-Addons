@@ -138,9 +138,9 @@ footer { padding: 10px 18px; border-top: 1px solid var(--line); color: var(--mut
 .strack { height: 10px; background: #222228; border-radius: 4px; overflow: hidden; }
 .sfill { display: block; height: 100%; background: #3987e5; border-radius: 0 4px 4px 0; }
 .sval { text-align: right; color: var(--mute); }
-.twrap { overflow-x: auto; }
+.twrap { overflow: auto; max-height: 420px; }
 .stable { width: 100%; border-collapse: collapse; font-size: 13px; }
-.stable th { text-align: left; color: var(--mute); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.stable th { position: sticky; top: 0; z-index: 1; background: var(--panel); text-align: left; color: var(--mute); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 .stable td { padding: 6px 8px; border-bottom: 1px solid #222228; white-space: nowrap; }
 .stable .good { color: #0ca30c; }
 .stable th.n, .stable td.n { text-align: right; font-variant-numeric: tabular-nums; }
