@@ -27,6 +27,7 @@ const keyOf = (table, v) => (typeof v === "string" ? table[v.toLowerCase()] || n
 
 const CLASSES = ["warrior", "paladin", "hunter", "rogue", "priest", "shaman", "mage", "warlock", "druid"];
 const RESULTS = ["victory", "defeat", "left"];
+const CLASS_IDS = { 1: "warrior", 2: "paladin", 3: "hunter", 4: "rogue", 5: "priest", 7: "shaman", 8: "mage", 9: "warlock", 11: "druid" };
 
 const str = (v, max) => (typeof v === "string" ? v.slice(0, max) : null);
 const num = (v, lo, hi) => (typeof v === "number" && isFinite(v) ? Math.min(hi, Math.max(lo, v)) : null);
@@ -48,6 +49,11 @@ function clean(r, ip) {
     zone: keyOf(ZONE_OF, r.zone),
     difficulty: num(r.difficulty, 0, 10),
     coop: Math.round(num(r.coop, 1, 5) || 1),
+    role: r.role === "host" || r.role === "guest" ? r.role : null,
+    group: typeof r.group === "string" && /^[0-9a-f]{16}$/.test(r.group) ? r.group : null,
+    party: Array.isArray(r.party) ? r.party.slice(0, 5).map((m) => ({ class: CLASS_IDS[m && m.classId] || null, race: keyOf(RACE_OF, m && m.race), host: !!(m && m.host), me: !!(m && m.me) })) : null,
+    downed: num(r.downed, 0, 1000),
+    allyDowned: num(r.allyDowned, 0, 1000),
     result: RESULTS.includes(r.result) ? r.result : "defeat",
     time: num(r.time, 0, 36000),
     level: num(r.level, 0, 500),

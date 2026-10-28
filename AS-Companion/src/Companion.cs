@@ -2004,8 +2004,22 @@ class Companion : Form
         {
             case "coop":
                 coopSize = S(G(j, "state")) == "off" ? 0 : (int)N(G(j, "size"), 0);
+                if (S(G(j, "role")) != "") coopRole = S(G(j, "role"));
+                if (S(G(j, "code")) != "") coopCode = S(G(j, "code"));
+                if (S(G(j, "state")) == "off" || S(G(j, "state")) == "ended" || S(G(j, "state")) == "left") { coopRole = null; coopCode = null; party = null; }
+                break;
+            case "party":
+                party = A(G(j, "members")).Select(m => (object)new Dictionary<string, object> { { "classId", G(D(m), "classId") }, { "race", G(D(m), "race") }, { "host", B(G(D(m), "host")) }, { "me", B(G(D(m), "me")) } }).Take(5).ToList();
+                break;
+            case "downed":
+                runDowned++;
+                break;
+            case "banner":
+                if (S(G(j, "kind")) == "frienddown") runAllyDowned++;
                 break;
             case "ready":
+                runDowned = 0;
+                runAllyDowned = 0;
                 recordedIndex = -1;
                 runStarted = DateTime.Now;
                 runMinutes = new List<object>();
@@ -2271,7 +2285,9 @@ class Companion : Form
         Log("spec detected (" + why + "): " + treeName + ", build " + S(G(build, "name")));
         Research("spec", new Dictionary<string, object> { { "tree", tree }, { "why", why }, { "build", build } });
     }
-    int coopSize;
+    int coopSize, runDowned, runAllyDowned;
+    string coopRole, coopCode;
+    List<object> party;
     double victoryTime;
 
     DateTime runStarted = DateTime.Now;
@@ -2350,8 +2366,17 @@ class Companion : Form
                 { "minutes", runMinutes },
                 { "spells", spellDmg.ToDictionary(kv => kv.Key, kv => (object)new Dictionary<string, object> { { "rank", owned.ContainsKey(kv.Key) ? owned[kv.Key] : 0 }, { "share", total > 0 ? Math.Round(kv.Value / total, 4) : 0 } }) },
                 { "jewels", G(r, "jewels") }, { "amuletUps", amuletUps },
-                { "picks", runPicks }
+                { "picks", runPicks }, { "downed", runDowned }
             };
+            if (coopSize > 1)
+            {
+                run["role"] = coopRole;
+                run["allyDowned"] = runAllyDowned;
+                if (party != null) run["party"] = party;
+                if (coopCode != null)
+                    using (System.Security.Cryptography.SHA256 sha = System.Security.Cryptography.SHA256.Create())
+                        run["group"] = BitConverter.ToString(sha.ComputeHash(Utf8.GetBytes(coopCode + "|" + G(r, "bg")))).Replace("-", "").Substring(0, 16).ToLowerInvariant();
+            }
             lock (shareLock)
             {
                 string qf = Path.Combine(dataDir, "share-queue.json");
@@ -2490,6 +2515,7 @@ class Companion : Form
         r["spec"] = specTree >= 0 && heroClass != null ? S(heroClass["key"]) + "-" + specTree : null;
         if (detectedTree >= 0) r["specDetected"] = true;
         if (coopSize > 1) r["coop"] = coopSize;
+        r["downed"] = runDowned;
         double time = N(G(j, "time"), 0);
         r["damageGame"] = G(j, "damage");
         r["damageLog"] = Math.Round(totalDmg);
