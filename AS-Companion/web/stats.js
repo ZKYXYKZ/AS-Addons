@@ -169,8 +169,10 @@ function table(title, head, rows) {
   const box = el("div", "chart");
   box.appendChild(el("h3", "", esc(title)));
   const t = el("table", "stable");
-  t.appendChild(el("tr", "", head.map((h) => `<th>${esc(h)}</th>`).join("")));
-  rows.forEach((r) => t.appendChild(el("tr", "", r.map((c) => `<td>${c}</td>`).join(""))));
+  const isNum = (c) => /^-?[\d\s\u202f.,]+( ?(k|M|%))?$|^\d+:\d\d$/.test(String(c).trim());
+  const num = head.map((_, i) => rows.length > 0 && rows.every((r) => r[i] === "" || r[i] == null || isNum(r[i])) && rows.some((r) => r[i] !== "" && r[i] != null));
+  t.appendChild(el("tr", "", head.map((h, i) => `<th${num[i] ? " class='n'" : ""}>${esc(h)}</th>`).join("")));
+  rows.forEach((r) => t.appendChild(el("tr", "", r.map((c, i) => `<td${num[i] ? " class='n'" : ""}>${c}</td>`).join(""))));
   const wrap = el("div", "twrap");
   wrap.appendChild(t);
   box.appendChild(wrap);

@@ -18,11 +18,21 @@ h2 { color: var(--gold); font-size: 16px; margin: 28px 0 8px; }
 .tile b { display: block; font-size: 22px; color: var(--gold); }
 .tile span { color: var(--mute); font-size: 12px; }
 .wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
-th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-th { color: var(--mute); font-weight: 500; cursor: pointer; user-select: none; }
-td.n { text-align: right; font-variant-numeric: tabular-nums; }
-tr.win td:first-child { color: var(--good); }
+.wrap { border: 1px solid var(--line); border-radius: 8px; }
+table { width: 100%; border-collapse: collapse; background: var(--panel); }
+th, td { text-align: left; padding: 9px 16px; white-space: nowrap; }
+th { background: #222229; color: var(--mute); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; cursor: pointer; user-select: none; border-bottom: 1px solid var(--line); }
+th:hover { color: var(--text); }
+td { border-bottom: 1px solid #24242b; }
+tr:last-child td { border-bottom: 0; }
+tr:nth-child(odd) td { background: #1d1d24; }
+tr:hover td { background: #26262f; }
+th.n, td.n { text-align: right; font-variant-numeric: tabular-nums; }
+td.n { font-weight: 600; }
+td.main { color: #fff; font-weight: 600; }
+td.mute { color: var(--mute); }
+.res-win { color: var(--good); font-weight: 600; }
+.res-loss { color: #e07a6a; }
 select { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; }
 .bar { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; color: var(--mute); }
 button { background: var(--panel); color: var(--gold); border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px; cursor: pointer; }
@@ -72,8 +82,8 @@ function table(el, cols, rows) {
   let sortI = -1, dir = 1;
   const draw = () => {
     const r = sortI < 0 ? rows : rows.slice().sort((a, b) => { const x = cols[sortI].v(a), y = cols[sortI].v(b); return (x > y ? 1 : x < y ? -1 : 0) * dir; });
-    el.innerHTML = "<tr>" + cols.map((c, i) => "<th data-i='" + i + "'>" + esc(c.h) + (i === sortI ? (dir > 0 ? " ▲" : " ▼") : "") + "</th>").join("") + "</tr>" +
-      r.map((x) => "<tr" + (x.result === "victory" ? " class='win'" : "") + ">" + cols.map((c) => "<td" + (c.num ? " class='n'" : "") + ">" + (c.html ? c.html(x) : esc(c.f ? c.f(x) : c.v(x))) + "</td>").join("") + "</tr>").join("");
+    el.innerHTML = "<tr>" + cols.map((c, i) => "<th data-i='" + i + "'" + (c.num ? " class='n'" : "") + ">" + esc(c.h) + (i === sortI ? (dir > 0 ? " ▲" : " ▼") : "") + "</th>").join("") + "</tr>" +
+      r.map((x) => "<tr>" + cols.map((c, i) => "<td" + (c.num ? " class='n'" : i === 0 ? " class='main'" : "") + ">" + (c.html ? c.html(x) : esc(c.f ? c.f(x) : c.v(x))) + "</td>").join("") + "</tr>").join("");
     el.querySelectorAll("th").forEach((th) => th.onclick = () => { const i = +th.dataset.i; dir = i === sortI ? -dir : -1; sortI = i; draw(); });
   };
   draw();
@@ -94,7 +104,7 @@ function render() {
     { h: t("zone"), v: (x) => zone(x.zone) }, { h: t("difficulty"), v: (x) => diff(x.difficulty) }, { h: t("players"), v: (x) => x.coop || 1, num: 1 },
     { h: t("class"), v: (x) => cls(x.class) }, { h: t("spec"), v: (x) => spec(x.spec, x.class) }, { h: t("race"), v: (x) => race(x.race) },
     { h: t("damage"), v: (x) => x.damage, f: (x) => fmt(x.damage), num: 1 }, { h: t("kills"), v: (x) => x.kills, f: (x) => int(x.kills), num: 1 }, { h: t("level"), v: (x) => x.level, num: 1 }, { h: t("duration"), v: (x) => x.time, f: (x) => dur(x.time), num: 1 },
-    { h: t("result"), v: (x) => x.result, f: (x) => res(x.result) },
+    { h: t("result"), v: (x) => x.result, html: (x) => "<span class='" + (x.result === "victory" ? "res-win" : "res-loss") + "'>" + esc(res(x.result)) + "</span>" },
   ], s.best);
   const drawGroups = () => {
     const c = $("fClass").value, z = $("fZone").value;
@@ -125,7 +135,7 @@ function render() {
     { h: t("date"), v: (x) => x.at, f: (x) => new Date(x.at).toLocaleString($("lang").value, { dateStyle: "short", timeStyle: "short" }) },
     { h: t("class"), v: (x) => cls(x.class) }, { h: t("spec"), v: (x) => spec(x.spec, x.class) }, { h: t("race"), v: (x) => race(x.race) },
     { h: t("zone"), v: (x) => zone(x.zone) }, { h: t("difficulty"), v: (x) => diff(x.difficulty) }, { h: t("players"), v: (x) => x.coop || 1, num: 1 },
-    { h: t("result"), v: (x) => x.result, f: (x) => res(x.result) },
+    { h: t("result"), v: (x) => x.result, html: (x) => "<span class='" + (x.result === "victory" ? "res-win" : "res-loss") + "'>" + esc(res(x.result)) + "</span>" },
     { h: t("level"), v: (x) => x.level, num: 1 }, { h: t("duration"), v: (x) => x.time, f: (x) => dur(x.time), num: 1 }, { h: t("damage"), v: (x) => x.damage, f: (x) => fmt(x.damage), num: 1 }, { h: t("kills"), v: (x) => x.kills, f: (x) => int(x.kills), num: 1 },
   ], s.recent);
 }
