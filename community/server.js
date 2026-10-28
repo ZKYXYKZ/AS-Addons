@@ -2,6 +2,8 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const zlib = require("zlib");
+const readline = require("readline");
 
 const PORT = +process.env.PORT || 3040;
 const DATA = process.env.DATA_DIR || path.join(__dirname, "data");
@@ -54,6 +56,7 @@ function clean(r, ip) {
     amuletUps: num(r.amuletUps, 0, 50),
     minutes: Array.isArray(r.minutes) ? r.minutes.slice(0, 120).map((m) => ({ dps: num(m && m.dps, 0, 1e12), taken: num(m && m.taken, 0, 1e12), level: num(m && m.level, 0, 500) })) : [],
     spells: {},
+    detail: typeof r.detail === "string" && r.detail.startsWith("AZD1|") ? r.detail.slice(0, 1000000) : null,
     picks: Array.isArray(r.picks) ? r.picks.slice(0, 400).map((p) => ({ t: num(p && p.t, 0, 36000), took: str(p && p.took, 40), kind: str(p && p.kind, 20), rarity: num(p && p.rarity, 0, 10) })) : [],
   };
   if (r.spells && typeof r.spells === "object")
@@ -142,12 +145,18 @@ function send(res, code, body, type) {
   res.end(body);
 }
 
-function forget(installHash) {
-  for (const f of files()) {
-    const p = path.join(DATA, f);
-    const kept = fs.readFileSync(p, "utf8").split("\n").filter((l) => l && !l.includes('"install":"' + installHash + '"'));
-    fs.writeFileSync(p, kept.length ? kept.join("\n") + "\n" : "");
-  }
+async function filterFile(p, keep) {
+  const tmp = p + ".tmp";
+  const out = fs.createWriteStream(tmp);
+  const rl = readline.createInterface({ input: fs.createReadStream(p), crlfDelay: Infinity });
+  for await (const line of rl) if (line && keep(line)) out.write(line + "\n");
+  await new Promise((ok) => out.end(ok));
+  fs.renameSync(tmp, p);
+}
+
+async function forget(installHash) {
+  const tag = '"install":"' + installHash + '"';
+  for (const f of fs.readdirSync(DATA).filter((x) => /^(runs|details)-\d{4}-\d{2}\.ndjson$/.test(x))) await filterFile(path.join(DATA, f), (l) => !l.includes(tag));
   rebuild();
 }
 
@@ -166,11 +175,18 @@ const server = http.createServer((req, res) => {
     req.on("end", () => {
       if (size > MAX_BODY) return;
       let r;
-      try { r = clean(JSON.parse(Buffer.concat(chunks).toString("utf8")), ip); } catch (e) { r = null; }
+      try {
+        let body = Buffer.concat(chunks);
+        if ((req.headers["content-encoding"] || "").includes("gzip")) body = zlib.gunzipSync(body, { maxOutputLength: 2 * 1024 * 1024 });
+        r = clean(JSON.parse(body.toString("utf8")), ip);
+      } catch (e) { r = null; }
       if (!r) return send(res, 400, '{"error":"invalid"}');
       if (limited("in:" + r.install, LIMIT_INSTALL)) return send(res, 429, '{"error":"too many"}');
-      const file = path.join(DATA, "runs-" + r.at.slice(0, 7) + ".ndjson");
-      fs.appendFile(file, JSON.stringify(r) + "\n", (err) => {
+      const month = r.at.slice(0, 7);
+      const detail = r.detail;
+      delete r.detail;
+      if (detail) fs.appendFile(path.join(DATA, "details-" + month + ".ndjson"), JSON.stringify({ at: r.at, install: r.install, class: r.class, zone: r.zone, level: r.level, kills: r.kills, detail }) + "\n", () => {});
+      fs.appendFile(path.join(DATA, "runs-" + month + ".ndjson"), JSON.stringify(r) + "\n", (err) => {
         if (err) return send(res, 500, '{"error":"store"}');
         add(r);
         send(res, 201, '{"ok":true}');
@@ -181,8 +197,8 @@ const server = http.createServer((req, res) => {
   if (req.method === "DELETE" && url.startsWith("/api/install/")) {
     const id = decodeURIComponent(url.slice("/api/install/".length));
     if (!id || id.length < 16 || limited("del:" + ip, 10)) return send(res, 400, '{"error":"invalid"}');
-    forget(hash(id));
-    return send(res, 200, '{"ok":true}');
+    forget(hash(id)).then(() => send(res, 200, '{"ok":true}'), () => send(res, 500, '{"error":"forget"}'));
+    return;
   }
   if (req.method === "GET" && url === "/api/stats") return send(res, 200, snapshot(), "application/json; charset=utf-8");
   if (req.method === "GET" && (url === "/" || url === "/index.html")) return send(res, 200, fs.readFileSync(path.join(PUBLIC, "index.html")), "text/html; charset=utf-8");

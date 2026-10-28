@@ -429,6 +429,7 @@ class Companion : Form
         ThreadPool.QueueUserWorkItem(delegate { try { FindGame(); FirstRunAddons(); } catch (Exception ex) { Log("find game: " + ex.Message); } });
         tick = new System.Windows.Forms.Timer { Interval = 200 };
         tick.Tick += OnTick;
+        new Thread(() => { Thread.Sleep(20000); FlushShare(); }) { IsBackground = true }.Start();
         tick.Start();
     }
 
@@ -618,6 +619,23 @@ class Companion : Form
                 if (m.Success) map[m.Groups[1].Value] = m.Groups[2].Value.ToLowerInvariant() == "enabled";
             }
         return map;
+    }
+
+    string buildsAddon = "";
+    DateTime buildsAddonAt;
+
+    string BuildsAddonState()
+    {
+        if (DateTime.Now < buildsAddonAt) return buildsAddon;
+        buildsAddonAt = DateTime.Now.AddSeconds(20);
+        try
+        {
+            string dir = AddonsDir();
+            bool en;
+            buildsAddon = Toc(dir, "SurvivorsBuilds") == null ? "missing" : EnabledMap(dir).TryGetValue("SurvivorsBuilds", out en) && !en ? "disabled" : "ok";
+        }
+        catch { buildsAddon = ""; }
+        return buildsAddon;
     }
 
     string AddonsJson()
@@ -1153,6 +1171,8 @@ class Companion : Form
             overlay.Hide();
             Log("game exited");
             ReadAddonRuns(savedFile);
+            AttachDetails(savedFile);
+            new Thread(FlushShare) { IsBackground = true }.Start();
         }
         if (pendingKey != 0 && running && (DateTime.Now - pendingAt).TotalMilliseconds > 800)
         {
@@ -1367,7 +1387,7 @@ class Companion : Form
             }
             if (path == "/api/status")
             {
-                Respond(ctx, 200, "application/json", Utf8.GetBytes(json.Serialize(new Dictionary<string, object> { { "running", running }, { "advice", advice }, { "spec", running ? specNote : "" }, { "error", error }, { "version", CurrentVersion }, { "update", latestTag }, { "updating", updating }, { "updateStage", updateStage }, { "updateProgress", updateProgress }, { "updatedFrom", (DateTime.Now - updatedAt).TotalSeconds < 60 ? updatedFrom : null }, { "updateError", updateError }, { "addonsUpdated", (DateTime.Now - addonsUpdatedAt).TotalMinutes < 2 ? addonsUpdated : "" }, { "game", GamePath() } })));
+                Respond(ctx, 200, "application/json", Utf8.GetBytes(json.Serialize(new Dictionary<string, object> { { "running", running }, { "advice", advice }, { "spec", running ? specNote : "" }, { "error", error }, { "version", CurrentVersion }, { "update", latestTag }, { "updating", updating }, { "updateStage", updateStage }, { "updateProgress", updateProgress }, { "updatedFrom", (DateTime.Now - updatedAt).TotalSeconds < 60 ? updatedFrom : null }, { "updateError", updateError }, { "addonsUpdated", (DateTime.Now - addonsUpdatedAt).TotalMinutes < 2 ? addonsUpdated : "" }, { "game", GamePath() }, { "buildsAddon", BuildsAddonState() } })));
                 return;
             }
             if (path == "/api/browse" && method == "POST")
@@ -1399,6 +1419,7 @@ class Companion : Form
                 Dictionary<string, object> req = D(json.DeserializeObject(new StreamReader(ctx.Request.InputStream, Utf8).ReadToEnd()));
                 string err;
                 try { err = AddonAction(S(G(req, "name")), S(G(req, "action"))); } catch (Exception ex) { err = ex.Message; }
+                buildsAddonAt = DateTime.MinValue;
                 Respond(ctx, 200, "application/json", Utf8.GetBytes(json.Serialize(new Dictionary<string, object> { { "error", err } })));
                 return;
             }
@@ -1693,6 +1714,8 @@ class Companion : Form
         Directory.CreateDirectory(dir);
         ReadLuck(Path.Combine(dir, "SurvivorsBuilds.lua"));
         ReadAddonRuns(Path.Combine(dir, "SurvivorsBuilds.lua"));
+        AttachDetails(Path.Combine(dir, "SurvivorsBuilds.lua"));
+        new Thread(FlushShare) { IsBackground = true }.Start();
         StringBuilder L = new StringBuilder();
         L.Append("SurvivorsBuildsDB = {\n  luck = { " + string.Join(", ", measuredLuck.Select(kv => kv.Key + " = " + kv.Value.ToString(System.Globalization.CultureInfo.InvariantCulture))) + " },\n  link = {\n");
         L.Append("    launched = " + (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds + ",\n");
@@ -2319,9 +2342,37 @@ class Companion : Form
                 while (q.Count > 200) q.RemoveAt(0);
                 File.WriteAllText(qf, json.Serialize(q), Utf8);
             }
-            new Thread(() => { Thread.Sleep(5000); FlushShare(); }) { IsBackground = true }.Start();
         }
         catch (Exception ex) { Log("share queue failed: " + ex.Message); }
+    }
+
+    void AttachDetails(string file)
+    {
+        if (file == null || !File.Exists(file)) return;
+        try
+        {
+            System.Globalization.CultureInfo inv = System.Globalization.CultureInfo.InvariantCulture;
+            List<string[]> details = Regex.Matches(File.ReadAllText(file, Utf8), "\"(AZD1\\|[^\"]*)\"").Cast<Match>().Select(m => m.Groups[1].Value.Split('|')).Where(f => f.Length >= 15).ToList();
+            if (details.Count == 0) return;
+            lock (shareLock)
+            {
+                string qf = Path.Combine(dataDir, "share-queue.json");
+                if (!File.Exists(qf)) return;
+                List<object> q = A(json.DeserializeObject(File.ReadAllText(qf, Utf8))).ToList();
+                int n = 0;
+                foreach (object o in q)
+                {
+                    Dictionary<string, object> run = D(o);
+                    if (run == null || G(run, "detail") != null) continue;
+                    string[] d = details.LastOrDefault(f => f[1].Split(',')[0] == S(G(run, "class")) && Math.Abs(double.Parse(f[3], inv) - N(G(run, "level"), -1)) < 0.5 && Math.Abs(double.Parse(f[4], inv) - N(G(run, "kills"), -1)) <= 5);
+                    if (d == null) continue;
+                    run["detail"] = string.Join("|", d);
+                    n++;
+                }
+                if (n > 0) { File.WriteAllText(qf, json.Serialize(q), Utf8); Log("run details attached: " + n); }
+            }
+        }
+        catch (Exception ex) { Log("details failed: " + ex.Message); }
     }
 
     void FlushShare()
@@ -2341,7 +2392,14 @@ class Companion : Form
                     using (WebClient w = Web())
                     {
                         w.Headers.Add("Content-Type", "application/json");
-                        w.UploadData(url.TrimEnd('/') + "/api/runs", "POST", Utf8.GetBytes(json.Serialize(q[0])));
+                        w.Headers.Add("Content-Encoding", "gzip");
+                        MemoryStream ms = new MemoryStream();
+                        using (System.IO.Compression.GZipStream gz = new System.IO.Compression.GZipStream(ms, System.IO.Compression.CompressionMode.Compress, true))
+                        {
+                            byte[] raw = Utf8.GetBytes(json.Serialize(q[0]));
+                            gz.Write(raw, 0, raw.Length);
+                        }
+                        w.UploadData(url.TrimEnd('/') + "/api/runs", "POST", ms.ToArray());
                     }
                     q.RemoveAt(0);
                     sent++;

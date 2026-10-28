@@ -10,3 +10,4 @@ Core.lua
 Guide.lua
 Window.lua
 Talents.lua
+Recorder.lua

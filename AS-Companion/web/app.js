@@ -23,6 +23,7 @@ const STR = {
     overlay: "Bandeau de conseil par-dessus le jeu", importTitle: "Collez un build (texte d'export) puis validez", exportTitle: "Copiez ce texte pour partager le build", ok: "Importer", close: "Fermer", bad: "Texte de build invalide",
     raceRec: "Race conseillée :", raceAlt: "toutes races débloquées (succès) :",
     applyTal: "Appliquer au jeu", applyTalHelp: "Dans le jeu, ouvrez l’Armurerie, onglet Talents, sur la classe et la spé à remplacer. Ne bougez plus la souris après le clic (environ vingt secondes).", applyTalRun: "Pose des talents en cours : ne bougez pas la souris…", applyTal_ok: "Talents posés. Vérifiez l’arbre puis cliquez sur Terminé.", applyTal_nogame: "Le jeu n'est pas lancé.", applyTal_empty: "Ce build n'a aucun talent.", applyTal_wrongclass: "L’Armurerie ouverte n’est pas celle de la classe de ce build : sélectionnez la bonne classe dans le jeu.", applyTal_focus: "Arrêté : le jeu n'était plus au premier plan.",
+    needAddon: "L'addon SurvivorsBuilds n'est pas installé : il affiche le build en jeu et enregistre le détail de vos parties pour le simulateur et les statistiques.", needAddonOn: "L'addon SurvivorsBuilds est désactivé : il affiche le build en jeu et enregistre le détail de vos parties pour le simulateur et les statistiques.", needAddonInstall: "Installer", needAddonEnable: "Activer",
     shareNotice: "Vos parties, anonymes, améliorent le compagnon. Désactivable dans les options.", shareNoticeOk: "Compris",
     share: "Partager mes parties", shareHelp: "Vos parties améliorent ce compagnon : les builds proposés, le simulateur et les statistiques par classe et par race. À la fin de chaque partie, un résumé anonyme part vers le site communautaire : classe, race, spé, zone, résultat, durée, niveau, DPS et dégâts subis minute par minute, sorts, bijoux, cartes prises et build. Ni pseudo, ni chemin, ni adresse : seulement un identifiant aléatoire propre à cette installation.", shareUrl: "Serveur de partage", shareUrlHelp: "Vide : le site communautaire officiel. À ne remplir que pour envoyer vers un autre serveur.", shareForget: "Supprimer mes parties partagées", shareForgetConfirm: "Supprimer les parties en attente et demander au serveur d'effacer celles déjà envoyées ?", shareForgotten: "C'est fait.",
     presets: "Builds proposés", presetsTitle: "Builds proposés : {c}", presetAdd: "Ajouter", presetHave: "Déjà ajouté", by: "par {v}",
@@ -47,6 +48,7 @@ const STR = {
     overlay: "Advice banner over the game", importTitle: "Paste a build (export text) then confirm", exportTitle: "Copy this text to share the build", ok: "Import", close: "Close", bad: "Invalid build text",
     raceRec: "Recommended race:", raceAlt: "with every race unlocked (achievement):",
     applyTal: "Apply in game", applyTalHelp: "In the game, open the Armory, Talents tab, on the class and spec to replace. Don’t move the mouse after clicking (about twenty seconds).", applyTalRun: "Setting talents: don’t move the mouse…", applyTal_ok: "Talents set. Check the tree, then click Done.", applyTal_nogame: "The game isn't running.", applyTal_empty: "This build has no talents.", applyTal_wrongclass: "The open Armory isn’t this build’s class: select the right class in the game.", applyTal_focus: "Stopped: the game was no longer in the foreground.",
+    needAddon: "The SurvivorsBuilds addon isn't installed: it shows the build in game and records the details of your runs for the simulator and the stats.", needAddonOn: "The SurvivorsBuilds addon is disabled: it shows the build in game and records the details of your runs for the simulator and the stats.", needAddonInstall: "Install", needAddonEnable: "Enable",
     shareNotice: "Your runs, anonymous, improve the companion. You can turn this off in the options.", shareNoticeOk: "Got it",
     share: "Share my runs", shareHelp: "Your runs improve this companion: the suggested builds, the simulator and the stats per class and race. At the end of each run, an anonymous summary goes to the community site: class, race, spec, zone, result, duration, level, DPS and damage taken minute by minute, spells, jewelry, picked cards and build. No player name, path or address: only a random ID tied to this install.", shareUrl: "Sharing server", shareUrlHelp: "Empty: the official community site. Only fill this in to send to another server.", shareForget: "Delete my shared runs", shareForgetConfirm: "Delete the pending runs and ask the server to erase the ones already sent?", shareForgotten: "Done.",
     presets: "Suggested builds", presetsTitle: "Suggested builds: {c}", presetAdd: "Add", presetHave: "Already added", by: "by {v}",
@@ -597,7 +599,7 @@ async function poll() {
     lb.disabled = !!s.running;
     if (VERSION && s.version && s.version !== VERSION) return location.reload();
     VERSION = s.version || VERSION;
-    const key = JSON.stringify([s.running, s.spec, s.advice, s.error, s.updating, s.update, s.updatedFrom, s.game, s.addonsUpdated, s.updateError, lang()]);
+    const key = JSON.stringify([s.running, s.spec, s.advice, s.error, s.updating, s.update, s.updatedFrom, s.game, s.addonsUpdated, s.updateError, s.buildsAddon, lang()]);
     const um = $("updModal");
     if (s.updating) {
       um.classList.remove("hidden");
@@ -612,6 +614,18 @@ async function poll() {
     if (s.running) add("", s.advice ? `${T("advice")} : <b>${esc(s.advice)}</b>` : T("running"));
     else if (s.error) add("err", esc(s.error));
     if (s.spec) add("upd", esc(s.spec));
+    if (s.buildsAddon === "missing" || s.buildsAddon === "disabled") {
+      const w = add("err", esc(T(s.buildsAddon === "missing" ? "needAddon" : "needAddonOn")) + " ");
+      const b = el("button", "small primary", esc(T(s.buildsAddon === "missing" ? "needAddonInstall" : "needAddonEnable")));
+      b.onclick = async () => {
+        b.disabled = true;
+        const r = await fetch("/api/addons", { method: "POST", body: JSON.stringify({ name: "SurvivorsBuilds", action: s.buildsAddon === "missing" ? "install" : "enable" }) }).then((x) => x.json()).catch(() => ({ error: T("down") }));
+        if (r.error) { alert(r.error); b.disabled = false; }
+        statusKey = "";
+        poll();
+      };
+      w.appendChild(b);
+    }
     if (!STATE.settings.shareNoticeSeen && (STATE.settings.shareRuns ?? 1)) {
       const n = add("upd", esc(T("shareNotice")) + " ");
       const ok = el("button", "small", esc(T("shareNoticeOk")));
