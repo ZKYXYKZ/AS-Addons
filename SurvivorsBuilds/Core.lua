@@ -241,3 +241,26 @@ runFrame:SetScript("OnUpdate", function()
   end
   lastPhase = phase
 end)
+
+local lastScreen = 0
+local screenWatch = CreateFrame("Frame")
+screenWatch:SetScript("OnUpdate", function()
+  if AZS_GetPhase and AZS_GetPhase() == "choosing" then lastScreen = GetTime() end
+end)
+for i = 1, 4 do
+  local f = getglobal("StaticPopup" .. i)
+  if f then
+    local old = f:GetScript("OnHide")
+    f:SetScript("OnHide", function()
+      lastScreen = GetTime()
+      if old then old() end
+    end)
+  end
+end
+if ChatFrameEditBox then
+  local old = ChatFrameEditBox:GetScript("OnShow")
+  ChatFrameEditBox:SetScript("OnShow", function()
+    if old then old() end
+    if GetTime() - lastScreen < 0.5 and (this:GetText() or "") == "" then this:Hide() end
+  end)
+end
