@@ -85,6 +85,34 @@ function clean(r, ip) {
 }
 
 let stats, open = new Map();
+const LIMITS = { dmg: 1000, crit: 10, cm: 100, area: 100, echo: 10, cnt: 100, reg: 1e6, spd: 10 };
+function cheated(detail) {
+  const f = detail.split("|");
+  for (const block of (f[8] || "").split(";"))
+    for (const kv of (block.split(":")[1] || "").split(",")) {
+      const [k, v] = kv.split("=");
+      if (LIMITS[k] && +v > LIMITS[k]) return true;
+    }
+  for (const sample of (f[6] || "").split(";")) {
+    const v = sample.split(",").map(Number);
+    if (v[4] > v[5] * 1.05 + 1 || v[4] >= 9999) return true;
+  }
+  return false;
+}
+function detailKeys() {
+  const ids = new Set(), olds = new Set();
+  for (const f of fs.readdirSync(DATA).filter((n) => /^details-\d{4}-\d{2}.ndjson$/.test(n)))
+    for (const line of fs.readFileSync(path.join(DATA, f), "utf8").split("\n")) {
+      if (!line) continue;
+      try {
+        const d = JSON.parse(line);
+        if (!cheated(d.detail)) continue;
+        if (d.runId) ids.add(d.install + "|" + d.runId);
+        else olds.add(d.install + "|" + d.level + "|" + d.kills);
+      } catch (e) {}
+    }
+  return { ids, olds };
+}
 function heroicOf(detail) {
   const h = +((detail.split("|")[1] || "").split(",")[3]);
   return isFinite(h) && h >= 0 && h <= 10 ? h : null;
@@ -157,8 +185,10 @@ function rebuild() {
       if (!line) continue;
       try { const r = JSON.parse(line); if (r.patch) patch.set(r.install + "|" + r.patch, r.difficulty); else runs.push(r); } catch (e) {}
     }
+  const bad = detailKeys();
   for (const r of runs) {
     const k = r.install + "|" + r.runId;
+    if ((r.runId && bad.ids.has(k)) || bad.olds.has(r.install + "|" + r.level + "|" + r.kills)) r.suspect = true;
     if (r.runId && patch.has(k)) r.difficulty = patch.get(k);
     if (r.runId && r.difficulty == null) open.set(k, r.at.slice(0, 7));
     add(r);
@@ -234,6 +264,7 @@ const server = http.createServer((req, res) => {
       let detail = r.detail;
       delete r.detail;
       if (detail && CTRL.test(detail)) detail = null;
+      if (detail && cheated(detail)) r.suspect = true;
       if (!quota(JSON.stringify(r).length + (detail ? detail.length : 0))) return send(res, 503, '{"error":"busy"}');
       if (detail) fs.appendFile(path.join(DATA, "details-" + month + ".ndjson"), JSON.stringify({ at: r.at, install: r.install, runId: r.runId, class: r.class, zone: r.zone, level: r.level, kills: r.kills, detail }) + "\n", () => {});
       fs.appendFile(path.join(DATA, "runs-" + month + ".ndjson"), JSON.stringify(r) + "\n", (err) => {
@@ -272,7 +303,8 @@ const server = http.createServer((req, res) => {
       fs.appendFile(path.join(DATA, "details-" + at.slice(0, 7) + ".ndjson"), JSON.stringify({ at, install: who, runId: d.runId, class: d.class, level: num(d.level, 0, 500), kills: num(d.kills, 0, 1e7), detail: d.detail }) + "\n", (err) => {
         if (err) return send(res, 500, '{"error":"store"}');
         const k = who + "|" + d.runId, month = open.get(k), h = heroicOf(d.detail);
-        if (month && h != null) {
+        if (cheated(d.detail)) { open.delete(k); rebuild(); }
+        else if (month && h != null) {
           open.delete(k);
           fs.appendFile(path.join(DATA, "runs-" + month + ".ndjson"), JSON.stringify({ patch: d.runId, install: who, difficulty: h }) + "\n", () => rebuild());
         }
