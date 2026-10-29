@@ -1115,6 +1115,7 @@ class Companion : Form
 
     Dictionary<string, List<Dictionary<string, object>>> gatewayAll = new Dictionary<string, List<Dictionary<string, object>>>();
     int gamePick = -1;
+    string pickActive;
     DateTime pickRead;
     Bitmap pickPixel = new Bitmap(1, 1);
 
@@ -1137,6 +1138,7 @@ class Companion : Form
             if (v == gamePick) return;
             int prev = gamePick;
             gamePick = v;
+            pickActive = heroClass != null ? S(G(ActiveBuild(state, S(heroClass["key"])), "id")) ?? "" : "?";
             if (v > 0 || prev > 0) ApplyGamePick();
         }
         catch { }
@@ -1149,7 +1151,8 @@ class Companion : Form
         string ck = S(heroClass["key"]);
         Dictionary<string, object> pick = null;
         List<Dictionary<string, object>> sent;
-        if (gamePick > 0 && gatewayAll.TryGetValue(ck, out sent) && gamePick <= sent.Count)
+        bool companionNewer = pickActive != "?" && (S(G(ActiveBuild(state, ck), "id")) ?? "") != pickActive;
+        if (gamePick > 0 && !companionNewer && gatewayAll.TryGetValue(ck, out sent) && gamePick <= sent.Count)
         {
             Dictionary<string, object> g = sent[gamePick - 1];
             pick = A(G(state, "builds")).Select(D).FirstOrDefault(b => G(g, "id") != null && S(G(b, "id")) == S(G(g, "id"))) ?? g;
