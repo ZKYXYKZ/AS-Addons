@@ -2116,7 +2116,7 @@ class Companion : Form
                         Log("sent key " + a.Key);
                         if (a.Pick != null && S(G(a.Pick, "replaces")) != null)
                         {
-                            System.Windows.Forms.Timer c = new System.Windows.Forms.Timer { Interval = 700 };
+                            System.Windows.Forms.Timer c = new System.Windows.Forms.Timer { Interval = 450 };
                             c.Tick += delegate
                             {
                                 c.Stop();
