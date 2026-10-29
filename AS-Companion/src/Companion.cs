@@ -1090,6 +1090,8 @@ class Companion : Form
                 if (en == spellName || en == bare) { key = S(G(sp, "key")); break; }
             }
         int capTree;
+        KeyValuePair<string, int> capLog;
+        if (detectedTree < 0 && heroClass != null && CapLog.TryGetValue(spellName, out capLog) && capLog.Key == S(heroClass["key"])) DetectSpec(capLog.Value, "log " + spellName);
         if (detectedTree < 0 && !offeredNew.Contains(key) && !owned.ContainsKey(key) && capSpells.TryGetValue(key, out capTree)) DetectSpec(capTree, "log " + key);
         double v;
         spellDmg.TryGetValue(key, out v);
@@ -1116,6 +1118,17 @@ class Companion : Form
     Dictionary<string, List<Dictionary<string, object>>> gatewayAll = new Dictionary<string, List<Dictionary<string, object>>>();
     int gamePick = -1;
     string pickActive;
+    static readonly Dictionary<string, KeyValuePair<string, int>> CapLog = new Dictionary<string, KeyValuePair<string, int>>
+    {
+        { "Noxious Cloud", new KeyValuePair<string, int>("rogue", 0) },
+    };
+
+    Dictionary<string, object> LastPicks()
+    {
+        string f = Path.Combine(dataDir, "last-pick.json");
+        try { return File.Exists(f) ? D(json.DeserializeObject(File.ReadAllText(f, Utf8))) ?? new Dictionary<string, object>() : new Dictionary<string, object>(); }
+        catch { return new Dictionary<string, object>(); }
+    }
     DateTime pickRead;
     Bitmap pickPixel = new Bitmap(1, 1);
 
@@ -1147,7 +1160,7 @@ class Companion : Form
 
     void ApplyGamePick()
     {
-        if (heroClass == null || gamePick < 0) return;
+        if (heroClass == null) return;
         string ck = S(heroClass["key"]);
         Dictionary<string, object> pick = null;
         List<Dictionary<string, object>> sent;
@@ -1156,6 +1169,22 @@ class Companion : Form
         {
             Dictionary<string, object> g = sent[gamePick - 1];
             pick = A(G(state, "builds")).Select(D).FirstOrDefault(b => G(g, "id") != null && S(G(b, "id")) == S(G(g, "id"))) ?? g;
+        }
+        if (pick != null)
+        {
+            Dictionary<string, object> lp = LastPicks();
+            lp[ck] = new Dictionary<string, object> { { "name", S(G(pick, "name")) }, { "active", S(G(ActiveBuild(state, ck), "id")) ?? "" } };
+            try { File.WriteAllText(Path.Combine(dataDir, "last-pick.json"), json.Serialize(lp), Utf8); } catch { }
+        }
+        if (pick == null && detectedTree < 0 && gamePick <= 0)
+        {
+            Dictionary<string, object> last = D(G(LastPicks(), ck));
+            List<Dictionary<string, object>> all;
+            if (last != null && (S(G(ActiveBuild(state, ck), "id")) ?? "") == S(G(last, "active")) && gatewayAll.TryGetValue(ck, out all))
+            {
+                Dictionary<string, object> g = all.FirstOrDefault(x => S(G(x, "name")) == S(G(last, "name")));
+                if (g != null) pick = A(G(state, "builds")).Select(D).FirstOrDefault(b => G(g, "id") != null && S(G(b, "id")) == S(G(g, "id"))) ?? g;
+            }
         }
         if (pick == null && detectedTree >= 0) pick = A(G(state, "builds")).Select(D).FirstOrDefault(b => S(G(b, "class")) == ck && SpecIndex(b) == detectedTree) ?? PresetFor(heroClass, detectedTree);
         if (pick == null) pick = ActiveBuild(state, ck) ?? ClassPresets(heroClass).FirstOrDefault();
