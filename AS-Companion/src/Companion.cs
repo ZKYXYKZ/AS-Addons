@@ -2215,7 +2215,8 @@ class Companion : Form
         { "treants", new[] { "Tréant", "Treant" } },
         { "Water Elemental", new[] { "Élémentaire d'eau", "Water Elemental" } },
         { "spirit wolves", new[] { "Loup spirituel", "Esprit du loup", "Spirit Wolf" } },
-        { "Pit Lord", new[] { "Seigneur des fosses", "Pit Lord" } },
+        { "Pit Lord", new[] { "Seigneur des fosses", "Pit Lord", "Seigneur de l'effroi", "Dread Lord" } },
+        { "Dread Lord", new[] { "Seigneur de l'effroi", "Dread Lord" } },
         { "Felguard", new[] { "Gangregarde", "Felguard" } },
     };
 
