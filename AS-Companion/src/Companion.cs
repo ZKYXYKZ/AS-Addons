@@ -1178,7 +1178,7 @@ class Companion : Form
         }
         if (pendingKey != 0 && running && (DateTime.Now - pendingAt).TotalMilliseconds > 800)
         {
-            if (pendingTries >= 6) { Log("key not taken by the game"); pendingKey = 0; }
+            if (pendingTries >= (pendingKey == 0x0D ? 1 : 6)) { Log("key not taken by the game"); pendingKey = 0; }
             else { SendKey(pendingKey); pendingTries++; Log("key resent (" + pendingTries + ")"); }
         }
         if (!running && !updating && DateTime.Now > nextCheck)
@@ -2067,6 +2067,21 @@ class Companion : Form
                         pendingTries = 0;
                         SendKey(vk);
                         Log("sent key " + a.Key);
+                        if (a.Pick != null && S(G(a.Pick, "replaces")) != null)
+                        {
+                            System.Windows.Forms.Timer c = new System.Windows.Forms.Timer { Interval = 700 };
+                            c.Tick += delegate
+                            {
+                                c.Stop();
+                                c.Dispose();
+                                if (!running || pendingKey != vk) return;
+                                pendingKey = 0x0D;
+                                pendingTries = 0;
+                                SendKey(0x0D);
+                                Log("sent Enter (replace amulet)");
+                            };
+                            c.Start();
+                        }
                     };
                     t.Start();
                     if (a.Pick != null) Took(a.Pick);
