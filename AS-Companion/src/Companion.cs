@@ -1786,6 +1786,15 @@ class Companion : Form
                 }
             if (byTree.Count == 0) continue;
             L.Append("      " + ck + " = {\n        caps = { " + string.Join(", ", caps.Select(kv => kv.Key + " = " + (kv.Value + 1))) + " },\n");
+            List<string> icons = new List<string>();
+            int tn = 0;
+            foreach (object tree in A(G(c, "trees")))
+            {
+                tn++;
+                foreach (object t in A(G(tree, "talents")).Where(x => N(G(x, "row"), 0) == 6 && S(G(x, "icon")) != null))
+                    icons.Add("[" + LuaStr(S(G(t, "icon")).ToLowerInvariant()) + "] = " + tn);
+            }
+            L.Append("        icons = { " + string.Join(", ", icons) + " },\n");
             foreach (KeyValuePair<int, Dictionary<string, object>> kv in byTree)
             {
                 L.Append("        [" + (kv.Key + 1) + "] = ");

@@ -105,7 +105,44 @@ logFrame:SetScript("OnEvent", function()
 end)
 
 local SPEC = { fr = "Spé détectée, build « %s »", en = "Spec detected, build \"%s\"" }
-local runId, lastPhase, specDone = nil, nil, false
+local runId, lastPhase, specDone, probeAt = nil, nil, false, nil
+
+local function useAlt(alts, t)
+  specDone = true
+  local b = alts[t]
+  local link = SB.Link()
+  local cur = link.builds and link.builds[SB.PlayerClass()]
+  if b and (not cur or cur.name ~= b.name) then
+    SB.alt = b
+    SB.Print(string.format(SPEC[SB.Lang()] or SPEC.en, b.name))
+  end
+end
+
+local function iconTree(alts, list)
+  if not alts.icons then return end
+  for _, x in ipairs(list or {}) do
+    local ic = x.icon and string.lower(string.gsub(x.icon, "^.*\\", ""))
+    if ic and alts.icons[ic] then return alts.icons[ic] end
+  end
+end
+
+local function detectIcons()
+  if specDone or SB.manual then return end
+  local link = SB.Link()
+  local alts = link and link.alts and link.alts[SB.PlayerClass()]
+  if not alts then return end
+  local t = iconTree(alts, AZS_TIMERS)
+  if t then useAlt(alts, t) end
+end
+
+local function probe()
+  local out = {}
+  for _, x in ipairs(AZS_TIMERS or {}) do table.insert(out, "T:" .. tostring(x.name) .. "/" .. tostring(x.icon) .. "/" .. tostring(x.kind)) end
+  for _, x in ipairs(AZS_BUFFS or {}) do table.insert(out, "B:" .. tostring(x.name) .. "/" .. tostring(x.icon)) end
+  local db = SB.DB()
+  db.probe = db.probe or {}
+  db.probe[SB.PlayerClass()] = table.concat(out, ";")
+end
 
 local function detectSpec()
   if specDone or not AZS_SPELLS then return end
@@ -119,13 +156,7 @@ local function detectSpec()
   for i = 1, table.getn(AZS_SPELLS) do
     local t = AZS_SPELLS[i].key and alts.caps[AZS_SPELLS[i].key]
     if t then
-      specDone = true
-      local b = alts[t]
-      local cur = link.builds and link.builds[SB.PlayerClass()]
-      if b and (not cur or cur.name ~= b.name) then
-        SB.alt = b
-        SB.Print(string.format(SPEC[SB.Lang()] or SPEC.en, b.name))
-      end
+      useAlt(alts, t)
       return
     end
   end
@@ -172,10 +203,11 @@ local function showPick()
   local link = SB.Link()
   if not link or not link.builds then pick:Hide() return end
   local v = 0
-  if SB.manual then
+  local chosen = SB.manual or SB.alt
+  if chosen then
     local list = SB.Builds()
     for i = 1, table.getn(list) do
-      if list[i].name == SB.manual.name then v = i end
+      if list[i].name == chosen.name then v = i end
     end
   end
   pick.t:SetTexture((math.mod(v, 16) * 16 + 8) / 255, 1, (math.floor(v / 16) * 16 + 8) / 255, 1)
@@ -187,6 +219,7 @@ local acc = 0
 runFrame:RegisterEvent("CHAT_MSG_ADDON")
 runFrame:SetScript("OnEvent", function()
   if arg1 == "AZSSPELLS" then detectSpec() end
+  if arg1 == "AZSTIMERS" then detectIcons() end
 end)
 runFrame:SetScript("OnUpdate", function()
   acc = acc + arg1
@@ -199,8 +232,10 @@ runFrame:SetScript("OnUpdate", function()
     runId, specDone, SB.alt = nil, false, nil
   elseif phase == "playing" and not runId then
     runId = time()
+    probeAt = GetTime() + 20
     detectSpec()
   end
+  if probeAt and GetTime() > probeAt then probeAt = nil pcall(probe) end
   if runId and (phase == "dead" or phase == "victory") and phase ~= lastPhase and AZS_GetMeter then
     pcall(saveRun)
   end
