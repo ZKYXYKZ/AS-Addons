@@ -1208,7 +1208,7 @@ class Companion : Form
             AttachDetails(savedFile);
             new Thread(FlushShare) { IsBackground = true }.Start();
         }
-        if (pendingKey != 0 && running && (DateTime.Now - pendingAt).TotalMilliseconds > 600)
+        if (pendingKey != 0 && running && (DateTime.Now - pendingAt).TotalMilliseconds > 500)
         {
             if (pendingTries >= (pendingKey == 0x0D ? 1 : 6)) { Log("key not taken by the game"); pendingKey = 0; }
             else { SendKey(pendingKey); pendingTries++; Log("key resent (" + pendingTries + ")"); }
@@ -2103,7 +2103,7 @@ class Companion : Form
                 if (B(G(settings, "autoPick")) && a.Key != null)
                 {
                     uint vk = a.Key == "r" ? 0x52u : (uint)(0x30 + int.Parse(a.Key));
-                    System.Windows.Forms.Timer t = new System.Windows.Forms.Timer { Interval = (DateTime.Now - lastKey).TotalMilliseconds < 2500 ? 350 : 250 };
+                    System.Windows.Forms.Timer t = new System.Windows.Forms.Timer { Interval = (DateTime.Now - lastKey).TotalMilliseconds < 2500 ? 600 : 500 };
                     lastKey = DateTime.Now;
                     t.Tick += delegate
                     {
@@ -2116,7 +2116,7 @@ class Companion : Form
                         Log("sent key " + a.Key);
                         if (a.Pick != null && S(G(a.Pick, "replaces")) != null)
                         {
-                            System.Windows.Forms.Timer c = new System.Windows.Forms.Timer { Interval = 450 };
+                            System.Windows.Forms.Timer c = new System.Windows.Forms.Timer { Interval = 400 };
                             c.Tick += delegate
                             {
                                 c.Stop();
