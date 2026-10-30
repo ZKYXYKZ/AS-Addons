@@ -2470,7 +2470,7 @@ class Companion : Form
                     string[] head = d[1].Split(',');
                     int hl;
                     if (head.Length < 4 || !int.TryParse(head[3], out hl) || hl <= 0) continue;
-                    Dictionary<string, object> run = runs.Select(D).LastOrDefault(x => x != null && G(x, "heroic") == null && S(G(x, "class")) == head[0] && Math.Abs(N(G(x, "level"), -1) - double.Parse(d[3], inv)) < 0.5 && Math.Abs(N(G(x, "kills"), -1) - double.Parse(d[4], inv)) <= 5);
+                    Dictionary<string, object> run = runs.Select(D).LastOrDefault(x => x != null && G(x, "heroic") == null && S(G(x, "class")) == head[0] && Math.Abs(N(G(x, "level"), -1) - double.Parse(d[3], inv)) < 1.5 && Math.Abs(N(G(x, "kills"), -1) - double.Parse(d[4], inv)) <= 5 + 0.05 * N(G(x, "kills"), 0));
                     if (run == null) continue;
                     run["heroic"] = hl;
                     marked++;
@@ -2486,7 +2486,7 @@ class Companion : Form
                 {
                     Dictionary<string, object> run = D(o);
                     if (run == null || G(run, "detail") != null) continue;
-                    string[] d = details.LastOrDefault(f => f[1].Split(',')[0] == S(G(run, "class")) && Math.Abs(double.Parse(f[3], inv) - N(G(run, "level"), -1)) < 0.5 && Math.Abs(double.Parse(f[4], inv) - N(G(run, "kills"), -1)) <= 5);
+                    string[] d = details.LastOrDefault(f => f[1].Split(',')[0] == S(G(run, "class")) && Math.Abs(double.Parse(f[3], inv) - N(G(run, "level"), -1)) < 1.5 && Math.Abs(double.Parse(f[4], inv) - N(G(run, "kills"), -1)) <= 5 + 0.05 * N(G(run, "kills"), 0));
                     if (d == null) continue;
                     run["detail"] = string.Join("|", d);
                     int hl;
@@ -2500,7 +2500,7 @@ class Companion : Form
                 {
                     Dictionary<string, object> run = D(o);
                     if (run == null) continue;
-                    string[] d = details.LastOrDefault(f => f[1].Split(',')[0] == S(G(run, "class")) && Math.Abs(double.Parse(f[3], inv) - N(G(run, "level"), -1)) < 0.5 && Math.Abs(double.Parse(f[4], inv) - N(G(run, "kills"), -1)) <= 5);
+                    string[] d = details.LastOrDefault(f => f[1].Split(',')[0] == S(G(run, "class")) && Math.Abs(double.Parse(f[3], inv) - N(G(run, "level"), -1)) < 1.5 && Math.Abs(double.Parse(f[4], inv) - N(G(run, "kills"), -1)) <= 5 + 0.05 * N(G(run, "kills"), 0));
                     if (d == null) continue;
                     q.Add(new Dictionary<string, object> { { "v", 1 }, { "kind", "detail" }, { "install", InstallId() }, { "runId", G(run, "runId") }, { "class", G(run, "class") }, { "level", G(run, "level") }, { "kills", G(run, "kills") }, { "detail", string.Join("|", d) } });
                     sentRuns.Remove(o);
